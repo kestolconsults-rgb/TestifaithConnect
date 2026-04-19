@@ -1,0 +1,54 @@
+You are building a full-stack web application called “Testifaith.”
+
+Purpose:
+Testifaith is a faith-based community platform for Christians and believers to share testimonies, read others’ stories, and strengthen their faith in God. The app will provide encouragement, hope, and inspiration through real-life experiences of God’s goodness.
+
+Core Features:
+1. **Homepage**
+   - Welcoming banner with tagline: “Share Your Story. Strengthen Your Faith.”
+   - Daily “Testimony of the Day” section highlighting one impactful story.
+   - Navigation to major categories: Healing, Marriage, Fruitfulness, Finance, Breakthrough, Deliverance, and Others.
+
+2. **Testimony Feed**
+   - List or card view of testimonies shared by users.
+   - Each testimony includes: title, category, author name (or “Anonymous”), date, and story content.
+   - Option to “Amen,” “Encourage,” or comment.
+
+3. **Post a Testimony**
+   - Simple form where users can submit a new testimony with fields: title, category, and full story.
+   - Option to post anonymously.
+
+4. **Category Pages**
+   - Dedicated pages for each category (Healing, Marriage, Fruitfulness, Finance, etc.).
+   - Displays testimonies under that category.
+
+5. **Testimony of the Day**
+   - Automatically select or highlight one featured testimony daily.
+
+6. **Encouragement Section**
+   - Short daily verses or quotes on faith and hope.
+   - Option for users to submit encouraging Bible verses.
+
+7. **User Account (optional MVP feature)**
+   - Simple authentication system (sign up, login, logout).
+   - Users can manage their testimonies.
+
+Design & Tech Stack:
+- Use modern, clean UI with soft, peaceful colors (white, light gold, gentle blue tones).
+- Framework: React (frontend), Node.js + Express (backend), MongoDB (database).
+- Responsive design (mobile-friendly).
+- Include header, footer, and navigation menu.
+- Optional admin dashboard to manage testimonies and highlight “Testimony of the Day.”
+
+App Goals:
+- Build a safe, uplifting space for believers to share and read testimonies.
+- Help users grow their faith through the experiences of others.
+- Encourage gratitude and hope through shared faith journeys.
+
+Branding:
+- App Name: Testifaith
+- Tagline: “Share Your Story. Strengthen Your Faith.”
+- Logo idea: A glowing cross or open book with rays of light (can be added later).
+
+Deliverable:
+Generate the code for a working prototype of the Testifaith web app with the above structure and functionality. Include comments and clear folder organization for easy modification later.
