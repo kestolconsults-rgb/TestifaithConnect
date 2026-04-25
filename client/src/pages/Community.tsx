@@ -81,10 +81,9 @@ function VideoCard({ testimony }: { testimony: TestimonyWithUser }) {
   );
 }
 
-function TestimonyRow({ testimony }: { testimony: TestimonyWithUser }) {
+function TestimonyRow({ testimony, currentUser }: { testimony: TestimonyWithUser; currentUser?: { id: string } }) {
   const displayName = testimony.isAnonymous ? "Anonymous" : `${testimony.user?.firstName || ""} ${testimony.user?.lastName || ""}`.trim() || "Anonymous";
   const initials = testimony.isAnonymous ? "A" : getInitials(testimony.user?.firstName, testimony.user?.lastName);
-  const { user } = useAuth();
   const [amenAnimating, setAmenAnimating] = useState(false);
   const [localAmen, setLocalAmen] = useState(testimony.userHasAmen);
   const [localCount, setLocalCount] = useState(testimony.amenCount || 0);
@@ -98,7 +97,7 @@ function TestimonyRow({ testimony }: { testimony: TestimonyWithUser }) {
   });
 
   const handleAmen = () => {
-    if (!user) return;
+    if (!currentUser) return;
     const next = !localAmen;
     setLocalAmen(next);
     setLocalCount((c) => next ? c + 1 : Math.max(0, c - 1));
@@ -192,6 +191,7 @@ export default function Community() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const { user } = useAuth();
 
   const { data: allTestimonies, isLoading, refetch } = useQuery<TestimonyWithUser[]>({
     queryKey: ["/api/testimonies"],
@@ -341,7 +341,7 @@ export default function Community() {
           <CommunitySkeleton />
         ) : textTestimonies.length > 0 ? (
           <div className="space-y-3">
-            {textTestimonies.slice(0, 10).map((t) => <TestimonyRow key={t.id} testimony={t} />)}
+            {textTestimonies.slice(0, 10).map((t) => <TestimonyRow key={t.id} testimony={t} currentUser={user} />)}
           </div>
         ) : (
           <EmptyState
