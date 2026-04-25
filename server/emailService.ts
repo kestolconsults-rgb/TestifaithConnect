@@ -99,7 +99,7 @@ function getWelcomeEmailHtml(firstName: string): string {
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td align="center">
-                    <a href="https://testifaith.com/home" style="display: inline-block; padding: 16px 40px; background-color: #EF4444; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 8px; letter-spacing: 0.5px;">
+                    <a href="https://testifaith.com" style="display: inline-block; padding: 16px 40px; background-color: #EF4444; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 8px; letter-spacing: 0.5px;">
                       Start Exploring
                     </a>
                   </td>
@@ -167,7 +167,7 @@ HERE'S HOW TO GET STARTED:
 3. Encourage Others
    Say "Amen" or send encouragement to uplift fellow believers in their faith journey.
 
-Visit us at: https://testifaith.com/home
+Visit us at: https://testifaith.com
 
 DAILY INSPIRATION
 Visit daily for a featured "Testimony of the Day" and faith declarations to strengthen your walk with God.

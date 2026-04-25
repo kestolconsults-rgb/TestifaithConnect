@@ -58,6 +58,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
+  // Redirect bare root to /home so testifaith.com works the same as testifaith.com/home
+  app.get("/", (_req: Request, res: Response) => {
+    res.redirect(301, "/home");
+  });
+
   // Object storage service (Replit — used as fallback in dev if S3 not configured)
   const objectStorageService = new ObjectStorageService();
 
