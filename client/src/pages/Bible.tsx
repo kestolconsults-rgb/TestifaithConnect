@@ -22,12 +22,11 @@ export const FREE_VERSIONS: BibleVersion[] = [
   { id: "bbe",   name: "BBE",   full: "Basic English Bible",          source: "free" },
 ];
 
-export const PREMIUM_VERSION_ABBREVS = ["NKJV", "MSG", "AMP", "TPT"] as const;
+export const PREMIUM_VERSION_ABBREVS = ["MSG", "AMP", "NLT"] as const;
 export const PREMIUM_VERSION_LABELS: Record<string, string> = {
-  NKJV: "New King James Version",
-  MSG:  "The Message",
-  AMP:  "Amplified Bible",
-  TPT:  "The Passion Translation",
+  MSG: "The Message",
+  AMP: "Amplified Bible",
+  NLT: "New Living Translation",
 };
 
 interface BibleBook {

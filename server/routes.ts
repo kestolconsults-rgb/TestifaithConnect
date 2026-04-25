@@ -1656,7 +1656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (_premiumVersionsCache && now - _premiumVersionsCacheTime < 3_600_000) {
       return _premiumVersionsCache;
     }
-    const resp = await fetch("https://api.scripture.api.bible/v1/bibles?language=eng", {
+    const resp = await fetch("https://rest.api.bible/v1/bibles?language=eng", {
       headers: { "api-key": apiKey },
     });
     if (!resp.ok) {
@@ -1665,7 +1665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       throw new Error(`api.bible request failed: HTTP ${resp.status}`);
     }
     const data = await resp.json();
-    const TARGETS = ["NKJV", "MSG", "AMP", "TPT"];
+    const TARGETS = ["MSG", "AMP", "NLT"];
     const versions = (data.data ?? [])
       .filter((b: any) =>
         TARGETS.some(
@@ -1742,7 +1742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { bibleId, chapterId } = req.query as { bibleId: string; chapterId: string };
     if (!bibleId || !chapterId) return res.status(400).json({ message: "bibleId and chapterId required" });
     try {
-      const url = new URL(`https://api.scripture.api.bible/v1/bibles/${bibleId}/chapters/${chapterId}`);
+      const url = new URL(`https://rest.api.bible/v1/bibles/${bibleId}/chapters/${chapterId}`);
       url.searchParams.set("content-type", "json");
       url.searchParams.set("include-notes", "false");
       url.searchParams.set("include-titles", "false");
