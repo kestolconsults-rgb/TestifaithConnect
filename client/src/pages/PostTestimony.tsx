@@ -58,6 +58,8 @@ export default function PostTestimony() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
+  const [postedTitle, setPostedTitle] = useState<string | null>(null);
+  const [postedType, setPostedType] = useState<"text" | "video">("text");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -196,13 +198,8 @@ export default function PostTestimony() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/testimonies"] });
-      toast({
-        title: "Success!",
-        description: testimonyType === "video" 
-          ? "Your video testimony has been submitted for review."
-          : "Your testimony has been shared successfully.",
-      });
-      setLocation("/my-testimonies");
+      setPostedTitle(form.getValues("title") || "Your Testimony");
+      setPostedType(testimonyType);
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -238,6 +235,53 @@ export default function PostTestimony() {
 
   if (authLoading || !isAuthenticated) {
     return null;
+  }
+
+  if (postedTitle !== null) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center">
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{ background: "color-mix(in srgb, hsl(var(--primary)) 12%, transparent)" }}
+          >
+            <Sparkles className="w-10 h-10 text-primary" />
+          </div>
+          <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            {postedType === "video" ? "Testimony Submitted!" : "Testimony Shared!"}
+          </h1>
+          {postedType === "video" ? (
+            <p className="text-muted-foreground mb-2 leading-relaxed">
+              Your video testimony is under review. We'll publish it once it's approved.
+            </p>
+          ) : (
+            <p className="text-muted-foreground mb-2 leading-relaxed">
+              Your testimony is now live. May it encourage someone's faith today.
+            </p>
+          )}
+          <p className="font-['Crimson_Pro'] italic text-muted-foreground text-sm mb-8">
+            "Let your light shine before others, that they may see your good deeds and glorify your Father in heaven." — Matt. 5:16
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setLocation("/community")}
+              className="w-full py-3 rounded-xl font-semibold text-white text-sm"
+              style={{ background: "#ef4444" }}
+              data-testid="button-success-community"
+            >
+              Back to Community
+            </button>
+            <button
+              onClick={() => setLocation("/my-testimonies")}
+              className="w-full py-3 rounded-xl font-semibold text-sm border bg-card text-foreground"
+              data-testid="button-success-my-testimonies"
+            >
+              View My Testimonies
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (showVideoGuide) {

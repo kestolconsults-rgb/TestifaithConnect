@@ -1900,6 +1900,12 @@ function SupportMessages() {
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const { toast } = useToast();
 
+  const { data: supportMsgs = [] } = useQuery<{ id: string; status: string }[]>({
+    queryKey: ["/api/admin/support-messages"],
+    refetchInterval: 60000,
+  });
+  const openSupportCount = supportMsgs.filter((m) => m.status === "open").length;
+
   const handleLogout = async () => {
     try {
       await apiRequest("POST", "/api/admin/logout");
@@ -1971,6 +1977,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <TabsTrigger value="support" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-support">
                 <Headphones className="w-4 h-4 mr-2" />
                 Support
+                {openSupportCount > 0 && (
+                  <span className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 data-[state=active]:bg-white data-[state=active]:text-red-500 text-white text-[9px] font-bold" data-testid="badge-support-count">
+                    {openSupportCount > 9 ? "9+" : openSupportCount}
+                  </span>
+                )}
               </TabsTrigger>
               <TabsTrigger value="logs" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-logs">
                 <History className="w-4 h-4 mr-2" />

@@ -75,6 +75,17 @@ The app is a **mobile-first PWA** with a bottom tab bar (Home, Community, FAB, B
 - **Empty States**: `EmptyState.tsx` SVG illustrated components (community, journal, search, video types)
 - **Video Thumbnails**: Category-gradient thumbnails with play button overlay when no thumbnail URL available
 
+## UX Enhancements (April 2026)
+- **Declare it! button** — Daily faith declaration card now has a "Declare it!" pill button. Taps flip it to "Declared today" (persisted in localStorage per day, resets at midnight).
+- **Stone of the Day relative time** — Featured testimony timestamp now shows relative time (e.g. "6 months ago") with full date in tooltip.
+- **Trending This Week** — Community page shows a horizontal scroll of the most-encouraged testimonies (sorted by encourageCount, hidden when all have 0 encouragements or during search/category filter).
+- **Comment count on testimony cards** — TestimonyCard now shows a MessageCircle icon + count, linked to the testimony detail page.
+- **Faith interests → category links** — Profile page faith interest badges now navigate to their respective category page on tap.
+- **Onboarding welcome screen** — After completing 3-step onboarding, users see a "You're all set!" celebration screen with CTA to post or explore.
+- **Post testimony success screen** — After sharing a testimony, instead of a silent redirect, users see a dedicated success screen with scripture and navigation options.
+- **Admin Support tab badge** — Support tab in admin dashboard shows a live count of open (unread) messages; auto-refreshes every 60 seconds.
+- **Push notification tooltip** — Bell icon tooltip now describes what you'll receive: "Turn on notifications to hear when someone Amens or Encourages your testimony".
+
 ## Future Features (Roadmap)
 - **Phase 3**: Faith expectations tracking with milestones and scripture linking
 - **Phase 4**: Faith circles for group prayer requests and community connection

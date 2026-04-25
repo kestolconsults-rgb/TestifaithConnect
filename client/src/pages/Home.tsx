@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Lock, Heart, Star, Plus, Feather, LogIn, ChevronDown, ChevronUp, Flame, Clock, Users } from "lucide-react";
+import { BookOpen, Lock, Heart, Star, Plus, Feather, LogIn, ChevronDown, ChevronUp, Flame, Clock, Users, CheckCircle2, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow, format, subDays, parseISO } from "date-fns";
 import type { TestimonyWithUser, EncouragementVerse, FaithDeclaration } from "@shared/schema";
@@ -36,6 +36,15 @@ function calculateStreak(testimonies: TestimonyWithUser[]): number {
 export default function Home() {
   const { user } = useAuth();
   const [declarationExpanded, setDeclarationExpanded] = useState(false);
+  const TODAY_DECLARE_KEY = `testifaith_declared_${format(new Date(), "yyyy-MM-dd")}`;
+  const [declared, setDeclared] = useState(() => {
+    try { return localStorage.getItem(TODAY_DECLARE_KEY) === "1"; } catch { return false; }
+  });
+
+  const handleDeclare = () => {
+    setDeclared(true);
+    try { localStorage.setItem(TODAY_DECLARE_KEY, "1"); } catch { /* noop */ }
+  };
 
   const { data: featuredTestimony, isLoading: featuredLoading } = useQuery<TestimonyWithUser>({
     queryKey: ["/api/testimonies/featured"],
@@ -127,6 +136,24 @@ export default function Home() {
               <p className="text-xs font-medium text-primary" data-testid="text-faith-verse">
                 {faithDeclaration.bibleReference && `— ${faithDeclaration.bibleReference}`}
               </p>
+              <div className="mt-3">
+                {declared ? (
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-primary/80" data-testid="text-declared">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Declared today
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleDeclare}
+                    className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-full transition-all active:scale-95"
+                    style={{ background: "color-mix(in srgb, hsl(var(--primary)) 18%, transparent)", color: "hsl(var(--primary))" }}
+                    data-testid="button-declare-it"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Declare it!
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ) : (
@@ -183,8 +210,8 @@ export default function Home() {
                     Featured
                   </span>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {format(new Date(featuredTestimony.createdAt ?? Date.now()), "MMM d, yyyy")}
+                <span className="text-xs text-muted-foreground" title={format(new Date(featuredTestimony.createdAt ?? Date.now()), "MMM d, yyyy")}>
+                  {formatDistanceToNow(new Date(featuredTestimony.createdAt ?? Date.now()), { addSuffix: true })}
                 </span>
               </div>
               {featuredTestimony.title && (

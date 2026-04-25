@@ -66,12 +66,12 @@ export default function MobileHeader() {
                 )}
               </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
+            <TooltipContent side="bottom" className="text-xs max-w-[200px] text-center">
               {permission === "denied"
-                ? "Notifications blocked in browser settings"
+                ? "Notifications are blocked — enable them in your browser settings"
                 : isSubscribed
                 ? "Notifications on — tap to turn off"
-                : "Tap to turn on push notifications"}
+                : "Turn on notifications to hear when someone Amens or Encourages your testimony"}
             </TooltipContent>
           </Tooltip>
         )}

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, Sparkles, Share2 } from "lucide-react";
+import { Heart, Sparkles, Share2, MessageCircle } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Link } from "wouter";
 import type { TestimonyWithUser } from "@shared/schema";
@@ -165,6 +165,13 @@ export default function TestimonyCard({
               </span>
             )}
           </Button>
+
+          <Link href={`/testimony/${testimony.id}`}>
+            <Button variant="ghost" size="sm" className="text-muted-foreground" data-testid={`button-comments-${testimony.id}`}>
+              <MessageCircle className="h-4 w-4 mr-1" />
+              {testimony.commentCount != null && testimony.commentCount > 0 ? testimony.commentCount : ""}
+            </Button>
+          </Link>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

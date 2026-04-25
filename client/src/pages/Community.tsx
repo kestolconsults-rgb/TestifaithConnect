@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Search, Play, Heart, MessageCircle, Globe, RefreshCw } from "lucide-react";
+import { Search, Play, Heart, MessageCircle, Globe, RefreshCw, Flame, Sparkles } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -311,6 +311,51 @@ export default function Community() {
           );
         })}
       </div>
+
+      {/* Trending This Week */}
+      {!debouncedQuery && activeCategory === "All" && !isLoading && allTestimonies && allTestimonies.length > 0 && (() => {
+        const trending = [...allTestimonies]
+          .filter(t => !t.videoUrl)
+          .sort((a, b) => (b.encourageCount || 0) - (a.encourageCount || 0))
+          .slice(0, 5);
+        if (!trending.length || trending[0].encourageCount === 0) return null;
+        return (
+          <section className="mb-5">
+            <div className="flex items-center gap-2 px-5 mb-3">
+              <Flame className="w-4 h-4 text-amber-500" />
+              <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Trending This Week</h2>
+            </div>
+            <div className="flex gap-3 overflow-x-auto px-5 pb-1 hide-scrollbar">
+              {trending.map((t) => {
+                const name = t.isAnonymous ? "Anonymous" : `${t.user?.firstName || ""} ${t.user?.lastName || ""}`.trim() || "Anonymous";
+                return (
+                  <Link key={t.id} href={`/testimony/${t.id}`}>
+                    <div className="flex-shrink-0 w-56 rounded-2xl border bg-card p-4 hover-elevate cursor-pointer" data-testid={`trending-card-${t.id}`}>
+                      <Badge variant="outline" className={`text-[9px] font-bold uppercase mb-2 ${CATEGORY_COLORS[t.category as keyof typeof CATEGORY_COLORS] || ""}`}>
+                        {t.category}
+                      </Badge>
+                      <p className="font-['Space_Grotesk'] text-xs font-bold text-foreground mb-1.5 line-clamp-2">
+                        {t.title || "Untitled"}
+                      </p>
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Heart className="w-3 h-3 text-chart-3" />
+                          <span className="text-[10px]">{t.amenCount || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-chart-4" />
+                          <span className="text-[10px]">{t.encourageCount || 0}</span>
+                        </div>
+                        <span className="text-[10px] ml-auto truncate">{name}</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Video Testimonies — only shown when there are videos */}
       {!debouncedQuery && activeCategory === "All" && (isLoading || videoTestimonies.length > 0) && (

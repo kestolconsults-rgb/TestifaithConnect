@@ -1,0 +1,24 @@
+UX & flow
+
+The onboarding ends but doesn't give users a satisfying "you're all set" moment — a brief welcome screen with their name and a prompt to write their first testimony would increase early engagement significantly
+The Search page could add filters (by category, date, most-amened) so users can actually find what they're looking for rather than just keyword searching
+When a user posts a testimony, they're likely dropped back somewhere without any celebration — a success moment ("Your testimony has been shared!") with a share button would feel more rewarding
+Profile page
+
+There's no way for other users to follow or connect with people whose testimonies they find meaningful — right now the community feels anonymous
+The faith interests badges on profiles aren't clickable — tapping one could take you to that category's testimonies, which would make them useful rather than decorative
+Home page
+
+The "Stone of the Day" featured testimony has no indication of when it was last updated — if it hasn't changed in days, users stop checking it
+The daily faith declaration is read-only — letting users tap to "declare it" with a brief animation (similar to the Amen burst) would make it feel interactive and personal
+Community
+
+There's no comment count visible on testimony cards in the feed — users have no signal that a testimony has active conversation before they tap in
+No "Trending" or "Most Encouraged This Week" section to surface the best content to new users
+Admin
+
+The Support tab is built but there's no in-app notification or badge when new messages arrive — admins have no reason to check it unless they remember
+Technical polish
+
+The app doesn't remember your scroll position when you navigate back from a testimony detail — you start at the top of the community feed every time, which is frustrating
+Push notification opt-in is triggered by the bell icon but there's no explanation of what you'll receive — a one-line tooltip or small prompt would improve the opt-in rate

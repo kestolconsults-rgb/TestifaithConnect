@@ -162,9 +162,11 @@ export default function Profile() {
           {profile.faithInterests && profile.faithInterests.length > 0 && (
             <div className="flex flex-wrap justify-center gap-1.5 mt-2">
               {profile.faithInterests.map((interest) => (
-                <Badge key={interest} variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                  {interest}
-                </Badge>
+                <Link key={interest} href={`/category/${interest}`}>
+                  <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5 cursor-pointer hover-elevate">
+                    {interest}
+                  </Badge>
+                </Link>
               ))}
             </div>
           )}

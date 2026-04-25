@@ -12,7 +12,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Heart, Sparkles, ArrowRight, ArrowLeft, Check, Loader2 } from "lucide-react";
+import { Heart, Sparkles, ArrowRight, ArrowLeft, Check, Loader2, BookOpen, Users } from "lucide-react";
 import { completeOnboardingSchema, type CompleteOnboarding } from "@shared/schema";
 
 const FAITH_INTERESTS = [
@@ -28,6 +28,7 @@ const FAITH_INTERESTS = [
 
 export default function Onboarding() {
   const [step, setStep] = useState(1);
+  const [showWelcome, setShowWelcome] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -47,22 +48,12 @@ export default function Onboarding() {
       return apiRequest("POST", "/api/profile/onboarding", data);
     },
     onSuccess: async () => {
-      toast({
-        title: "Welcome to Testifaith!",
-        description: "Your profile is all set up. Start exploring!",
-      });
-      
-      // Invalidate and wait for queries to refetch before redirecting
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["/api/profile"] }),
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] }),
         queryClient.invalidateQueries({ queryKey: ["/api/profile/onboarding-status"] }),
       ]);
-      
-      // Small delay to ensure React state updates before redirect
-      setTimeout(() => {
-        setLocation("/home");
-      }, 100);
+      setShowWelcome(true);
     },
     onError: () => {
       toast({
@@ -90,6 +81,47 @@ export default function Onboarding() {
   const onSubmit = (data: CompleteOnboarding) => {
     completeMutation.mutate(data);
   };
+
+  if (showWelcome) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center">
+          <div
+            className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{ background: "color-mix(in srgb, hsl(var(--primary)) 12%, transparent)" }}
+          >
+            <Check className="w-12 h-12 text-primary" />
+          </div>
+          <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            You're all set{user?.firstName ? `, ${user.firstName}` : ""}!
+          </h1>
+          <p className="text-muted-foreground mb-2 leading-relaxed">
+            Welcome to the Testifaith community — a place to share what God has done and be encouraged by others' stories.
+          </p>
+          <p className="font-['Crimson_Pro'] italic text-muted-foreground text-sm mb-8">
+            "They triumphed over him by the blood of the Lamb and by the word of their testimony." — Rev. 12:11
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setLocation("/post")}
+              className="w-full py-3 rounded-xl font-semibold text-white text-sm"
+              style={{ background: "#ef4444" }}
+              data-testid="button-welcome-post"
+            >
+              Share Your First Testimony
+            </button>
+            <button
+              onClick={() => setLocation("/home")}
+              className="w-full py-3 rounded-xl font-semibold text-sm border bg-card text-foreground"
+              data-testid="button-welcome-home"
+            >
+              Explore the Community
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
