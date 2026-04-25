@@ -148,6 +148,7 @@ export const testimonies = pgTable("testimonies", {
   thumbnailUrl: varchar("thumbnail_url", { length: 500 }),
   videoDuration: integer("video_duration"),
   moderationStatus: varchar("moderation_status", { length: 20 }).default("approved"),
+  privacy: varchar("privacy", { length: 20 }).default("public").notNull(), // public, private
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -163,6 +164,7 @@ export const insertTestimonySchema = createInsertSchema(testimonies).omit({
   title: z.string().min(5, "Title must be at least 5 characters").max(200, "Title is too long"),
   category: z.enum(['Healing', 'Marriage', 'Fruitfulness', 'Finance', 'Breakthrough', 'Deliverance', 'Others']),
   story: z.string().min(10, "Story must be at least 10 characters").max(10000, "Story is too long"),
+  privacy: z.enum(['public', 'private']).default('public'),
   videoUrl: z.string().max(500).optional().nullable(),
   thumbnailUrl: z.string().max(500).optional().nullable(),
   videoDuration: z.number().int().positive().optional().nullable(),

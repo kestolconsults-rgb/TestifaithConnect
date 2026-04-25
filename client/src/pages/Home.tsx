@@ -1,255 +1,239 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import TestimonyCard from "@/components/TestimonyCard";
-import EncouragementCard from "@/components/EncouragementCard";
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BookOpen, Lock, Heart, Star, ChevronRight, Plus } from "lucide-react";
+import { Link } from "wouter";
+import { formatDistanceToNow, format } from "date-fns";
 import type { TestimonyWithUser, EncouragementVerse, FaithDeclaration } from "@shared/schema";
-import { CATEGORIES } from "@/lib/constants";
-import CategoryPill from "@/components/CategoryPill";
-import { Sparkles, TrendingUp, Plus, Heart, BookOpen, Star } from "lucide-react";
+import { CATEGORY_COLORS } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
+
+function getInitials(firstName?: string | null, lastName?: string | null) {
+  return ((firstName?.[0] || "") + (lastName?.[0] || "")).toUpperCase() || "?";
+}
 
 export default function Home() {
   const { user } = useAuth();
+
   const { data: featuredTestimony, isLoading: featuredLoading } = useQuery<TestimonyWithUser>({
     queryKey: ["/api/testimonies/featured"],
-  });
-
-  const { data: recentTestimonies, isLoading: recentLoading } = useQuery<TestimonyWithUser[]>({
-    queryKey: ["/api/testimonies/recent"],
-  });
-
-  const hasInterests = user?.faithInterests && user.faithInterests.length > 0;
-  const { data: personalizedTestimonies, isLoading: personalizedLoading } = useQuery<TestimonyWithUser[]>({
-    queryKey: ["/api/testimonies/personalized"],
-    enabled: !!hasInterests,
-    retry: false,
-  });
-
-  const { data: dailyVerse, isLoading: verseLoading } = useQuery<EncouragementVerse>({
-    queryKey: ["/api/encouragement/daily"],
   });
 
   const { data: faithDeclaration, isLoading: declarationLoading } = useQuery<FaithDeclaration | null>({
     queryKey: ["/api/faith-declaration/active"],
   });
 
+  const { data: myTestimonies, isLoading: myLoading } = useQuery<TestimonyWithUser[]>({
+    queryKey: ["/api/testimonies/my"],
+    enabled: !!user,
+  });
+
+  const privateTestimonies = myTestimonies?.filter((t) => t.privacy === "private") ?? [];
+
+  const displayName = featuredTestimony?.isAnonymous
+    ? "Anonymous"
+    : featuredTestimony?.user
+    ? `${featuredTestimony.user.firstName || ""} ${featuredTestimony.user.lastName || ""}`.trim() || "Anonymous"
+    : "Anonymous";
+
+  const featuredInitials = featuredTestimony?.isAnonymous
+    ? "A"
+    : getInitials(featuredTestimony?.user?.firstName, featuredTestimony?.user?.lastName);
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Welcome Section */}
-      <section className="px-4 py-16 bg-gradient-to-b from-primary/5 to-background">
-        <div className="max-w-7xl mx-auto text-center space-y-6">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight" data-testid="text-welcome-title" style={{ fontFamily: "'League Spartan', sans-serif" }}>
-            Welcome back, <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{user?.firstName || 'Friend'}!</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-            Share your story of faith and be encouraged by testimonies from believers worldwide
-          </p>
-          <Link href="/post">
-            <Button size="lg" className="rounded-full font-bold text-lg px-12 py-6 h-auto shadow-lg hover:shadow-xl transition-all" data-testid="button-share-testimony">
-              <Plus className="h-5 w-5 mr-2" />
-              Share Your Testimony
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      <div className="max-w-7xl mx-auto px-4 py-12 space-y-20">
-        {/* Daily Encouragement */}
-        <section>
-          <div className="text-center mb-10">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-3" style={{ fontFamily: "'League Spartan', sans-serif" }}>
-              Daily Encouragement
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Start your day with God's Word
-            </p>
-          </div>
-          {verseLoading ? (
-            <Skeleton className="h-40 w-full rounded-2xl" />
-          ) : dailyVerse ? (
-            <EncouragementCard verse={dailyVerse} />
-          ) : (
-            <Card className="rounded-2xl">
-              <CardContent className="p-8 text-center">
-                <p className="text-muted-foreground">No verse available today</p>
-              </CardContent>
-            </Card>
-          )}
-        </section>
-
-        {/* Faith Declaration of the Day */}
-        <section>
-          <div className="text-center mb-10">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-3" style={{ fontFamily: "'League Spartan', sans-serif" }}>
-              Faith Declaration
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Speak God's truth over your life today
-            </p>
-          </div>
-          {declarationLoading ? (
-            <Skeleton className="h-40 w-full rounded-2xl" />
-          ) : faithDeclaration ? (
-            <Card className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
-              <CardContent className="p-8 md:p-12 text-center space-y-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                  <BookOpen className="h-8 w-8 text-primary" />
-                </div>
-                <blockquote className="text-xl md:text-2xl font-medium leading-relaxed" data-testid="text-faith-declaration">
-                  "{faithDeclaration.declaration}"
-                </blockquote>
-                <p className="text-muted-foreground text-lg" data-testid="text-faith-verse">
-                  "{faithDeclaration.bibleVerse}" — {faithDeclaration.bibleReference}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="rounded-2xl border-2 border-dashed border-muted-foreground/30">
-              <CardContent className="p-8 md:p-12 text-center space-y-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-                  <BookOpen className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <p className="text-muted-foreground text-lg">
-                  No faith declaration has been set for today yet.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </section>
-
-        {/* Testimony of the Day */}
-        <section>
-          <div className="text-center mb-10">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-3" style={{ fontFamily: "'League Spartan', sans-serif" }}>
-              Testimony of the Day
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              The most impactful story from our community
-            </p>
-          </div>
-          {featuredLoading ? (
-            <Skeleton className="h-80 w-full rounded-2xl" />
-          ) : featuredTestimony ? (
-            <TestimonyCard testimony={featuredTestimony} featured />
-          ) : (
-            <Card className="rounded-2xl border-2 border-dashed border-muted-foreground/30">
-              <CardContent className="p-8 md:p-12 text-center space-y-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-                  <Star className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <p className="text-muted-foreground text-lg">
-                  No featured testimony has been selected for today yet.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </section>
-
-        {/* Browse Categories */}
-        <section>
-          <div className="text-center mb-10">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-3" style={{ fontFamily: "'League Spartan', sans-serif" }}>
-              Browse by Category
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Discover testimonies across different areas of faith
-            </p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-4">
-            {CATEGORIES.map((category) => (
-              <CategoryPill key={category} category={category} />
-            ))}
-          </div>
-        </section>
-
-        {/* For You - Personalized Section */}
-        {hasInterests && (
-          <section>
-            <div className="text-center mb-10">
-              <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-3" style={{ fontFamily: "'League Spartan', sans-serif" }}>
-                For You
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Testimonies based on your faith interests
+    <div className="min-h-screen bg-background pb-28">
+      {/* Daily Declaration */}
+      <div className="px-5 pt-4 mb-5">
+        {declarationLoading ? (
+          <Skeleton className="h-36 rounded-2xl" />
+        ) : faithDeclaration ? (
+          <div
+            className="rounded-2xl p-5 relative overflow-hidden border"
+            style={{
+              background: "color-mix(in srgb, hsl(var(--primary)) 8%, hsl(var(--background)))",
+              borderColor: "color-mix(in srgb, hsl(var(--primary)) 20%, transparent)",
+            }}
+            data-testid="card-daily-declaration"
+          >
+            <div className="absolute top-0 right-0 p-5 opacity-[0.07]">
+              <BookOpen size={64} className="text-primary" />
+            </div>
+            <div className="relative z-10">
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-sm inline-block mb-3"
+                style={{
+                  background: "color-mix(in srgb, hsl(var(--primary)) 15%, transparent)",
+                  color: "hsl(var(--primary))",
+                }}
+              >
+                Daily Declaration
+              </span>
+              <p
+                className="font-['League_Spartan'] text-base leading-snug mb-2 font-semibold text-foreground"
+                data-testid="text-faith-declaration"
+              >
+                "{faithDeclaration.declaration}"
+              </p>
+              <p className="text-xs font-medium text-primary" data-testid="text-faith-verse">
+                {faithDeclaration.bibleReference && `— ${faithDeclaration.bibleReference}`}
               </p>
             </div>
-            
-            {personalizedLoading ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-80 w-full rounded-2xl" />
-                ))}
-              </div>
-            ) : personalizedTestimonies && personalizedTestimonies.length > 0 ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {personalizedTestimonies.map((testimony) => (
-                  <TestimonyCard key={testimony.id} testimony={testimony} />
-                ))}
-              </div>
-            ) : (
-              <Card className="rounded-2xl border-2 border-dashed border-muted-foreground/30">
-                <CardContent className="p-8 md:p-12 text-center space-y-4">
-                  <p className="text-muted-foreground text-lg">
-                    No testimonies found in your areas of interest yet. Check back soon!
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </section>
+          </div>
+        ) : (
+          <div className="rounded-2xl p-5 border bg-card">
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-8 h-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No declaration set for today</p>
+            </div>
+          </div>
         )}
+      </div>
 
-        {/* Recent Testimonies */}
-        <section>
-          <div className="text-center mb-10">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-3" style={{ fontFamily: "'League Spartan', sans-serif" }}>
-              Recent Testimonies
+      {/* Testimony of the Day */}
+      <section className="px-5 mb-6">
+        <h2 className="font-['League_Spartan'] text-base font-semibold text-foreground mb-3" data-testid="section-testimony-of-day">
+          Testimony of the Day
+        </h2>
+        {featuredLoading ? (
+          <Skeleton className="h-52 rounded-2xl" />
+        ) : featuredTestimony ? (
+          <Link href={`/testimony/${featuredTestimony.id}`}>
+            <div
+              className="rounded-2xl p-5 border relative overflow-hidden cursor-pointer hover-elevate"
+              style={{
+                background: "hsl(var(--card))",
+                borderColor: "hsl(var(--border))",
+              }}
+              data-testid="card-testimony-of-day"
+            >
+              {/* Top accent line */}
+              <div
+                className="absolute top-0 left-0 w-full h-0.5"
+                style={{ background: "linear-gradient(90deg, rgba(239,68,68,0.1), #ef4444, rgba(239,68,68,0.1))" }}
+              />
+              <div className="flex justify-between items-start mb-3">
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] font-bold uppercase ${CATEGORY_COLORS[featuredTestimony.category as keyof typeof CATEGORY_COLORS] || ""}`}
+                >
+                  {featuredTestimony.category}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(featuredTestimony.createdAt ?? Date.now()), { addSuffix: true })}
+                </span>
+              </div>
+              {featuredTestimony.title && (
+                <p className="font-['League_Spartan'] text-base font-bold text-foreground mb-2">{featuredTestimony.title}</p>
+              )}
+              <p className="text-sm leading-relaxed italic text-card-foreground mb-4 line-clamp-3 font-serif">
+                "{featuredTestimony.story}"
+              </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={featuredTestimony.user?.profileImageUrl || undefined} />
+                    <AvatarFallback className="text-[10px] bg-muted">{featuredInitials}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-card-foreground">{displayName}</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10">
+                  <Heart className="w-3.5 h-3.5 fill-primary text-primary" />
+                  <span className="text-xs font-semibold text-primary">{featuredTestimony.amenCount || 0} Amen</span>
+                </div>
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <Card className="rounded-2xl border-dashed">
+            <CardContent className="p-8 text-center">
+              <Star className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No featured testimony selected yet</p>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
+      {/* God's Faithfulness — Private Journal */}
+      <section className="px-5 mb-6">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+            <h2 className="font-['League_Spartan'] text-base font-semibold text-foreground">
+              God's Faithfulness in the Past
             </h2>
-            <p className="text-lg text-muted-foreground mb-6">
-              Fresh stories from believers around the world
+          </div>
+          <Link href="/my-testimonies">
+            <button className="text-xs font-medium text-blue-500 dark:text-blue-400" data-testid="link-see-all-private">
+              See all
+            </button>
+          </Link>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">Your private faith journal — only visible to you</p>
+
+        {myLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-28 rounded-2xl" />
+            <Skeleton className="h-28 rounded-2xl" />
+          </div>
+        ) : privateTestimonies.length > 0 ? (
+          <div className="space-y-3">
+            {privateTestimonies.slice(0, 3).map((t) => (
+              <Link key={t.id} href={`/testimony/${t.id}`}>
+                <div
+                  className="rounded-2xl p-4 border cursor-pointer hover-elevate"
+                  style={{
+                    background: "color-mix(in srgb, #3b82f6 5%, hsl(var(--background)))",
+                    borderColor: "color-mix(in srgb, #3b82f6 20%, transparent)",
+                  }}
+                  data-testid={`private-entry-${t.id}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] font-bold uppercase border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30"
+                    >
+                      {t.category}
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground">
+                      {format(new Date(t.createdAt ?? Date.now()), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                  {t.title && (
+                    <p className="font-['League_Spartan'] text-sm font-bold text-foreground mb-1">{t.title}</p>
+                  )}
+                  <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">{t.story}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div
+            className="rounded-2xl p-6 border text-center"
+            style={{
+              background: "color-mix(in srgb, #3b82f6 4%, hsl(var(--background)))",
+              borderColor: "color-mix(in srgb, #3b82f6 15%, transparent)",
+            }}
+            data-testid="empty-private-journal"
+          >
+            <Lock className="w-8 h-8 text-blue-400 mx-auto mb-2 opacity-60" />
+            <p className="text-sm font-medium text-foreground mb-1">Your faith journal is empty</p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Tap the + button below and choose "Journal Your Faith" to start recording God's faithfulness privately.
             </p>
-            <Link href="/testimonies">
-              <Button variant="outline" className="rounded-full font-semibold px-8" data-testid="button-view-all">
-                View All Testimonies
-              </Button>
+            <Link href="/post">
+              <button
+                className="inline-flex items-center gap-2 text-xs font-semibold text-blue-500 dark:text-blue-400 border border-blue-200 dark:border-blue-800 px-4 py-2 rounded-full"
+                data-testid="button-start-journal"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Start journaling
+              </button>
             </Link>
           </div>
-          
-          {recentLoading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-80 w-full rounded-2xl" />
-              ))}
-            </div>
-          ) : recentTestimonies && recentTestimonies.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recentTestimonies.map((testimony) => (
-                <TestimonyCard key={testimony.id} testimony={testimony} />
-              ))}
-            </div>
-          ) : (
-            <Card className="rounded-2xl border-2">
-              <CardContent className="p-16 text-center space-y-6">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-xl bg-primary/10 mb-2">
-                  <Plus className="h-10 w-10 text-primary" />
-                </div>
-                <h3 className="text-2xl font-bold">No Testimonies Yet</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto">
-                  Every great story starts somewhere. Be the first to share how God has worked in your life and inspire others on their faith journey.
-                </p>
-                <Link href="/post">
-                  <Button size="lg" className="rounded-full font-bold text-lg px-10 py-6 h-auto shadow-lg mt-4" data-testid="button-be-first">
-                    <Plus className="h-5 w-5 mr-2" />
-                    Share the First Testimony
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-        </section>
-      </div>
+        )}
+      </section>
     </div>
   );
 }

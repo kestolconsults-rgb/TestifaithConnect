@@ -12,12 +12,12 @@ Testifaith is a faith-based community platform designed for Christians and belie
 ## System Architecture
 
 ### UI/UX Decisions
-The design emphasizes a clean, modern, app-like aesthetic inspired by YouVersion Bible, focusing on large typography, white space, and centered content. It features a light/dark mode toggle with user preference persistence (localStorage) and system preference detection. Dark mode uses black backgrounds with white/light text, while light mode uses white backgrounds with dark text. Red accents are preserved for interactive elements in both themes. The UI includes simplified testimony cards, a standardized border-radius system, enhanced video hero readability, and personality-driven empty states. The navigation header is transparent with a backdrop blur and includes a sun/moon theme toggle. All major headings use the League Spartan font.
+The app is a **mobile-first PWA** with a bottom tab bar (Home, Community, FAB, Bible, Profile) and no traditional header/footer for authenticated users. The design defaults to **dark mode** with a theme toggle. It uses League Spartan for headings, red (#EF4444) accents, and a YouVersion Bible aesthetic. Features: transparent MobileHeader with logo + bell + theme toggle; expandable FAB action sheet (Journal Faith, Get Encouraged, Ask Question); private faith journal section on Home (filters user's `privacy=private` testimonies).
 
 ### Technical Implementations
 - **Frontend**: React 18 with TypeScript, Vite for bundling, Wouter for routing, and TanStack Query for server state management. UI components are built with shadcn/ui (Radix UI primitives) and styled using Tailwind CSS and CSS Variables for theming. Form handling uses React Hook Form with Zod for validation.
 - **Backend**: Express.js with TypeScript on Node.js. It features a RESTful API, authentication via Google OAuth 2.0 using passport-google-oauth20 and Express Session, and a data access layer using a repository pattern.
-- **Database**: Drizzle ORM for type-safe queries with Neon Serverless PostgreSQL. The schema includes `users`, `testimonies`, `testimony_interactions`, `encouragement_verses`, `faith_declarations`, `admins`, `comments`, and `sessions` tables.
+- **Database**: Drizzle ORM for type-safe queries with Neon Serverless PostgreSQL. The schema includes `users`, `testimonies`, `testimony_interactions`, `encouragement_verses`, `faith_declarations`, `admins`, `comments`, and `sessions` tables. The `testimonies` table has a `privacy` field (`public` | `private`) — private entries are only visible to the author (personal faith journal) and are excluded from all public feeds.
 
 ### Feature Specifications
 - **Core Features**: User authentication (Google OAuth), browsing/posting testimonies, 7 dedicated category pages, testimony detail view, Amen/Encourage interactions, personal testimony dashboard, daily "Testimony of the Day," daily faith declarations, and daily encouragement verses.

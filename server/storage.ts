@@ -304,9 +304,12 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(testimonies)
       .leftJoin(users, eq(testimonies.userId, users.id))
-      .where(or(
-        sql`${testimonies.videoUrl} IS NULL`,
-        eq(testimonies.moderationStatus, 'approved')
+      .where(and(
+        eq(testimonies.privacy, 'public'),
+        or(
+          sql`${testimonies.videoUrl} IS NULL`,
+          eq(testimonies.moderationStatus, 'approved')
+        )
       ))
       .orderBy(desc(testimonies.createdAt));
 
@@ -335,9 +338,12 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(testimonies)
       .leftJoin(users, eq(testimonies.userId, users.id))
-      .where(or(
-        sql`${testimonies.videoUrl} IS NULL`,
-        eq(testimonies.moderationStatus, 'approved')
+      .where(and(
+        eq(testimonies.privacy, 'public'),
+        or(
+          sql`${testimonies.videoUrl} IS NULL`,
+          eq(testimonies.moderationStatus, 'approved')
+        )
       ))
       .orderBy(desc(testimonies.createdAt))
       .limit(limit);
@@ -369,6 +375,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(testimonies.userId, users.id))
       .where(and(
         eq(testimonies.category, category),
+        eq(testimonies.privacy, 'public'),
         or(
           sql`${testimonies.videoUrl} IS NULL`,
           eq(testimonies.moderationStatus, 'approved')
@@ -419,7 +426,7 @@ export class DatabaseStorage implements IStorage {
     endDate?: Date,
     userId?: string
   ): Promise<TestimonyWithUser[]> {
-    const conditions: any[] = [];
+    const conditions: any[] = [eq(testimonies.privacy, 'public')];
 
     // Keyword search across title and story
     if (query) {

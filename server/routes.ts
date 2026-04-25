@@ -714,6 +714,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title,
         story,
         category,
+        privacy: 'public',
         videoUrl: videoUrl || null,
         thumbnailUrl: thumbnailUrl || null,
       });

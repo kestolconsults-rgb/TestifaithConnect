@@ -80,6 +80,7 @@ export default function PostTestimony() {
       category: "Others",
       story: "",
       isAnonymous: false,
+      privacy: "public",
       videoUrl: null,
       thumbnailUrl: null,
       videoDuration: null,
@@ -548,6 +549,28 @@ export default function PostTestimony() {
                         )}
                       />
                     )}
+
+                    <FormField
+                      control={form.control}
+                      name="privacy"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Keep Private</FormLabel>
+                            <FormDescription>
+                              Only you can see this — saved to your personal faith journal
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value === "private"}
+                              onCheckedChange={(checked) => field.onChange(checked ? "private" : "public")}
+                              data-testid="switch-privacy"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={form.control}
