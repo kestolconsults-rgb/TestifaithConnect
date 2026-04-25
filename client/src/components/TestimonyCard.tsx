@@ -5,7 +5,8 @@ import { Heart, Sparkles, Share2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "wouter";
 import type { TestimonyWithUser } from "@shared/schema";
-import { CATEGORY_COLORS } from "@/lib/constants";
+import { CATEGORY_COLORS, CATEGORY_ACCENT_COLORS } from "@/lib/constants";
+import type { Category } from "@/lib/constants";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,9 +85,14 @@ export default function TestimonyCard({
     }
   };
 
+  const accentColor = CATEGORY_ACCENT_COLORS[testimony.category as Category] ?? '#64748b';
+
   return (
     <Card 
-      className={`hover-elevate transition-all ${featured ? 'border-primary/50 shadow-lg' : ''}`}
+      className={`hover-elevate transition-all ${featured ? 'shadow-lg' : ''}`}
+      style={{
+        boxShadow: `inset 4px 0 0 ${accentColor}${featured ? ', 0 4px 24px rgba(0,0,0,0.15)' : ''}`,
+      }}
       data-testid={`card-testimony-${testimony.id}`}
     >
       {featured && (

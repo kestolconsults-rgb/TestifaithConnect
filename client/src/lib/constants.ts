@@ -1,3 +1,13 @@
+import {
+  HeartPulse,
+  Heart,
+  Sprout,
+  TrendingUp,
+  Zap,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
+
 export const CATEGORIES = [
   'Healing',
   'Marriage',
@@ -18,6 +28,66 @@ export const CATEGORY_COLORS: Record<Category, string> = {
   Breakthrough: 'bg-sky-100 dark:bg-sky-900/20 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-700',
   Deliverance: 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-700',
   Others: 'bg-slate-100 dark:bg-slate-800/30 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-600',
+};
+
+export const CATEGORY_ACCENT_COLORS: Record<Category, string> = {
+  Healing:      '#10b981',
+  Marriage:     '#f43f5e',
+  Fruitfulness: '#8b5cf6',
+  Finance:      '#f59e0b',
+  Breakthrough: '#0ea5e9',
+  Deliverance:  '#6366f1',
+  Others:       '#64748b',
+};
+
+export const CATEGORY_META: Record<Category, {
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+  bgLight: string;
+  bgDark: string;
+}> = {
+  Healing: {
+    icon: HeartPulse,
+    description: "Stories of miraculous healing and divine restoration",
+    bgLight: "bg-emerald-50",
+    bgDark: "dark:bg-emerald-900/20",
+  },
+  Marriage: {
+    icon: Heart,
+    description: "Testimonies of restored relationships and covenant faithfulness",
+    bgLight: "bg-rose-50",
+    bgDark: "dark:bg-rose-900/20",
+  },
+  Fruitfulness: {
+    icon: Sprout,
+    description: "Victories of growth, abundance, and multiplication",
+    bgLight: "bg-violet-50",
+    bgDark: "dark:bg-violet-900/20",
+  },
+  Finance: {
+    icon: TrendingUp,
+    description: "God's provision, debt freedom, and financial breakthroughs",
+    bgLight: "bg-amber-50",
+    bgDark: "dark:bg-amber-900/20",
+  },
+  Breakthrough: {
+    icon: Zap,
+    description: "The impossible made possible through faith and prayer",
+    bgLight: "bg-sky-50",
+    bgDark: "dark:bg-sky-900/20",
+  },
+  Deliverance: {
+    icon: ShieldCheck,
+    description: "Freedom from bondage and the power of God's liberation",
+    bgLight: "bg-indigo-50",
+    bgDark: "dark:bg-indigo-900/20",
+  },
+  Others: {
+    icon: Sparkles,
+    description: "Other remarkable works of God in believers' lives",
+    bgLight: "bg-slate-50",
+    bgDark: "dark:bg-slate-800/20",
+  },
 };
 
 export const DEFAULT_VERSES = [

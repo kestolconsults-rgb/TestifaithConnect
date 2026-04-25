@@ -8,12 +8,11 @@ import type { TestimonyWithUser } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Testimonies() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
   const { data: testimonies, isLoading } = useQuery<TestimonyWithUser[]>({
@@ -74,24 +73,19 @@ export default function Testimonies() {
     },
   });
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      toast({
-        title: "Sign in to interact",
-        description: "Sign in to give Amen or Encourage testimonies",
-      });
-    }
-  }, [authLoading, isAuthenticated, toast]);
-
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1">
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-4xl mx-auto mb-12 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4" data-testid="text-page-title">
+        <div className="container mx-auto px-4 pt-6 pb-12">
+          <div className="max-w-4xl mx-auto mb-6">
+            <h1
+              className="text-2xl font-bold text-foreground mb-1"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              data-testid="text-page-title"
+            >
               All Testimonies
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Read and be encouraged by testimonies of God's faithfulness
             </p>
           </div>

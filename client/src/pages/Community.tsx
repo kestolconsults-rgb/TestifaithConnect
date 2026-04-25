@@ -312,8 +312,8 @@ export default function Community() {
         })}
       </div>
 
-      {/* Video Testimonies */}
-      {!debouncedQuery && activeCategory === "All" && (
+      {/* Video Testimonies — only shown when there are videos */}
+      {!debouncedQuery && activeCategory === "All" && (isLoading || videoTestimonies.length > 0) && (
         <section className="px-5 mb-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Video Testimonies</h2>
@@ -323,18 +323,10 @@ export default function Community() {
           </div>
           {isLoading ? (
             <Skeleton className="h-64 rounded-2xl" />
-          ) : videoTestimonies.length > 0 ? (
+          ) : (
             <div className="grid grid-cols-1 gap-3">
               {videoTestimonies.slice(0, 2).map((t) => <VideoCard key={t.id} testimony={t} />)}
             </div>
-          ) : (
-            <EmptyState
-              type="video"
-              title="No video testimonies yet"
-              description="Be the first to share your testimony on video"
-              actionLabel="Share yours"
-              actionHref="/post"
-            />
           )}
         </section>
       )}

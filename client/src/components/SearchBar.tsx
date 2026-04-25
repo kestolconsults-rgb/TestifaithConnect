@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,23 +31,33 @@ export default function SearchBar() {
     setEndDate(end ? new Date(end) : undefined);
   }, [location]);
 
-  const handleSearch = () => {
-    // Validate date range
-    if (startDate && endDate && startDate > endDate) {
-      return; // Silently ignore invalid date range
-    }
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
+  const buildParams = (q: string, cats: string[], start?: Date, end?: Date) => {
     const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (selectedCategories.length > 0) params.set("categories", selectedCategories.join(","));
-    if (startDate) params.set("startDate", startDate.toISOString());
-    if (endDate) params.set("endDate", endDate.toISOString());
-    
-    setLocation(`/search?${params.toString()}`);
+    if (q) params.set("q", q);
+    if (cats.length > 0) params.set("categories", cats.join(","));
+    if (start) params.set("startDate", start.toISOString());
+    if (end) params.set("endDate", end.toISOString());
+    return params;
+  };
+
+  const handleSearch = () => {
+    if (startDate && endDate && startDate > endDate) return;
+    setLocation(`/search?${buildParams(query, selectedCategories, startDate, endDate).toString()}`);
+  };
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setLocation(`/search?${buildParams(value, selectedCategories, startDate, endDate).toString()}`);
+    }, 400);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
+      clearTimeout(searchTimerRef.current);
       handleSearch();
     }
   };
@@ -78,7 +88,7 @@ export default function SearchBar() {
             type="text"
             placeholder="Search testimonies..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleQueryChange(e.target.value)}
             onKeyDown={handleKeyDown}
             className="pl-9"
           />

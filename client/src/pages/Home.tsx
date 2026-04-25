@@ -93,9 +93,12 @@ export default function Home() {
 
       {/* Testimony of the Day */}
       <section className="px-5 mb-6">
-        <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground mb-3" data-testid="section-testimony-of-day">
-          Testimony of the Day
-        </h2>
+        <div className="flex items-center gap-2 mb-3">
+          <Star className="w-4 h-4 text-amber-500" />
+          <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground" data-testid="section-testimony-of-day">
+            Testimony of the Day
+          </h2>
+        </div>
         {featuredLoading ? (
           <Skeleton className="h-52 rounded-2xl" />
         ) : featuredTestimony ? (
@@ -103,23 +106,34 @@ export default function Home() {
             <div
               className="rounded-2xl p-5 border relative overflow-hidden cursor-pointer hover-elevate"
               style={{
-                background: "hsl(var(--card))",
-                borderColor: "hsl(var(--border))",
+                background: "color-mix(in srgb, hsl(var(--card)) 92%, #f59e0b 8%)",
+                borderColor: "color-mix(in srgb, hsl(var(--border)) 60%, #f59e0b 40%)",
               }}
               data-testid="card-testimony-of-day"
             >
-              {/* Top accent line */}
+              {/* Amber top bar */}
               <div
                 className="absolute top-0 left-0 w-full h-0.5"
-                style={{ background: "linear-gradient(90deg, rgba(239,68,68,0.1), #ef4444, rgba(239,68,68,0.1))" }}
+                style={{ background: "linear-gradient(90deg, transparent, #f59e0b 30%, #ef4444 70%, transparent)" }}
               />
               <div className="flex justify-between items-start mb-3">
-                <Badge
-                  variant="outline"
-                  className={`text-[10px] font-bold uppercase ${CATEGORY_COLORS[featuredTestimony.category as keyof typeof CATEGORY_COLORS] || ""}`}
-                >
-                  {featuredTestimony.category}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-bold uppercase ${CATEGORY_COLORS[featuredTestimony.category as keyof typeof CATEGORY_COLORS] || ""}`}
+                  >
+                    {featuredTestimony.category}
+                  </Badge>
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm"
+                    style={{
+                      background: "color-mix(in srgb, #f59e0b 15%, transparent)",
+                      color: "#f59e0b",
+                    }}
+                  >
+                    Featured
+                  </span>
+                </div>
                 <span className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(featuredTestimony.createdAt ?? Date.now()), { addSuffix: true })}
                 </span>
@@ -127,7 +141,7 @@ export default function Home() {
               {featuredTestimony.title && (
                 <p className="font-['Space_Grotesk'] text-base font-bold text-foreground mb-2">{featuredTestimony.title}</p>
               )}
-              <p className="text-sm leading-relaxed italic text-card-foreground mb-4 line-clamp-3 font-serif">
+              <p className="text-sm leading-relaxed italic text-card-foreground mb-4 line-clamp-3 font-['Crimson_Pro']">
                 "{featuredTestimony.story}"
               </p>
               <div className="flex items-center justify-between">
