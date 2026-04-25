@@ -2,7 +2,8 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = 'Testifaith <noreply@testifaith.com>';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'Testifaith <noreply@testifaith.com>';
+const REPLY_TO = process.env.REPLY_TO_EMAIL || 'testifaith2025@gmail.com';
 
 function getWelcomeEmailHtml(firstName: string): string {
   return `
