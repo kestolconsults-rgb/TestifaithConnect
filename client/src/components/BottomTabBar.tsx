@@ -38,8 +38,8 @@ const AUTH_FAB_ACTIONS = [
 const GUEST_FAB_ACTIONS = [
   {
     icon: Feather,
-    label: "Share Your Testimony",
-    sublabel: "Sign in to share what God has done",
+    label: "Start Your Faith Journal",
+    sublabel: "Sign in to record what God has done",
     color: "#ef4444",
     href: "/signin",
   },

@@ -357,9 +357,9 @@ export default function Community() {
             description={
               debouncedQuery
                 ? "Try a different keyword or browse all testimonies"
-                : "Be the first in the community to share what God has done"
+                : "Be the first to record what God has done in this community"
             }
-            actionLabel={debouncedQuery ? undefined : "Share your testimony"}
+            actionLabel={debouncedQuery ? undefined : "Write a new entry"}
             actionHref={debouncedQuery ? undefined : "/post"}
           />
         )}

@@ -146,7 +146,7 @@ export default function Header() {
                         <Link href="/post">
                           <DropdownMenuItem className="rounded-lg cursor-pointer" data-testid="menu-post-testimony">
                             <Plus className="h-4 w-4 mr-2" />
-                            <span className="font-medium">Share Testimony</span>
+                            <span className="font-medium">New Journal Entry</span>
                           </DropdownMenuItem>
                         </Link>
                         <DropdownMenuSeparator />
@@ -242,7 +242,7 @@ export default function Header() {
                     <Link href="/post" onClick={() => setMobileMenuOpen(false)}>
                       <Button className="w-full rounded-xl font-semibold shadow-md" data-testid="mobile-button-post-testimony">
                         <Plus className="h-4 w-4 mr-2" />
-                        Share Testimony
+                        New Journal Entry
                       </Button>
                     </Link>
                   </div>

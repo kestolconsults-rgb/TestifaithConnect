@@ -189,7 +189,7 @@ export default function Profile() {
             {isOwnProfile && (
               <Link href="/post">
                 <Button data-testid="button-new-testimony">
-                  Share New Testimony
+                  New Journal Entry
                 </Button>
               </Link>
             )}
@@ -209,13 +209,13 @@ export default function Profile() {
                 </div>
                 <p className="text-lg text-muted-foreground mb-4">
                   {isOwnProfile 
-                    ? "You haven't shared any testimonies yet" 
-                    : "No public testimonies to display"}
+                    ? "Your journal is empty — start by writing down what God has done" 
+                    : "No public entries to display"}
                 </p>
                 {isOwnProfile && (
                   <Link href="/post">
                     <Button data-testid="button-share-first-testimony">
-                      Share Your First Testimony
+                      Write Your First Entry
                     </Button>
                   </Link>
                 )}

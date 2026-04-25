@@ -183,7 +183,7 @@ export default function CategoryPage() {
                       <a>
                         <Button size="lg" className="rounded-full font-bold text-lg px-10 py-6 h-auto shadow-lg mt-4" data-testid="button-share-category">
                           <Plus className="h-5 w-5 mr-2" />
-                          Share {categoryName} Testimony
+                          Record a {categoryName} Entry
                         </Button>
                       </a>
                     </Link>
@@ -191,7 +191,7 @@ export default function CategoryPage() {
                     <a href="/signin">
                       <Button size="lg" className="rounded-full font-bold text-lg px-10 py-6 h-auto shadow-lg mt-4" data-testid="button-login-share-category">
                         <Heart className="h-5 w-5 mr-2" />
-                        Sign In to Share
+                        Sign In to Record This
                       </Button>
                     </a>
                   )}

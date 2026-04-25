@@ -124,15 +124,15 @@ export default function MyTestimonies() {
                   <div className="inline-flex items-center justify-center w-20 h-20 rounded-xl bg-primary/10 mb-2">
                     <PlusCircle className="h-10 w-10 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold">No Testimonies Yet</h3>
+                  <h3 className="text-2xl font-bold">Your journal is empty</h3>
                   <p className="text-muted-foreground text-lg leading-relaxed">
-                    Share your first testimony and encourage others with your story of faith. Your journey could be exactly what someone needs to hear today.
+                    Start recording what God has done. Every stone of remembrance begins with writing it down — even if only you ever read it.
                   </p>
                   <Link href="/post">
                     <a>
                       <Button size="lg" className="rounded-full font-bold text-lg px-10 py-6 h-auto shadow-lg mt-4" data-testid="button-first-testimony">
                         <PlusCircle className="h-5 w-5 mr-2" />
-                        Share Your First Testimony
+                        Write Your First Entry
                       </Button>
                     </a>
                   </Link>

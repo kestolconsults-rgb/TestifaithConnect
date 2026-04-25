@@ -115,16 +115,16 @@ export default function Testimonies() {
                   <div className="inline-flex items-center justify-center w-20 h-20 rounded-xl bg-primary/10 mb-4">
                     <Heart className="h-10 w-10 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold">No Testimonies Yet</h3>
+                  <h3 className="text-2xl font-bold">Nothing written yet</h3>
                   <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto">
-                    Every great story starts somewhere. Be the first to share how God has worked in your life and inspire others on their faith journey.
+                    Every stone of remembrance starts with someone writing it down. Be the first to record what God has done.
                   </p>
                   {isAuthenticated ? (
                     <Link href="/post">
                       <a>
                         <Button size="lg" className="rounded-full font-bold text-lg px-10 py-6 h-auto shadow-lg mt-4" data-testid="button-share-first">
                           <Heart className="h-5 w-5 mr-2" />
-                          Share the First Testimony
+                          Write the First Entry
                         </Button>
                       </a>
                     </Link>
@@ -132,7 +132,7 @@ export default function Testimonies() {
                     <a href="/signin">
                       <Button size="lg" className="rounded-full font-bold text-lg px-10 py-6 h-auto shadow-lg mt-4" data-testid="button-login-share">
                         <Heart className="h-5 w-5 mr-2" />
-                        Sign In to Share
+                        Sign In to Begin Your Journal
                       </Button>
                     </a>
                   )}
