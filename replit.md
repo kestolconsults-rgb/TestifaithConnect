@@ -8,6 +8,8 @@ Testifaith is a faith-based community platform designed for Christians and belie
 - Design aesthetic: Peaceful, uplifting, reverent with light/dark mode support and red (#EF4444) accents
 - No technical jargon - translate technical concepts into everyday terms
 - League Spartan font for all major headings site-wide
+- Plus Jakarta Sans as the body/UI font (modern, clean)
+- Crimson Pro for testimony quotes and serif contexts
 
 ## System Architecture
 
