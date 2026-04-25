@@ -7,6 +7,37 @@ import { insertTestimonySchema, insertEncouragementVerseSchema, insertCommentSch
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { ObjectStorageService } from "./replit_integrations/object_storage";
+import webpush from "web-push";
+
+// Configure web-push
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT || "mailto:admin@testifaith.app",
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
+
+async function sendPushNotification(userId: string, payload: { title: string; body: string; url?: string; tag?: string }) {
+  try {
+    const subs = await storage.getPushSubscriptionsForUser(userId);
+    const payloadStr = JSON.stringify(payload);
+    await Promise.allSettled(
+      subs.map((sub) =>
+        webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          payloadStr
+        ).catch(async (err: any) => {
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            await storage.deletePushSubscription(sub.endpoint);
+          }
+        })
+      )
+    );
+  } catch {
+    // Non-critical — don't let push errors affect the main request
+  }
+}
 
 interface AuthUser {
   id: string;
@@ -235,6 +266,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId,
           interactionType: 'amen',
         });
+        // Notify testimony author (fire-and-forget)
+        const testimony = await storage.getTestimony(id);
+        if (testimony && testimony.userId !== userId) {
+          const senderName = req.user!.firstName || "Someone";
+          sendPushNotification(testimony.userId, {
+            title: "Someone said Amen!",
+            body: `${senderName} said Amen to your testimony "${testimony.title || "your testimony"}"`,
+            url: `/testimony/${id}`,
+            tag: `amen-${id}`,
+          });
+        }
         res.json({ action: 'added' });
       }
     } catch (error) {
@@ -258,11 +300,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId,
           interactionType: 'encourage',
         });
+        // Notify testimony author (fire-and-forget)
+        const testimony = await storage.getTestimony(id);
+        if (testimony && testimony.userId !== userId) {
+          const senderName = req.user!.firstName || "Someone";
+          sendPushNotification(testimony.userId, {
+            title: "You've been encouraged!",
+            body: `${senderName} sent you encouragement for "${testimony.title || "your testimony"}"`,
+            url: `/testimony/${id}`,
+            tag: `encourage-${id}`,
+          });
+        }
         res.json({ action: 'added' });
       }
     } catch (error) {
       console.error("Error toggling encourage:", error);
       res.status(500).json({ message: "Failed to toggle encourage" });
+    }
+  });
+
+  // Push notification subscription routes
+  app.post('/api/push/subscribe', isAuthenticated, async (req: Request, res) => {
+    try {
+      const { endpoint, p256dh, auth } = req.body;
+      if (!endpoint || !p256dh || !auth) {
+        return res.status(400).json({ message: "Missing subscription fields" });
+      }
+      await storage.savePushSubscription({
+        userId: req.user!.id,
+        endpoint,
+        p256dh,
+        auth,
+      });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Push subscribe error:", error);
+      res.status(500).json({ message: "Failed to save subscription" });
+    }
+  });
+
+  app.post('/api/push/unsubscribe', isAuthenticated, async (req: Request, res) => {
+    try {
+      const { endpoint } = req.body;
+      if (!endpoint) return res.status(400).json({ message: "Missing endpoint" });
+      await storage.deletePushSubscription(endpoint);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Push unsubscribe error:", error);
+      res.status(500).json({ message: "Failed to remove subscription" });
     }
   });
 

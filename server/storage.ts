@@ -11,6 +11,9 @@ import {
   expectationMilestones,
   expectationScriptures,
   adminAuditLogs,
+  pushSubscriptions,
+  type PushSubscription,
+  type InsertPushSubscription,
   type User,
   type UpsertUser,
   type Testimony,
@@ -135,6 +138,11 @@ export interface IStorage {
   getScriptures(expectationId: string): Promise<ExpectationScripture[]>;
   getScriptureWithOwner(id: string): Promise<{ scripture: ExpectationScripture; ownerId: string } | undefined>;
   deleteScripture(id: string): Promise<boolean>;
+
+  // Push subscriptions
+  savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
+  deletePushSubscription(endpoint: string): Promise<void>;
+  getPushSubscriptionsForUser(userId: string): Promise<PushSubscription[]>;
 
   // =====================================================
   // ADMIN DASHBOARD OPERATIONS
@@ -1257,6 +1265,27 @@ export class DatabaseStorage implements IStorage {
       .where(eq(expectationScriptures.id, id))
       .returning();
     return result.length > 0;
+  }
+
+  // =====================================================
+  // PUSH SUBSCRIPTIONS
+  // =====================================================
+
+  async savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscription> {
+    const [result] = await db
+      .insert(pushSubscriptions)
+      .values(sub)
+      .onConflictDoUpdate({ target: pushSubscriptions.endpoint, set: { userId: sub.userId, p256dh: sub.p256dh, auth: sub.auth } })
+      .returning();
+    return result;
+  }
+
+  async deletePushSubscription(endpoint: string): Promise<void> {
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+  }
+
+  async getPushSubscriptionsForUser(userId: string): Promise<PushSubscription[]> {
+    return db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
   }
 
   // =====================================================

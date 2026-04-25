@@ -44,3 +44,11 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.0", "javascript_object_storage:2.0.0"]
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BC7n6Q4fcisLiM3ZQeWOF_El5zsEbKgexy9yEXPGpAQnhQOSqV9qRSIghYohCjuUYFgMu8u3LS_ue7bixNO4_DE"
+VAPID_PRIVATE_KEY = "r3Z0YjkGnmSlvbxyqLk1g-3Zqpb9ePO6wYNxRwzRspI"
+VAPID_SUBJECT = "mailto:admin@testifaith.app"
+VITE_VAPID_PUBLIC_KEY = "BC7n6Q4fcisLiM3ZQeWOF_El5zsEbKgexy9yEXPGpAQnhQOSqV9qRSIghYohCjuUYFgMu8u3LS_ue7bixNO4_DE"

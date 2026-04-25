@@ -1,10 +1,31 @@
-import { Bell, Sun, Moon } from "lucide-react";
+import { Bell, BellOff, Sun, Moon } from "lucide-react";
 import Logo from "./Logo";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function MobileHeader() {
   const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated } = useAuth();
+  const { supported, permission, isSubscribed, isLoading, subscribe, unsubscribe } = usePushNotifications();
+
+  const showBellDot = isAuthenticated && supported && !isSubscribed && permission !== "denied";
+  const bellActive = isAuthenticated && isSubscribed;
+
+  const handleBellClick = async () => {
+    if (!isAuthenticated || !supported) return;
+    if (isSubscribed) {
+      await unsubscribe();
+    } else {
+      await subscribe();
+    }
+  };
 
   return (
     <header
@@ -15,18 +36,56 @@ export default function MobileHeader() {
 
       <div className="flex items-center gap-2">
         {/* Notification Bell */}
-        <button
-          className="relative w-9 h-9 flex items-center justify-center rounded-full border bg-card"
-          style={{ borderColor: "hsl(var(--border))" }}
-          data-testid="button-notifications"
-          aria-label="Notifications"
-        >
-          <Bell className="w-5 h-5 text-muted-foreground" />
-          <span
-            className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full border-2"
-            style={{ borderColor: "hsl(var(--background))" }}
-          />
-        </button>
+        {isAuthenticated && supported && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className={`relative w-9 h-9 flex items-center justify-center rounded-full border transition-colors ${
+                  bellActive
+                    ? "bg-primary/10 border-primary/30"
+                    : "bg-card"
+                }`}
+                style={{ borderColor: bellActive ? undefined : "hsl(var(--border))" }}
+                onClick={handleBellClick}
+                disabled={isLoading || permission === "denied"}
+                data-testid="button-notifications"
+                aria-label={isSubscribed ? "Disable notifications" : "Enable notifications"}
+              >
+                {permission === "denied" ? (
+                  <BellOff className="w-4.5 h-4.5 text-muted-foreground" />
+                ) : (
+                  <Bell className={`w-[18px] h-[18px] ${bellActive ? "text-primary" : "text-muted-foreground"}`} />
+                )}
+                {showBellDot && (
+                  <span
+                    className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full border-2 animate-pulse"
+                    style={{ borderColor: "hsl(var(--background))" }}
+                  />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {permission === "denied"
+                ? "Notifications blocked in browser settings"
+                : isSubscribed
+                ? "Notifications on — tap to turn off"
+                : "Tap to turn on push notifications"}
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {/* Non-authenticated bell placeholder (decorative, no action) */}
+        {!isAuthenticated && (
+          <button
+            className="relative w-9 h-9 flex items-center justify-center rounded-full border bg-card"
+            style={{ borderColor: "hsl(var(--border))" }}
+            data-testid="button-notifications"
+            aria-label="Notifications"
+            disabled
+          >
+            <Bell className="w-[18px] h-[18px] text-muted-foreground" />
+          </button>
+        )}
 
         {/* Theme Toggle */}
         <Button

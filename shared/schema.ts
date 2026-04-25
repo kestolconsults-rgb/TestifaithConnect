@@ -497,6 +497,22 @@ export const updateMilestoneStatusSchema = z.object({
 export type UpdateMilestoneStatus = z.infer<typeof updateMilestoneStatusSchema>;
 
 // =====================================================
+// PUSH NOTIFICATION SUBSCRIPTIONS
+// =====================================================
+
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
+
+// =====================================================
 // ADMIN AUDIT LOGS
 // =====================================================
 

@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Filter, Play, Heart, MessageCircle, Globe } from "lucide-react";
+import { useState, useCallback } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Search, Play, Heart, MessageCircle, Globe, RefreshCw } from "lucide-react";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,7 +10,8 @@ import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useMutation } from "@tanstack/react-query";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { EmptyState } from "@/components/EmptyState";
 
 const ALL_CATEGORIES = ["All", ...CATEGORIES] as const;
 
@@ -18,24 +19,44 @@ function getInitials(firstName?: string | null, lastName?: string | null) {
   return ((firstName?.[0] || "") + (lastName?.[0] || "")).toUpperCase() || "?";
 }
 
+// Category gradient map for video thumbnails
+const CATEGORY_GRADIENTS: Record<string, string> = {
+  Healing:       "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+  Marriage:      "linear-gradient(135deg, #f472b6 0%, #ec4899 100%)",
+  Fruitfulness:  "linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)",
+  Finance:       "linear-gradient(135deg, #fbbf24 0%, #d97706 100%)",
+  Breakthrough:  "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+  Deliverance:   "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+  Others:        "linear-gradient(135deg, #6b7280 0%, #374151 100%)",
+};
+
 function VideoCard({ testimony }: { testimony: TestimonyWithUser }) {
   const displayName = testimony.isAnonymous ? "Anonymous" : `${testimony.user?.firstName || ""} ${testimony.user?.lastName || ""}`.trim() || "Anonymous";
   const initials = testimony.isAnonymous ? "A" : getInitials(testimony.user?.firstName, testimony.user?.lastName);
+  const gradient = CATEGORY_GRADIENTS[testimony.category] || CATEGORY_GRADIENTS.Others;
 
   return (
     <Link href={`/testimony/${testimony.id}`}>
       <div className="rounded-2xl overflow-hidden border bg-card hover-elevate cursor-pointer" data-testid={`video-card-${testimony.id}`}>
-        <div className="relative h-44 bg-muted flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-          <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center z-10">
-            <Play className="w-7 h-7 text-white ml-1" />
+        <div className="relative h-44 flex items-center justify-center overflow-hidden" style={{ background: testimony.thumbnailUrl ? undefined : gradient }}>
+          {testimony.thumbnailUrl ? (
+            <img src={testimony.thumbnailUrl} alt={testimony.title || "Video"} className="absolute inset-0 w-full h-full object-cover" />
+          ) : (
+            <div
+              className="absolute inset-0 opacity-30"
+              style={{ background: "repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0px, rgba(255,255,255,.05) 2px, transparent 2px, transparent 12px)" }}
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center z-10">
+            <Play className="w-6 h-6 text-white ml-0.5" />
           </div>
           <div className="absolute bottom-3 left-3 z-10">
             <Badge className={`text-[10px] font-bold uppercase ${CATEGORY_COLORS[testimony.category as keyof typeof CATEGORY_COLORS] || ""}`}>
               {testimony.category}
             </Badge>
           </div>
-          <div className="absolute bottom-3 right-3 z-10 text-white text-xs font-medium bg-black/40 px-2 py-0.5 rounded">
+          <div className="absolute top-3 right-3 z-10 text-white text-[10px] font-semibold bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm">
             Video
           </div>
         </div>
@@ -64,14 +85,30 @@ function TestimonyRow({ testimony }: { testimony: TestimonyWithUser }) {
   const displayName = testimony.isAnonymous ? "Anonymous" : `${testimony.user?.firstName || ""} ${testimony.user?.lastName || ""}`.trim() || "Anonymous";
   const initials = testimony.isAnonymous ? "A" : getInitials(testimony.user?.firstName, testimony.user?.lastName);
   const { user } = useAuth();
+  const [amenAnimating, setAmenAnimating] = useState(false);
+  const [localAmen, setLocalAmen] = useState(testimony.userHasAmen);
+  const [localCount, setLocalCount] = useState(testimony.amenCount || 0);
 
   const amenMutation = useMutation({
     mutationFn: async () => apiRequest("POST", `/api/testimonies/${testimony.id}/amen`),
-    onSuccess: () => {
+    onSuccess: (_, __, ___) => {
       queryClient.invalidateQueries({ queryKey: ["/api/testimonies"] });
       queryClient.invalidateQueries({ queryKey: ["/api/testimonies/recent"] });
     },
   });
+
+  const handleAmen = () => {
+    if (!user) return;
+    const next = !localAmen;
+    setLocalAmen(next);
+    setLocalCount((c) => next ? c + 1 : Math.max(0, c - 1));
+    if (next) {
+      setAmenAnimating(false);
+      requestAnimationFrame(() => setAmenAnimating(true));
+      setTimeout(() => setAmenAnimating(false), 500);
+    }
+    amenMutation.mutate();
+  };
 
   return (
     <div className="rounded-2xl p-4 border bg-card" data-testid={`testimony-row-${testimony.id}`}>
@@ -102,12 +139,17 @@ function TestimonyRow({ testimony }: { testimony: TestimonyWithUser }) {
       </Link>
       <div className="flex gap-4 pt-2.5 border-t border-border">
         <button
-          onClick={() => user && amenMutation.mutate()}
-          className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
+          onClick={handleAmen}
+          className="relative flex items-center gap-1.5 transition-colors"
+          style={{ color: localAmen ? "#ef4444" : undefined }}
           data-testid={`button-amen-${testimony.id}`}
         >
-          <Heart className="w-4 h-4" />
-          <span className="text-xs">{testimony.amenCount || 0}</span>
+          <Heart
+            className={`w-4 h-4 transition-colors ${amenAnimating ? "amen-burst" : ""}`}
+            fill={localAmen ? "#ef4444" : "none"}
+            color={localAmen ? "#ef4444" : "currentColor"}
+          />
+          <span className="text-xs text-muted-foreground">{localCount}</span>
         </button>
         <Link href={`/testimony/${testimony.id}`}>
           <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors" data-testid={`button-comment-${testimony.id}`}>
@@ -120,12 +162,38 @@ function TestimonyRow({ testimony }: { testimony: TestimonyWithUser }) {
   );
 }
 
+function CommunitySkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="rounded-2xl p-4 border bg-card">
+          <div className="flex items-center gap-2.5 mb-3">
+            <Skeleton className="w-9 h-9 rounded-full" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-2.5 w-16" />
+            </div>
+          </div>
+          <Skeleton className="h-4 w-3/4 mb-2" />
+          <Skeleton className="h-3 w-full mb-1" />
+          <Skeleton className="h-3 w-5/6 mb-1" />
+          <Skeleton className="h-3 w-4/5 mb-4" />
+          <div className="flex gap-4 pt-2.5 border-t border-border">
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-4 w-12" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Community() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  const { data: allTestimonies, isLoading } = useQuery<TestimonyWithUser[]>({
+  const { data: allTestimonies, isLoading, refetch } = useQuery<TestimonyWithUser[]>({
     queryKey: ["/api/testimonies"],
   });
 
@@ -148,6 +216,13 @@ export default function Community() {
     (window as any)._searchTimer = setTimeout(() => setDebouncedQuery(val), 400);
   };
 
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+    queryClient.invalidateQueries({ queryKey: ["/api/testimonies"] });
+  }, [refetch]);
+
+  const { containerRef, pullDistance, isRefreshing } = usePullToRefresh({ onRefresh: handleRefresh });
+
   const testimonies = (debouncedQuery || activeCategory !== "All") ? (searchResults || []) : (allTestimonies || []);
   const loading = (debouncedQuery || activeCategory !== "All") ? searchLoading : isLoading;
 
@@ -155,7 +230,22 @@ export default function Community() {
   const textTestimonies = testimonies.filter((t) => !t.videoUrl);
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div
+      ref={containerRef}
+      className="min-h-screen bg-background pb-28 overflow-y-auto"
+      style={{ WebkitOverflowScrolling: "touch" }}
+    >
+      {/* Pull-to-refresh indicator */}
+      <div
+        className="flex items-center justify-center overflow-hidden transition-all duration-200"
+        style={{ height: isRefreshing ? 48 : pullDistance > 0 ? Math.min(pullDistance, 48) : 0, opacity: isRefreshing || pullDistance > 20 ? 1 : 0 }}
+      >
+        <RefreshCw
+          className={`w-5 h-5 text-primary ${isRefreshing ? "ptr-spinner" : ""}`}
+          style={{ transform: isRefreshing ? undefined : `rotate(${pullDistance * 3}deg)` }}
+        />
+      </div>
+
       {/* Header */}
       <div className="px-5 pt-4 pb-3">
         <div className="flex items-center gap-2 mb-0.5">
@@ -178,8 +268,8 @@ export default function Community() {
             data-testid="input-community-search"
           />
           {searchQuery && (
-            <button onClick={() => { setSearchQuery(""); setDebouncedQuery(""); }} className="text-muted-foreground">
-              <Filter className="w-4 h-4" />
+            <button onClick={() => { setSearchQuery(""); setDebouncedQuery(""); }} className="text-muted-foreground text-xs">
+              Clear
             </button>
           )}
         </div>
@@ -217,18 +307,19 @@ export default function Community() {
             </Link>
           </div>
           {isLoading ? (
-            <div className="grid grid-cols-1 gap-3">
-              <Skeleton className="h-64 rounded-2xl" />
-            </div>
+            <Skeleton className="h-64 rounded-2xl" />
           ) : videoTestimonies.length > 0 ? (
             <div className="grid grid-cols-1 gap-3">
               {videoTestimonies.slice(0, 2).map((t) => <VideoCard key={t.id} testimony={t} />)}
             </div>
           ) : (
-            <div className="rounded-2xl border bg-card p-8 text-center">
-              <Play className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No video testimonies yet</p>
-            </div>
+            <EmptyState
+              type="video"
+              title="No video testimonies yet"
+              description="Be the first to share your testimony on video"
+              actionLabel="Share yours"
+              actionHref="/post"
+            />
           )}
         </section>
       )}
@@ -247,20 +338,23 @@ export default function Community() {
         </div>
 
         {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-40 rounded-2xl" />)}
-          </div>
+          <CommunitySkeleton />
         ) : textTestimonies.length > 0 ? (
           <div className="space-y-3">
             {textTestimonies.slice(0, 10).map((t) => <TestimonyRow key={t.id} testimony={t} />)}
           </div>
         ) : (
-          <div className="rounded-2xl border bg-card p-8 text-center">
-            <Globe className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
-              {debouncedQuery ? `No testimonies found for "${debouncedQuery}"` : "No testimonies yet"}
-            </p>
-          </div>
+          <EmptyState
+            type={debouncedQuery ? "search" : "community"}
+            title={debouncedQuery ? `No results for "${debouncedQuery}"` : "No testimonies yet"}
+            description={
+              debouncedQuery
+                ? "Try a different keyword or browse all testimonies"
+                : "Be the first in the community to share what God has done"
+            }
+            actionLabel={debouncedQuery ? undefined : "Share your testimony"}
+            actionHref={debouncedQuery ? undefined : "/post"}
+          />
         )}
       </section>
     </div>

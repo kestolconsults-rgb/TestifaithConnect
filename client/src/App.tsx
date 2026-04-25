@@ -1,10 +1,12 @@
 import { Switch, Route, Redirect } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { Skeleton } from "@/components/ui/skeleton";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
@@ -99,8 +101,49 @@ function UnauthenticatedApp() {
   );
 }
 
+function AppSkeleton() {
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header skeleton */}
+      <div className="sticky top-0 z-30 flex items-center justify-between px-5 py-3 border-b bg-background/92">
+        <Skeleton className="h-7 w-32 rounded-lg" />
+        <div className="flex gap-2">
+          <Skeleton className="w-9 h-9 rounded-full" />
+          <Skeleton className="w-9 h-9 rounded-full" />
+        </div>
+      </div>
+      {/* Content skeleton */}
+      <div className="flex-1 px-5 pt-5 space-y-4">
+        <Skeleton className="h-36 rounded-2xl" />
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-52 rounded-2xl" />
+        <Skeleton className="h-5 w-48" />
+        <div className="space-y-3">
+          <Skeleton className="h-28 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
+        </div>
+      </div>
+      {/* Bottom tab skeleton */}
+      <div className="fixed bottom-0 left-0 right-0 h-16 border-t bg-background/95 flex items-center justify-around px-6">
+        {[1,2,3,4,5].map((i) => (
+          <Skeleton key={i} className="w-8 h-8 rounded-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+
+  // Register service worker for push notifications
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        // SW registration failure is non-critical
+      });
+    }
+  }, []);
 
   // Admin route — completely separate, no mobile chrome
   if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
@@ -108,11 +151,7 @@ function Router() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <AppSkeleton />;
   }
 
   return isAuthenticated ? <AuthenticatedApp /> : <UnauthenticatedApp />;

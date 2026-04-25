@@ -60,6 +60,16 @@ The app is a **mobile-first PWA** with a bottom tab bar (Home, Community, FAB, B
 ## External Dependencies (continued)
 - **Object Storage**: Replit App Storage for video file hosting with presigned URL uploads
 - **Email Service**: Resend for transactional emails (welcome emails for new users)
+- **Push Notifications**: web-push (VAPID) for PWA push notifications; `push_subscriptions` table in DB; service worker at `client/public/sw.js`
+
+## PWA Features
+- **Service Worker**: Registered in App.tsx for push notification support (`/sw.js`)
+- **Push Notifications**: Bell icon in MobileHeader subscribes/unsubscribes; triggers on Amen and Encourage actions; `usePushNotifications.ts` hook; VAPID keys in env vars
+- **Pull-to-Refresh**: Touch gesture on Community page using `usePullToRefresh.ts` hook with visual spinner indicator
+- **Amen Animation**: CSS `amen-burst` keyframe animation on heart icon when tapped
+- **Skeleton Loading**: App-level `AppSkeleton` replaces spinner; Community uses `CommunitySkeleton`; new `skeleton-shimmer` CSS utility
+- **Empty States**: `EmptyState.tsx` SVG illustrated components (community, journal, search, video types)
+- **Video Thumbnails**: Category-gradient thumbnails with play button overlay when no thumbnail URL available
 
 ## Future Features (Roadmap)
 - **Phase 3**: Faith expectations tracking with milestones and scripture linking
