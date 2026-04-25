@@ -87,7 +87,7 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-zinc-900 border-zinc-800">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-white font-league-spartan">Admin Login</CardTitle>
+          <CardTitle className="text-2xl font-bold text-white font-['Space_Grotesk']">Admin Login</CardTitle>
           <CardDescription className="text-zinc-400">
             Testifaith Administration Panel
           </CardDescription>
@@ -181,10 +181,20 @@ function UserManagement() {
   const [suspendReason, setSuspendReason] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const { data: users, isLoading } = useQuery<UserWithStats[]>({
     queryKey: ["/api/admin/users"],
   });
+
+  const filteredUsers = users?.filter((u) => {
+    const q = search.toLowerCase();
+    return (
+      !q ||
+      `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+      (u.email ?? "").toLowerCase().includes(q)
+    );
+  }) ?? [];
 
   const suspendMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) =>
@@ -227,13 +237,21 @@ function UserManagement() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center gap-2">
+      <div className="flex justify-between items-center gap-2 flex-wrap">
         <h3 className="text-lg font-semibold text-white">All Users</h3>
-        <Badge className="bg-zinc-700">{users?.length || 0} users</Badge>
+        <Badge className="bg-zinc-700">{filteredUsers.length}/{users?.length || 0} users</Badge>
       </div>
 
+      <Input
+        placeholder="Search by name or email..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="bg-zinc-800 border-zinc-700 text-white"
+        data-testid="input-search-users"
+      />
+
       <div className="space-y-2 max-h-[500px] overflow-y-auto">
-        {users?.map((user) => (
+        {filteredUsers.map((user) => (
           <div
             key={user.id}
             className={`flex items-center justify-between p-3 rounded-lg ${
@@ -350,10 +368,18 @@ function UserManagement() {
 function TestimonyModeration() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const { data: testimonies, isLoading } = useQuery<TestimonyWithUser[]>({
     queryKey: ["/api/admin/testimonies"],
   });
+
+  const filteredTestimonies = testimonies?.filter((t) => {
+    const matchesSearch = !search || t.title.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || t.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  }) ?? [];
 
   const featureMutation = useMutation({
     mutationFn: (id: string) => apiRequest("POST", `/api/admin/testimonies/${id}/feature`),
@@ -397,8 +423,8 @@ function TestimonyModeration() {
     <div className="space-y-4">
       <div className="flex justify-between items-center gap-2 flex-wrap">
         <h3 className="text-lg font-semibold text-white">All Testimonies</h3>
-        <div className="flex gap-2">
-          <Badge className="bg-zinc-700">{testimonies?.length || 0} testimonies</Badge>
+        <div className="flex gap-2 flex-wrap">
+          <Badge className="bg-zinc-700">{filteredTestimonies.length}/{testimonies?.length || 0}</Badge>
           {featuredTestimony && (
             <Button
               variant="outline"
@@ -415,6 +441,27 @@ function TestimonyModeration() {
         </div>
       </div>
 
+      <div className="flex gap-2 flex-wrap">
+        <Input
+          placeholder="Search title..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="bg-zinc-800 border-zinc-700 text-white flex-1 min-w-[160px]"
+          data-testid="input-search-testimonies"
+        />
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white w-[140px]" data-testid="select-category-filter">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent className="bg-zinc-800 border-zinc-700">
+            <SelectItem value="all" className="text-white">All categories</SelectItem>
+            {TESTIMONY_CATEGORIES.map((cat) => (
+              <SelectItem key={cat} value={cat} className="text-white">{cat}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {featuredTestimony && (
         <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
           <p className="text-sm text-yellow-400 mb-1">Currently Featured:</p>
@@ -423,7 +470,7 @@ function TestimonyModeration() {
       )}
 
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
-        {testimonies?.map((testimony) => (
+        {filteredTestimonies.map((testimony) => (
           <div
             key={testimony.id}
             className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg gap-2"
@@ -1266,6 +1313,81 @@ function EncouragementVersesManagement() {
   );
 }
 
+function ChangePassword() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const { toast } = useToast();
+
+  const changeMutation = useMutation({
+    mutationFn: (data: { currentPassword: string; newPassword: string }) =>
+      apiRequest("POST", "/api/admin/change-password", data),
+    onSuccess: () => {
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast({ title: "Password changed successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords don't match", variant: "destructive" });
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast({ title: "Password must be at least 8 characters", variant: "destructive" });
+      return;
+    }
+    changeMutation.mutate({ currentPassword, newPassword });
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-white">Change Your Password</h3>
+      <form onSubmit={handleSubmit} className="space-y-3 p-4 bg-zinc-800 rounded-lg max-w-sm">
+        <Input
+          type="password"
+          placeholder="Current password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          className="bg-zinc-900 border-zinc-700 text-white"
+          data-testid="input-current-password"
+        />
+        <Input
+          type="password"
+          placeholder="New password (min 8 characters)"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          className="bg-zinc-900 border-zinc-700 text-white"
+          data-testid="input-new-password"
+        />
+        <Input
+          type="password"
+          placeholder="Confirm new password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="bg-zinc-900 border-zinc-700 text-white"
+          data-testid="input-confirm-password"
+        />
+        <Button
+          type="submit"
+          disabled={changeMutation.isPending || !currentPassword || !newPassword || !confirmPassword}
+          className="bg-red-500 hover:bg-red-600"
+          data-testid="button-change-password"
+        >
+          {changeMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+          Change Password
+        </Button>
+      </form>
+    </div>
+  );
+}
+
 function AdminUserManagement() {
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -1480,7 +1602,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-center gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white font-league-spartan">Admin Dashboard</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-white font-['Space_Grotesk']">Admin Dashboard</h1>
             <p className="text-zinc-400">Manage users, content, and platform settings</p>
           </div>
           <Button
@@ -1495,44 +1617,50 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
 
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="w-full flex flex-wrap bg-zinc-900 border border-zinc-800 h-auto p-1 gap-1">
-            <TabsTrigger value="analytics" className="flex-1 min-w-[120px] data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-analytics">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex-1 min-w-[120px] data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-users">
-              <Users className="w-4 h-4 mr-2" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="content" className="flex-1 min-w-[120px] data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-content">
-              <BookOpen className="w-4 h-4 mr-2" />
-              Content
-            </TabsTrigger>
-            <TabsTrigger value="upload" className="flex-1 min-w-[120px] data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-upload">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload
-            </TabsTrigger>
-            <TabsTrigger value="featured" className="flex-1 min-w-[120px] data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-featured">
-              <Star className="w-4 h-4 mr-2" />
-              Featured
-            </TabsTrigger>
-            <TabsTrigger value="videos" className="flex-1 min-w-[120px] data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-videos">
-              <Video className="w-4 h-4 mr-2" />
-              Videos
-            </TabsTrigger>
-            <TabsTrigger value="declarations" className="flex-1 min-w-[120px] data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-declarations">
-              <Heart className="w-4 h-4 mr-2" />
-              Declarations
-            </TabsTrigger>
-            <TabsTrigger value="admins" className="flex-1 min-w-[120px] data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-admins">
-              <Shield className="w-4 h-4 mr-2" />
-              Admins
-            </TabsTrigger>
-            <TabsTrigger value="logs" className="flex-1 min-w-[120px] data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-logs">
-              <History className="w-4 h-4 mr-2" />
-              Logs
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto hide-scrollbar">
+            <TabsList className="flex w-max bg-zinc-900 border border-zinc-800 h-auto p-1 gap-1">
+              <TabsTrigger value="analytics" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-analytics">
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger value="users" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-users">
+                <Users className="w-4 h-4 mr-2" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="content" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-content">
+                <BookOpen className="w-4 h-4 mr-2" />
+                Testimonies
+              </TabsTrigger>
+              <TabsTrigger value="comments" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-comments">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Comments
+              </TabsTrigger>
+              <TabsTrigger value="upload" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-upload">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload
+              </TabsTrigger>
+              <TabsTrigger value="featured" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-featured">
+                <Star className="w-4 h-4 mr-2" />
+                Featured
+              </TabsTrigger>
+              <TabsTrigger value="videos" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-videos">
+                <Video className="w-4 h-4 mr-2" />
+                Videos
+              </TabsTrigger>
+              <TabsTrigger value="declarations" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-declarations">
+                <Heart className="w-4 h-4 mr-2" />
+                Declarations
+              </TabsTrigger>
+              <TabsTrigger value="admins" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-admins">
+                <Shield className="w-4 h-4 mr-2" />
+                Admins
+              </TabsTrigger>
+              <TabsTrigger value="logs" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-logs">
+                <History className="w-4 h-4 mr-2" />
+                Logs
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="analytics" className="mt-6">
             <Card className="bg-zinc-900 border-zinc-800">
@@ -1558,7 +1686,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </Card>
           </TabsContent>
 
-          <TabsContent value="content" className="mt-6 space-y-6">
+          <TabsContent value="content" className="mt-6">
             <Card className="bg-zinc-900 border-zinc-800">
               <CardHeader>
                 <CardTitle className="text-white">Testimony Moderation</CardTitle>
@@ -1568,7 +1696,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <TestimonyModeration />
               </CardContent>
             </Card>
+          </TabsContent>
 
+          <TabsContent value="comments" className="mt-6">
             <Card className="bg-zinc-900 border-zinc-800">
               <CardHeader>
                 <CardTitle className="text-white">Comment Moderation</CardTitle>
@@ -1638,7 +1768,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </Card>
           </TabsContent>
 
-          <TabsContent value="admins" className="mt-6">
+          <TabsContent value="admins" className="mt-6 space-y-6">
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardHeader>
+                <CardTitle className="text-white">Change Password</CardTitle>
+                <CardDescription className="text-zinc-400">Update your admin account password</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChangePassword />
+              </CardContent>
+            </Card>
             <Card className="bg-zinc-900 border-zinc-800">
               <CardHeader>
                 <CardTitle className="text-white">Admin User Management</CardTitle>

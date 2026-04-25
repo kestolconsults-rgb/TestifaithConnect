@@ -28,7 +28,7 @@ The app is a **mobile-first PWA** with a bottom tab bar (Home, Community, FAB, B
 - **User Profiles**: Complete profile pages with bio, avatar, location, website, faith interests display, and stats (testimonies count, amens received, encouragements received).
 - **Settings**: Profile editing (name, bio, location, website), notification preferences (amen, encourage, comment, daily verse), privacy settings (public/private profile).
 - **Onboarding**: 3-step new user onboarding flow (name, bio, faith interests selection) to personalize the experience.
-- **Admin System**: Login at /admin with admin/testifaith2024, featured testimony selection, faith declaration management, video moderation queue (approve/reject pending video testimonies), comprehensive analytics, user management with suspend/unsuspend, content moderation, admin account management, and audit logging.
+- **Admin System**: Login at /admin with admin/testifaith2024. Features: horizontally scrollable tab bar (10 tabs), analytics dashboard, user management (search by name/email, suspend/unsuspend), testimony moderation (search + category filter, feature/delete), comments moderation (separate tab), video moderation queue (approve/reject), faith declaration management, encouragement verse management, upload testimony (with video), featured testimony selector, admin account management, change password, and audit logging.
 - **Welcome Emails**: Professional HTML welcome emails sent automatically to new users via Resend, triggered for both Google OAuth and email/password registrations.
 - **Technical Features**: Real-time data updates via TanStack Query, unauthorized error handling with redirects, loading states, Zod form validation, and session-based authentication with a 7-day TTL.
 
