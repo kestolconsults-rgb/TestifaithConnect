@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { TestimonyWithUser } from "@shared/schema";
 import { CATEGORY_COLORS, CATEGORIES } from "@/lib/constants";
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -29,13 +29,13 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
   Finance:       "linear-gradient(135deg, #fbbf24 0%, #d97706 100%)",
   Breakthrough:  "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
   Deliverance:   "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-  Others:        "linear-gradient(135deg, #6b7280 0%, #374151 100%)",
+  General:       "linear-gradient(135deg, #6b7280 0%, #374151 100%)",
 };
 
 function VideoCard({ testimony }: { testimony: TestimonyWithUser }) {
   const displayName = testimony.isAnonymous ? "Anonymous" : `${testimony.user?.firstName || ""} ${testimony.user?.lastName || ""}`.trim() || "Anonymous";
   const initials = testimony.isAnonymous ? "A" : getInitials(testimony.user?.firstName, testimony.user?.lastName);
-  const gradient = CATEGORY_GRADIENTS[testimony.category] || CATEGORY_GRADIENTS.Others;
+  const gradient = CATEGORY_GRADIENTS[testimony.category] || CATEGORY_GRADIENTS.General;
 
   return (
     <Link href={`/testimony/${testimony.id}`}>
@@ -135,7 +135,7 @@ function TestimonyRow({ testimony, currentUser }: { testimony: TestimonyWithUser
           <div>
             <p className="text-xs font-semibold text-foreground">{displayName}</p>
             <p className="text-[10px] text-muted-foreground">
-              {formatDistanceToNow(new Date(testimony.createdAt ?? Date.now()), { addSuffix: true })}
+              {format(new Date(testimony.createdAt ?? Date.now()), "MMM d, yyyy")}
             </p>
           </div>
         </div>
@@ -335,7 +335,7 @@ export default function Community() {
       <section className="px-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">
-            {debouncedQuery || activeCategory !== "All" ? "Results" : "Read Testimonies"}
+            {debouncedQuery || activeCategory !== "All" ? "Results" : "From the Community"}
           </h2>
           {!debouncedQuery && activeCategory === "All" && (
             <Link href="/testimonies">

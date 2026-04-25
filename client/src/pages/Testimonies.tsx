@@ -83,10 +83,10 @@ export default function Testimonies() {
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               data-testid="text-page-title"
             >
-              All Testimonies
+              Community Stones
             </h1>
             <p className="text-sm text-muted-foreground">
-              Read and be encouraged by testimonies of God's faithfulness
+              Shared testimonies from believers around the world
             </p>
           </div>
 

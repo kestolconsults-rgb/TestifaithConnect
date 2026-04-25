@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Lock, Heart, Star, Plus, Feather, LogIn, ChevronDown, ChevronUp, Flame, Clock } from "lucide-react";
+import { BookOpen, Lock, Heart, Star, Plus, Feather, LogIn, ChevronDown, ChevronUp, Flame, Clock, Users } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow, format, subDays, parseISO } from "date-fns";
 import type { TestimonyWithUser, EncouragementVerse, FaithDeclaration } from "@shared/schema";
@@ -169,11 +169,8 @@ export default function Home() {
                     {featuredTestimony.category}
                   </Badge>
                   <span
-                    className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm"
-                    style={{
-                      background: "color-mix(in srgb, #f59e0b 15%, transparent)",
-                      color: "#f59e0b",
-                    }}
+                    className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm text-black"
+                    style={{ background: "#f59e0b" }}
                   >
                     Featured
                   </span>
@@ -215,7 +212,12 @@ export default function Home() {
 
       {/* Stone of Remembrance — Private Journal */}
       <section className="px-5 mb-6">
-        {!user ? null : (
+        {!user ? (
+          <div className="flex items-center gap-2 mb-1">
+            <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Your Faith Journal</h2>
+          </div>
+        ) : (
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
               <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
@@ -238,7 +240,9 @@ export default function Home() {
             </Link>
           </div>
         )}
-        {user && <p className="text-xs text-muted-foreground mb-3">Your private faith journal — only visible to you</p>}
+        <p className="text-xs text-muted-foreground mb-3">
+          {user ? "Your private faith journal — only visible to you" : "A private place to record what God has done — only you can see it"}
+        </p>
 
         {!user ? (
           <div
@@ -263,7 +267,7 @@ export default function Home() {
                 <p className="text-xs text-muted-foreground leading-relaxed mb-4">
                   Write down what God has done — healings, answered prayers, breakthroughs — a record only you can see.
                 </p>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap mb-3">
                   <Link href="/signin">
                     <button
                       className="flex items-center gap-1.5 text-xs font-semibold text-white px-4 py-2 rounded-full"
@@ -284,6 +288,15 @@ export default function Home() {
                     </button>
                   </Link>
                 </div>
+                <Link href="/community">
+                  <button
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    data-testid="link-browse-community-home"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Browse community stones first
+                  </button>
+                </Link>
               </div>
             </div>
           </div>

@@ -41,13 +41,8 @@ export default function SignIn() {
         className="hidden lg:flex lg:w-[45%] relative overflow-hidden flex-col"
         style={{ background: "linear-gradient(160deg, #0a0a0a 0%, #1a0606 55%, #0d0a0a 100%)" }}
       >
-        {/* Faint cross watermark */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-          <div className="relative" style={{ opacity: 0.055 }}>
-            <div style={{ width: 480, height: 52, background: "white", borderRadius: 99 }} />
-            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 52, height: 480, background: "white", borderRadius: 99 }} />
-          </div>
-        </div>
+        {/* Subtle radial glow */}
+        <div className="absolute inset-0 pointer-events-none select-none" style={{ background: "radial-gradient(ellipse 70% 50% at 30% 60%, rgba(239,68,68,0.07) 0%, transparent 70%)" }} />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-14 h-full">
@@ -55,7 +50,7 @@ export default function SignIn() {
 
           <div className="space-y-6 max-w-xs">
             <h2 className="font-['Space_Grotesk'] text-[2.4rem] font-bold text-white leading-[1.18]">
-              Your testimony<br />matters to God<br />and to others.
+              Record what God<br />has done —<br />privately or<br />with the world.
             </h2>
             <div className="space-y-2">
               <p className="text-white/65 text-[1.1rem] leading-relaxed font-['Crimson_Pro'] italic">
@@ -215,7 +210,7 @@ export default function SignIn() {
           </p>
 
           <p className="text-center text-xs text-muted-foreground mt-8 leading-relaxed opacity-60">
-            By signing in you agree to share testimonies that honour God and encourage others.
+            Your private entries are only ever visible to you. Public entries encourage the community.
           </p>
         </div>
       </div>

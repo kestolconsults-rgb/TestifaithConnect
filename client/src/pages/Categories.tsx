@@ -22,13 +22,14 @@ export default function Categories() {
 
       {/* Category grid */}
       <div className="px-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {CATEGORIES.map((category) => {
+        {CATEGORIES.map((category, index) => {
           const meta = CATEGORY_META[category as Category];
           const accent = CATEGORY_ACCENT_COLORS[category as Category];
           const Icon = meta.icon;
 
+          const isLastOdd = index === CATEGORIES.length - 1 && CATEGORIES.length % 2 === 1;
           return (
-            <Link key={category} href={`/category/${category.toLowerCase()}`}>
+            <Link key={category} href={`/category/${category.toLowerCase()}`} className={isLastOdd ? "sm:col-span-2 sm:max-w-[calc(50%-6px)] sm:mx-auto sm:w-full" : ""}>
               <div
                 className="flex items-center gap-4 p-4 rounded-2xl border bg-card hover-elevate active-elevate-2 cursor-pointer transition-all"
                 data-testid={`card-category-${category.toLowerCase()}`}
