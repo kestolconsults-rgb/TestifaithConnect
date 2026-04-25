@@ -1645,6 +1645,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ── API.Bible proxy routes (for NKJV, MSG, AMP, TPT) ──────────────────────
+
+  // In-memory cache for premium Bible version IDs
+  let _premiumVersionsCache: Array<{ id: string; abbreviation: string; name: string }> | null = null;
+  let _premiumVersionsCacheTime = 0;
+
+  async function getPremiumVersions(apiKey: string) {
+    const now = Date.now();
+    if (_premiumVersionsCache && now - _premiumVersionsCacheTime < 3_600_000) {
+      return _premiumVersionsCache;
+    }
+    const resp = await fetch("https://api.scripture.api.bible/v1/bibles?language=eng", {
+      headers: { "api-key": apiKey },
+    });
+    if (!resp.ok) throw new Error("api.bible request failed");
+    const data = await resp.json();
+    const TARGETS = ["NKJV", "MSG", "AMP", "TPT"];
+    const versions = (data.data ?? [])
+      .filter((b: any) =>
+        TARGETS.some(
+          (t) =>
+            (b.abbreviationLocal ?? "").toUpperCase() === t ||
+            (b.abbreviation ?? "").toUpperCase() === t
+        )
+      )
+      .map((b: any) => ({
+        id: b.id,
+        abbreviation: ((b.abbreviationLocal || b.abbreviation) ?? "").toUpperCase(),
+        name: b.nameLocal || b.name,
+      }));
+    _premiumVersionsCache = versions;
+    _premiumVersionsCacheTime = now;
+    return versions;
+  }
+
+  // Recursively extract {verse, text} pairs from api.bible JSON content tree
+  function extractVerses(content: any[]): Array<{ verse: number; text: string }> {
+    const result: Array<{ verse: number; text: string }> = [];
+    let curVerse: number | null = null;
+    let curText = "";
+
+    function flush() {
+      if (curVerse !== null && curText.trim()) {
+        result.push({ verse: curVerse, text: curText.trim() });
+      }
+    }
+
+    function walk(node: any) {
+      if (!node) return;
+      if (node.type === "tag" && node.name === "verse") {
+        flush();
+        curVerse = parseInt(node.attrs?.number ?? "0", 10);
+        curText = "";
+        (node.items || []).forEach(walk);
+      } else if (node.type === "text") {
+        if (curVerse !== null) curText += node.text ?? "";
+      } else {
+        (node.items || []).forEach(walk);
+      }
+    }
+
+    content.forEach(walk);
+    flush();
+    return result;
+  }
+
+  // GET /api/bible/premium/status — is the key configured?
+  app.get("/api/bible/premium/status", (_req, res) => {
+    res.json({ configured: !!process.env.BIBLE_API_KEY });
+  });
+
+  // GET /api/bible/premium/versions — list available NKJV/MSG/AMP/TPT versions
+  app.get("/api/bible/premium/versions", async (_req, res) => {
+    const apiKey = process.env.BIBLE_API_KEY;
+    if (!apiKey) return res.status(503).json({ message: "API key not configured", versions: [] });
+    try {
+      const versions = await getPremiumVersions(apiKey);
+      res.json({ versions });
+    } catch (err) {
+      console.error("api.bible versions error:", err);
+      res.status(502).json({ message: "Failed to fetch Bible versions" });
+    }
+  });
+
+  // GET /api/bible/premium/chapter?bibleId=X&chapterId=JHN.3
+  app.get("/api/bible/premium/chapter", async (req, res) => {
+    const apiKey = process.env.BIBLE_API_KEY;
+    if (!apiKey) return res.status(503).json({ message: "API key not configured" });
+    const { bibleId, chapterId } = req.query as { bibleId: string; chapterId: string };
+    if (!bibleId || !chapterId) return res.status(400).json({ message: "bibleId and chapterId required" });
+    try {
+      const url = new URL(`https://api.scripture.api.bible/v1/bibles/${bibleId}/chapters/${chapterId}`);
+      url.searchParams.set("content-type", "json");
+      url.searchParams.set("include-notes", "false");
+      url.searchParams.set("include-titles", "false");
+      url.searchParams.set("include-chapter-numbers", "false");
+      url.searchParams.set("include-verse-numbers", "true");
+      url.searchParams.set("include-verse-spans", "false");
+      const resp = await fetch(url.toString(), { headers: { "api-key": apiKey } });
+      if (!resp.ok) {
+        const body = await resp.text();
+        return res.status(resp.status).json({ message: body });
+      }
+      const data = await resp.json();
+      const verses = extractVerses(data.data?.content ?? []);
+      res.json({ reference: data.data?.reference, verses });
+    } catch (err) {
+      console.error("api.bible chapter error:", err);
+      res.status(502).json({ message: "Failed to fetch chapter" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
