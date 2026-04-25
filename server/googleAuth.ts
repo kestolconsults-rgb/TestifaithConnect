@@ -6,9 +6,10 @@ import type { Express, RequestHandler, Request, Response } from "express";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 import bcrypt from "bcryptjs";
-import { signUpSchema, signInSchema } from "@shared/schema";
+import crypto from "crypto";
+import { signUpSchema, signInSchema, forgotPasswordSchema, resetPasswordSchema } from "@shared/schema";
 import { z } from "zod";
-import { sendWelcomeEmail } from "./emailService";
+import { sendWelcomeEmail, sendPasswordResetEmail } from "./emailService";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -273,6 +274,67 @@ export async function setupAuth(app: Express) {
         return res.status(400).json({ message: "An account with this email already exists" });
       }
       return res.status(500).json({ message: "An error occurred while creating your account. Please try again." });
+    }
+  });
+
+  app.post("/api/auth/forgot-password", async (req: Request, res: Response) => {
+    try {
+      const { email } = forgotPasswordSchema.parse(req.body);
+      const user = await storage.getUserByEmail(email);
+
+      // Always return success to prevent email enumeration
+      if (!user || !user.email) {
+        return res.json({ success: true });
+      }
+
+      // Only allow password reset for email/password accounts (or accounts with a password set)
+      // Google-only accounts get a helpful hint
+      if (!user.passwordHash) {
+        return res.json({ success: true });
+      }
+
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      await storage.createPasswordResetToken(user.id, token, expiresAt);
+      await sendPasswordResetEmail(user.email, user.firstName ?? undefined, token);
+
+      return res.json({ success: true });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Forgot password error:", error);
+      return res.status(500).json({ message: "An error occurred. Please try again." });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { token, password } = resetPasswordSchema.parse(req.body);
+
+      const resetToken = await storage.getPasswordResetToken(token);
+      if (!resetToken) {
+        return res.status(400).json({ message: "This reset link is invalid or has already been used." });
+      }
+      if (resetToken.usedAt) {
+        return res.status(400).json({ message: "This reset link has already been used. Please request a new one." });
+      }
+      if (new Date() > resetToken.expiresAt) {
+        return res.status(400).json({ message: "This reset link has expired. Please request a new one." });
+      }
+
+      const passwordHash = await bcrypt.hash(password, 12);
+      await storage.updateUserPassword(resetToken.userId, passwordHash);
+      await storage.markPasswordResetTokenUsed(resetToken.id);
+
+      return res.json({ success: true });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Reset password error:", error);
+      return res.status(500).json({ message: "An error occurred. Please try again." });
     }
   });
 

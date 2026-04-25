@@ -24,6 +24,8 @@ import Settings from "@/pages/Settings";
 import Onboarding from "@/pages/Onboarding";
 import SignIn from "@/pages/SignIn";
 import CreateAccount from "@/pages/CreateAccount";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import Expectations from "@/pages/Expectations";
 import ExpectationDetail from "@/pages/ExpectationDetail";
 import MobileHeader from "@/components/MobileHeader";
@@ -85,12 +87,14 @@ function Router() {
   if (isLoading) return <AppSkeleton />;
 
   // Full-screen auth flow pages — no nav chrome
-  if (location === "/signin" || location === "/create-account") {
+  if (location === "/signin" || location === "/create-account" || location === "/forgot-password" || location.startsWith("/reset-password")) {
     return (
       <AuthFlow>
         <Switch>
           <Route path="/signin" component={SignIn} />
           <Route path="/create-account" component={CreateAccount} />
+          <Route path="/forgot-password" component={ForgotPassword} />
+          <Route path="/reset-password" component={ResetPassword} />
         </Switch>
       </AuthFlow>
     );

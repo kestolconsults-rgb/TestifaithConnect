@@ -178,6 +178,95 @@ The Testifaith Team
 `;
 }
 
+function getPasswordResetEmailHtml(firstName: string, resetUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password — Testifaith</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #000000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #000000;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #111111; border-radius: 12px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); padding: 36px 40px; text-align: center;">
+              <h1 style="margin: 0; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 32px; font-weight: 700; color: #FFFFFF; letter-spacing: 1px;">TESTIFAITH</h1>
+              <p style="margin: 8px 0 0; font-size: 13px; color: rgba(255,255,255,0.85); letter-spacing: 2px; text-transform: uppercase;">Password Reset</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 16px; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 24px; color: #FFFFFF;">Hi ${firstName},</h2>
+              <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.6; color: #CCCCCC;">
+                We received a request to reset the password for your Testifaith account. Click the button below to choose a new password.
+              </p>
+              <p style="margin: 0 0 32px; font-size: 14px; color: #999999;">This link will expire in <strong style="color: #CCCCCC;">1 hour</strong>. If you didn't request this, you can safely ignore this email — your password won't change.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center">
+                    <a href="${resetUrl}" style="display: inline-block; padding: 16px 48px; background-color: #EF4444; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 8px; letter-spacing: 0.5px;">
+                      Reset Password
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 32px 0 0; font-size: 13px; color: #666666; word-break: break-all;">
+                Or copy this link into your browser:<br>
+                <a href="${resetUrl}" style="color: #EF4444; text-decoration: none;">${resetUrl}</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 40px; text-align: center; border-top: 1px solid #333333;">
+              <p style="margin: 0; font-size: 12px; color: #555555;">© ${new Date().getFullYear()} Testifaith. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendPasswordResetEmail(email: string, firstName: string | undefined, resetToken: string): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not configured, skipping password reset email');
+    return false;
+  }
+
+  const baseUrl = process.env.NODE_ENV === "production"
+    ? "https://testifaith.com"
+    : `https://${process.env.REPLIT_DOMAINS?.split(",")[0] || "localhost"}`;
+  const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
+  const displayName = firstName || "Friend";
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject: "Reset your Testifaith password",
+      html: getPasswordResetEmailHtml(displayName, resetUrl),
+      text: `Hi ${displayName},\n\nReset your Testifaith password by visiting:\n${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.\n\n© ${new Date().getFullYear()} Testifaith`,
+    });
+
+    if (error) {
+      console.error("Error sending password reset email:", error);
+      return false;
+    }
+
+    console.log("Password reset email sent:", data?.id);
+    return true;
+  } catch (error) {
+    console.error("Failed to send password reset email:", error);
+    return false;
+  }
+}
+
 export async function sendWelcomeEmail(email: string, firstName?: string): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) {
     console.warn('RESEND_API_KEY not configured, skipping welcome email');

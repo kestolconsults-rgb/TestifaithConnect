@@ -12,6 +12,8 @@ import {
   expectationScriptures,
   adminAuditLogs,
   pushSubscriptions,
+  passwordResetTokens,
+  type PasswordResetToken,
   type PushSubscription,
   type InsertPushSubscription,
   type User,
@@ -57,6 +59,10 @@ export interface IStorage {
   linkGoogleAccount(userId: string, googleId: string, profileImageUrl?: string): Promise<User>;
   addPasswordToAccount(userId: string, passwordHash: string): Promise<User>;
   hasPassword(userId: string): Promise<boolean>;
+  updateUserPassword(userId: string, passwordHash: string): Promise<void>;
+  createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<void>;
+  getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
+  markPasswordResetTokenUsed(id: string): Promise<void>;
 
   // Testimony operations
   createTestimony(testimony: InsertTestimony): Promise<Testimony>;
@@ -269,6 +275,30 @@ export class DatabaseStorage implements IStorage {
   async hasPassword(userId: string): Promise<boolean> {
     const user = await this.getUser(userId);
     return !!user?.passwordHash;
+  }
+
+  async updateUserPassword(userId: string, passwordHash: string): Promise<void> {
+    await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
+  }
+
+  async createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+    await db.insert(passwordResetTokens).values({ userId, token, expiresAt });
+  }
+
+  async getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined> {
+    const [row] = await db
+      .select()
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token))
+      .limit(1);
+    return row;
+  }
+
+  async markPasswordResetTokenUsed(id: string): Promise<void> {
+    await db
+      .update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(passwordResetTokens.id, id));
   }
 
   // Testimony operations
