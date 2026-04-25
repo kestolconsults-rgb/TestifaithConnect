@@ -60,17 +60,11 @@ export default function InstallBanner() {
       >
         <div className="flex items-start gap-3">
           {/* App icon */}
-          <div
-            className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center"
-            style={{ background: "#EF4444" }}
-          >
-            <span
-              className="font-['Space_Grotesk'] font-bold text-white text-lg"
-              style={{ lineHeight: 1 }}
-            >
-              T
-            </span>
-          </div>
+          <img
+            src="/favicon.png"
+            alt="Testifaith"
+            className="w-12 h-12 rounded-xl flex-shrink-0 object-cover"
+          />
 
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm text-foreground">Add Testifaith to your home screen</p>
