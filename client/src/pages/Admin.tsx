@@ -896,7 +896,7 @@ const TESTIMONY_CATEGORIES = [
   'Finance',
   'Breakthrough',
   'Deliverance',
-  'Others'
+  'General'
 ] as const;
 
 function UploadTestimony() {

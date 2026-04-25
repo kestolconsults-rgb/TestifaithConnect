@@ -184,7 +184,7 @@ export default function Profile() {
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              {isOwnProfile ? "My Testimonies" : `${profile.firstName}'s Testimonies`}
+              {isOwnProfile ? "My Journal" : `${profile.firstName}'s Journal`}
             </h2>
             {isOwnProfile && (
               <Link href="/post">

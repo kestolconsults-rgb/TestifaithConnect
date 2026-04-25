@@ -162,7 +162,7 @@ export const insertTestimonySchema = createInsertSchema(testimonies).omit({
   createdAt: true,
 }).extend({
   title: z.string().min(5, "Title must be at least 5 characters").max(200, "Title is too long"),
-  category: z.enum(['Healing', 'Marriage', 'Fruitfulness', 'Finance', 'Breakthrough', 'Deliverance', 'Others']),
+  category: z.enum(['Healing', 'Marriage', 'Fruitfulness', 'Finance', 'Breakthrough', 'Deliverance', 'General', 'Others']),
   story: z.string().min(10, "Story must be at least 10 characters").max(10000, "Story is too long"),
   privacy: z.enum(['public', 'private']).default('public'),
   videoUrl: z.string().max(500).optional().nullable(),
@@ -389,7 +389,7 @@ export const insertFaithExpectationSchema = createInsertSchema(faithExpectations
 }).extend({
   title: z.string().min(5, "Title must be at least 5 characters").max(200, "Title is too long"),
   description: z.string().max(2000, "Description is too long").optional(),
-  category: z.enum(['Healing', 'Marriage', 'Fruitfulness', 'Finance', 'Breakthrough', 'Deliverance', 'Career', 'Spiritual Growth', 'Others']),
+  category: z.enum(['Healing', 'Marriage', 'Fruitfulness', 'Finance', 'Breakthrough', 'Deliverance', 'Career', 'Spiritual Growth', 'General', 'Others']),
   status: z.enum(['active', 'answered', 'archived']).default('active'),
   privacy: z.enum(['private', 'community', 'public']),
   targetDate: z.string().datetime().optional().nullable(),

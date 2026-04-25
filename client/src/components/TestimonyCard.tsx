@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart, Sparkles, Share2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { Link } from "wouter";
 import type { TestimonyWithUser } from "@shared/schema";
 import { CATEGORY_COLORS, CATEGORY_ACCENT_COLORS } from "@/lib/constants";
@@ -112,8 +112,8 @@ export default function TestimonyCard({
           >
             {testimony.category}
           </Badge>
-          <span className="text-xs text-muted-foreground" data-testid={`date-${testimony.id}`}>
-            {testimony.createdAt && formatDistanceToNow(new Date(testimony.createdAt), { addSuffix: true })}
+          <span className="text-xs text-muted-foreground" data-testid={`date-${testimony.id}`} title={testimony.createdAt ? formatDistanceToNow(new Date(testimony.createdAt), { addSuffix: true }) : ""}>
+            {testimony.createdAt && format(new Date(testimony.createdAt), "MMM d, yyyy")}
           </span>
         </div>
         

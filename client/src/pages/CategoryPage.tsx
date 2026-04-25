@@ -32,7 +32,7 @@ export default function CategoryPage() {
 
   const categoryName = CATEGORIES.find(
     c => c.toLowerCase() === category.toLowerCase()
-  ) || 'Others';
+  ) || 'General';
 
   const { data: testimonies, isLoading } = useQuery<TestimonyWithUser[]>({
     queryKey: [`/api/testimonies/category/${category}`],

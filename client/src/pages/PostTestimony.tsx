@@ -77,7 +77,7 @@ export default function PostTestimony() {
     defaultValues: {
       userId: "",
       title: "",
-      category: "Others",
+      category: "General",
       story: "",
       isAnonymous: false,
       privacy: "public",

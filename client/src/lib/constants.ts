@@ -15,7 +15,7 @@ export const CATEGORIES = [
   'Finance',
   'Breakthrough',
   'Deliverance',
-  'Others'
+  'General'
 ] as const;
 
 export type Category = typeof CATEGORIES[number];
@@ -27,7 +27,7 @@ export const CATEGORY_COLORS: Record<Category, string> = {
   Finance: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700',
   Breakthrough: 'bg-sky-100 dark:bg-sky-900/20 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-700',
   Deliverance: 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-700',
-  Others: 'bg-slate-100 dark:bg-slate-800/30 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-600',
+  General: 'bg-slate-100 dark:bg-slate-800/30 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-600',
 };
 
 export const CATEGORY_ACCENT_COLORS: Record<Category, string> = {
@@ -37,7 +37,7 @@ export const CATEGORY_ACCENT_COLORS: Record<Category, string> = {
   Finance:      '#f59e0b',
   Breakthrough: '#0ea5e9',
   Deliverance:  '#6366f1',
-  Others:       '#64748b',
+  General:      '#64748b',
 };
 
 export const CATEGORY_META: Record<Category, {
@@ -82,9 +82,9 @@ export const CATEGORY_META: Record<Category, {
     bgLight: "bg-indigo-50",
     bgDark: "dark:bg-indigo-900/20",
   },
-  Others: {
+  General: {
     icon: Sparkles,
-    description: "Other remarkable works of God in believers' lives",
+    description: "Any other remarkable work of God in your life",
     bgLight: "bg-slate-50",
     bgDark: "dark:bg-slate-800/20",
   },
