@@ -1,0 +1,116 @@
+Instance created. Preparing to start...
+Starting download for registry01.prod.koyeb.com/k-10a8312f-ef7f-48f4-abee-88ac33bb5e75/81edf666-40a0-4631-a36d-1ebb12b96010:38002b4a-d6bd-44e4-b704-0b0208a71d2a
+Download progress: 100% |[32m++++++++[0m| (25.9 MiB/s)
+Download complete for registry01.prod.koyeb.com/k-10a8312f-ef7f-48f4-abee-88ac33bb5e75/81edf666-40a0-4631-a36d-1ebb12b96010:38002b4a-d6bd-44e4-b704-0b0208a71d2a
+
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+
+Instance is starting... Waiting for health checks to pass.
+10:52:32 AM [express] serving on port 8000
+Instance is healthy. All health checks are passing.
+Instance is stopping.
+10:52:55 AM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized"}
+10:52:56 AM [express] GET /api/faith-declaration/active 200 in 677ms
+10:52:56 AM [express] GET /api/testimonies/featured 200 in 781ms
+Instance stopped.
+10:54:08 AM [express] GET /api/auth/google 302 in 2ms
+Error sending welcome email: {
+  statusCode: 403,
+  name: 'validation_error',
+  message: 'You can only send testing emails to your own email address (testifaith2025@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain.'
+}
+10:54:16 AM [express] GET /api/auth/google/callback 302 in 2047ms
+10:54:18 AM [express] GET /api/auth/user 200 in 288ms :: {"id":"f80d0f73-649d-4fb9-9077-514a731c4ab2"…
+10:54:18 AM [express] GET /api/testimonies/my 200 in 291ms :: []
+10:54:19 AM [express] GET /api/faith-declaration/active 304 in 852ms
+10:54:19 AM [express] GET /api/testimonies/featured 304 in 957ms
+10:54:19 AM [express] GET /api/profile/onboarding-status 200 in 1419ms :: {"needsOnboarding":true,"ha…
+10:54:50 AM [express] POST /api/profile/onboarding 200 in 1434ms :: {"id":"f80d0f73-649d-4fb9-9077-51…
+10:54:51 AM [express] GET /api/profile/onboarding-status 200 in 285ms :: {"needsOnboarding":false,"ha…
+10:54:51 AM [express] GET /api/auth/user 200 in 854ms :: {"id":"f80d0f73-649d-4fb9-9077-514a731c4ab2"…
+10:55:04 AM [express] GET /api/profile 200 in 1518ms :: {"id":"f80d0f73-649d-4fb9-9077-514a731c4ab2",…
+Instance created. Preparing to start...
+Starting download for registry01.prod.koyeb.com/k-10a8312f-ef7f-48f4-abee-88ac33bb5e75/81edf666-40a0-4631-a36d-1ebb12b96010:8571424f-29a3-49fc-925e-4ad35cb8aed8
+Download progress: 100% |[32m++++++++[0m| (25.9 MiB/s)
+Download complete for registry01.prod.koyeb.com/k-10a8312f-ef7f-48f4-abee-88ac33bb5e75/81edf666-40a0-4631-a36d-1ebb12b96010:8571424f-29a3-49fc-925e-4ad35cb8aed8
+
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+
+Instance is starting... Waiting for health checks to pass.
+10:57:19 AM [express] serving on port 8000
+Instance is healthy. All health checks are passing.
+Instance is stopping.
+npm error path /workspace
+npm error command failed
+npm error signal SIGTERM
+npm error command sh -c NODE_ENV=production node dist/index.js
+npm error A complete log of this run can be found in: /tmp/npm_cache/_logs/2026-04-25T10_52_28_726Z-debug-0.log
+Instance stopped.
+11:00:27 AM [express] GET /api/admin/session 200 in 186ms :: {"authenticated":false}
+11:00:28 AM [express] GET /api/auth/user 304 in 829ms :: {"id":"f80d0f73-649d-4fb9-9077-514a731c4ab2"…
+11:00:28 AM [express] GET /api/profile/onboarding-status 304 in 276ms :: {"needsOnboarding":false,"ha…
+11:00:33 AM [express] POST /api/admin/login 200 in 819ms :: {"message":"Login successful","admin":{"i…
+11:00:33 AM [express] GET /api/admin/session 200 in 184ms :: {"authenticated":true,"adminId":"94cfe6f…
+11:00:35 AM [express] GET /api/admin/analytics 200 in 1022ms :: {"totalUsers":1,"totalTestimonies":0,…
+11:00:41 AM [express] GET /api/admin/users 200 in 278ms :: [{"id":"f80d0f73-649d-4fb9-9077-514a731c4a…
+11:00:45 AM [express] GET /api/admin/testimonies 200 in 280ms :: []
+11:00:48 AM [express] GET /api/admin/comments 200 in 277ms :: []
+11:00:51 AM [express] GET /api/admin/testimonies/approved 200 in 280ms :: []
+11:00:53 AM [express] GET /api/admin/testimonies/pending-videos 200 in 277ms :: []
+11:00:54 AM [express] GET /api/admin/faith-declarations 200 in 276ms :: []
+11:00:55 AM [express] GET /api/admin/encouragement-verses 200 in 852ms :: []
+11:01:02 AM [express] GET /api/admin/admins 200 in 285ms :: [{"id":"94cfe6f7-9756-4f0f-b124-2b98b4e95…
+11:01:17 AM [express] POST /api/admin/admins 400 in 1394ms :: {"message":"Username already exists"}
+11:01:24 AM [express] GET /api/admin/audit-logs 200 in 282ms :: []
+11:02:37 AM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized"}
+11:02:39 AM [express] GET /api/faith-declaration/active 200 in 668ms
+11:02:39 AM [express] GET /api/testimonies/featured 200 in 775ms
+Instance created. Preparing to start...
+Starting download for registry01.prod.koyeb.com/k-10a8312f-ef7f-48f4-abee-88ac33bb5e75/81edf666-40a0-4631-a36d-1ebb12b96010:29e9a72f-80dd-4da1-ba05-710dcab6fec8
+Download progress: 100% |[32m++++++++[0m| (25.9 MiB/s)
+Download complete for registry01.prod.koyeb.com/k-10a8312f-ef7f-48f4-abee-88ac33bb5e75/81edf666-40a0-4631-a36d-1ebb12b96010:29e9a72f-80dd-4da1-ba05-710dcab6fec8
+
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+
+11:03:04 AM [express] serving on port 8000
+Instance is starting... Waiting for health checks to pass.
+Instance is healthy. All health checks are passing.
+Instance is stopping.
+11:03:34 AM [express] GET /api/auth/user 401 in 2ms :: {"message":"Unauthorized"}
+11:03:39 AM [express] GET /api/faith-declaration/active 304 in 681ms
+11:03:39 AM [express] GET /api/testimonies/featured 304 in 772ms
+Instance stopped.
+11:04:04 AM [express] POST /api/admin/logout 200 in 863ms :: {"message":"Logged out successfully"}
+11:04:04 AM [express] GET /api/admin/session 200 in 1ms :: {"authenticated":false}
+11:04:27 AM [express] GET /api/auth/user 401 in 0ms :: {"message":"Unauthorized"}
+11:04:28 AM [express] GET /api/faith-declaration/active 304 in 663ms
+11:04:28 AM [express] GET /api/testimonies/featured 304 in 762ms
+11:06:01 AM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized"}
+11:06:02 AM [express] GET /api/faith-declaration/active 304 in 675ms
+11:06:02 AM [express] GET /api/testimonies/featured 304 in 771ms
+11:07:23 AM [express] GET /api/auth/google 302 in 1ms
+11:07:29 AM [express] GET /api/auth/google/callback 302 in 1673ms
+11:08:05 AM [express] GET /api/auth/user 304 in 835ms :: {"id":"f80d0f73-649d-4fb9-9077-514a731c4ab2"…
+11:08:05 AM [express] GET /api/profile/onboarding-status 304 in 284ms :: {"needsOnboarding":false,"ha…
+11:08:06 AM [express] GET /api/faith-declaration/active 304 in 829ms
+11:08:06 AM [express] GET /api/testimonies/featured 304 in 926ms
+11:08:07 AM [express] GET /api/testimonies/my 304 in 1414ms :: []
+Instance created. Preparing to start...
+
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+
+Starting download for registry01.prod.koyeb.com/k-10a8312f-ef7f-48f4-abee-88ac33bb5e75/81edf666-40a0-4631-a36d-1ebb12b96010:29e9a72f-80dd-4da1-ba05-710dcab6fec8
+Download progress: 100% |[32m++++++++[0m| (25.9 MiB/s)
+Download complete for registry01.prod.koyeb.com/k-10a8312f-ef7f-48f4-abee-88ac33bb5e75/81edf666-40a0-4631-a36d-1ebb12b96010:29e9a72f-80dd-4da1-ba05-710dcab6fec8
+Instance is starting... Waiting for health checks to pass.
+11:22:45 AM [express] serving on port 8000
+Instance is healthy. All health checks are passing.
+11:24:46 AM [express] GET /api/auth/user 304 in 860ms :: {"id":"f80d0f73-649d-4fb9-9077-514a731c4ab2"…
+11:24:47 AM [express] GET /api/profile/onboarding-status 304 in 280ms :: {"needsOnboarding":false,"ha…
+11:25:22 AM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized"}
+11:25:22 AM [express] GET /api/faith-declaration/active 304 in 666ms
+11:25:23 AM [express] GET /api/testimonies/featured 304 in 745ms
