@@ -7,6 +7,7 @@ import { insertTestimonySchema, insertEncouragementVerseSchema, insertCommentSch
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { ObjectStorageService } from "./replit_integrations/object_storage";
+import { s3StorageService } from "./s3Storage";
 import webpush from "web-push";
 
 // Configure web-push
@@ -57,7 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
-  // Object storage service
+  // Object storage service (Replit — used as fallback in dev if S3 not configured)
   const objectStorageService = new ObjectStorageService();
 
   // Video upload routes (protected)
@@ -77,7 +78,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (size && size > maxSize) {
         return res.status(400).json({ error: "Video file too large. Maximum size is 100MB." });
       }
-      
+
+      // Use S3 when configured (production/Koyeb), fall back to Replit Object Storage
+      if (s3StorageService.isConfigured()) {
+        const { uploadURL, objectPath } = await s3StorageService.getVideoUploadURL(contentType);
+        return res.json({ uploadURL, objectPath, metadata: { name, size, contentType } });
+      }
+
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
       const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
       
@@ -95,6 +102,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded objects
   app.get('/objects/:objectPath(*)', async (req, res) => {
     try {
+      // S3 path: redirect browser to a presigned GET URL (no server bandwidth used)
+      if (s3StorageService.isConfigured()) {
+        const objectPath = req.path; // e.g. /objects/uploads/<uuid>
+        const exists = await s3StorageService.objectExists(objectPath);
+        if (!exists) return res.status(404).json({ error: "Object not found" });
+        const presignedUrl = await s3StorageService.getPresignedGetURL(objectPath, 3600);
+        return res.redirect(302, presignedUrl);
+      }
+
+      // Replit Object Storage fallback
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       await objectStorageService.downloadObject(objectFile, res);
     } catch (error) {

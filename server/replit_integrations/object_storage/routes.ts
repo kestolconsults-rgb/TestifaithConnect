@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { s3StorageService } from "../../s3Storage";
 
 /**
  * Register object storage routes for file uploads.
@@ -40,20 +41,21 @@ export function registerObjectStorageRoutes(app: Express): void {
       const { name, size, contentType } = req.body;
 
       if (!name) {
-        return res.status(400).json({
-          error: "Missing required field: name",
-        });
+        return res.status(400).json({ error: "Missing required field: name" });
+      }
+
+      // Use S3 when configured (production/Koyeb), fall back to Replit Object Storage
+      if (s3StorageService.isConfigured()) {
+        const { uploadURL, objectPath } = await s3StorageService.getVideoUploadURL(contentType);
+        return res.json({ uploadURL, objectPath, metadata: { name, size, contentType } });
       }
 
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-
-      // Extract object path from the presigned URL for later reference
       const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
 
       res.json({
         uploadURL,
         objectPath,
-        // Echo back the metadata for client convenience
         metadata: { name, size, contentType },
       });
     } catch (error) {

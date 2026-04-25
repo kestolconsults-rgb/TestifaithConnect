@@ -61,7 +61,7 @@ The app is a **mobile-first PWA** with a bottom tab bar (Home, Community, FAB, B
 - **Development Tools**: TSX, esbuild, Replit Vite Plugins
 
 ## External Dependencies (continued)
-- **Object Storage**: Replit App Storage for video file hosting with presigned URL uploads
+- **Object Storage**: S3-compatible storage for video file hosting with presigned URL uploads. Uses Replit Object Storage in dev (when S3 env vars not set), and any S3-compatible provider (Cloudflare R2, AWS S3, etc.) in production via `server/s3Storage.ts`. Required env vars: `S3_BUCKET_NAME`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and optionally `S3_ENDPOINT` for non-AWS providers.
 - **Email Service**: Resend for transactional emails (welcome emails for new users)
 - **Push Notifications**: web-push (VAPID) for PWA push notifications; `push_subscriptions` table in DB; service worker at `client/public/sw.js`
 
