@@ -102,14 +102,13 @@ export function Unified() {
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-2 pb-3">
+      <div className="flex items-center justify-between px-6 pt-1 pb-3">
         <div>
-          <h1 className="font-['League_Spartan'] text-3xl font-bold tracking-tight" style={{ color: dark ? "#fff" : "#ef4444" }}>
-            Testifaith
-          </h1>
-          <p className="text-xs mt-0.5" style={{ color: t.textSub }}>
-            {dark ? "Share what God has done" : "Good morning, Sarah"}
-          </p>
+          <img
+            src={dark ? "/__mockup/images/logo-dark.png" : "/__mockup/images/logo-light.png"}
+            alt="Testifaith"
+            style={{ height: dark ? "44px" : "56px", width: "auto" }}
+          />
         </div>
         <div className="flex items-center gap-2">
           <button
