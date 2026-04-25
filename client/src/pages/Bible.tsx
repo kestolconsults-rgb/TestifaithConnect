@@ -267,16 +267,22 @@ function ReadingView({
   versionId,
   versionAbbrev,
   premiumBibleId,
+  premiumVersions,
   onBack,
   onChapterChange,
+  onSelectFreeVersion,
+  onSelectPremiumVersion,
 }: {
   book: BibleBook;
   chapter: number;
   versionId: string;
   versionAbbrev: string;
   premiumBibleId: string | null;
+  premiumVersions: PremiumVersionInfo[];
   onBack: () => void;
   onChapterChange: (ch: number) => void;
+  onSelectFreeVersion: (id: string) => void;
+  onSelectPremiumVersion: (v: PremiumVersionInfo) => void;
 }) {
   const isPremium = !!premiumBibleId;
 
@@ -304,9 +310,15 @@ function ReadingView({
           <ArrowLeft className="w-4 h-4" />
           {book.name}
         </button>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground font-medium">{versionAbbrev}</span>
+        <div className="flex items-center gap-3">
           <span className="text-sm font-bold text-foreground">Ch. {chapter}</span>
+          <VersionPicker
+            selectedId={versionId}
+            selectedAbbrev={versionAbbrev}
+            onSelectFree={onSelectFreeVersion}
+            onSelectPremium={onSelectPremiumVersion}
+            premiumVersions={premiumVersions}
+          />
         </div>
       </div>
 
@@ -567,8 +579,11 @@ export default function Bible() {
         versionId={versionId}
         versionAbbrev={versionAbbrev}
         premiumBibleId={premiumBibleId}
+        premiumVersions={premiumVersions}
         onBack={() => { setView("chapters"); window.scrollTo(0, 0); }}
         onChapterChange={(ch) => { setSelectedChapter(ch); window.scrollTo(0, 0); }}
+        onSelectFreeVersion={handleSelectFreeVersion}
+        onSelectPremiumVersion={handleSelectPremiumVersion}
       />
     );
   }
