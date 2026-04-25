@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Lock, Heart, Star, ChevronRight, Plus } from "lucide-react";
+import { BookOpen, Lock, Heart, Star, ChevronRight, Plus, Sparkles, LogIn } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow, format } from "date-fns";
 import type { TestimonyWithUser, EncouragementVerse, FaithDeclaration } from "@shared/schema";
@@ -155,8 +155,9 @@ export default function Home() {
         )}
       </section>
 
-      {/* God's Faithfulness — Private Journal */}
+      {/* God's Faithfulness — Private Journal (auth) / Sign-in CTA (guest) */}
       <section className="px-5 mb-6">
+        {!user ? null : (
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
@@ -170,9 +171,58 @@ export default function Home() {
             </button>
           </Link>
         </div>
-        <p className="text-xs text-muted-foreground mb-3">Your private faith journal — only visible to you</p>
+        )}
+        {user && <p className="text-xs text-muted-foreground mb-3">Your private faith journal — only visible to you</p>}
 
-        {myLoading ? (
+        {!user ? (
+          /* Guest sign-in CTA */
+          <div
+            className="rounded-2xl p-6 border"
+            style={{
+              background: "color-mix(in srgb, hsl(var(--primary)) 5%, hsl(var(--background)))",
+              borderColor: "color-mix(in srgb, hsl(var(--primary)) 18%, transparent)",
+            }}
+            data-testid="guest-signin-cta"
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: "color-mix(in srgb, hsl(var(--primary)) 12%, transparent)" }}
+              >
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-['League_Spartan'] text-sm font-bold text-foreground mb-1">
+                  Keep a private faith journal
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                  Record the moments God shows up — healings, answered prayers, breakthroughs — visible only to you.
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  <Link href="/signin">
+                    <button
+                      className="flex items-center gap-1.5 text-xs font-semibold text-white px-4 py-2 rounded-full"
+                      style={{ background: "#ef4444" }}
+                      data-testid="button-signin-cta-home"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      Sign In
+                    </button>
+                  </Link>
+                  <Link href="/create-account">
+                    <button
+                      className="text-xs font-semibold px-4 py-2 rounded-full border"
+                      style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}
+                      data-testid="button-create-account-cta-home"
+                    >
+                      Create account
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : myLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-28 rounded-2xl" />
             <Skeleton className="h-28 rounded-2xl" />

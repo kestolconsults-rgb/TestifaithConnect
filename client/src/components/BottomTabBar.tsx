@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Users, Plus, BookOpen, User, Feather, Sparkles, HelpCircle } from "lucide-react";
+import { Home, Users, Plus, BookOpen, User, Feather, Sparkles, HelpCircle, LogIn } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -11,7 +11,7 @@ const TABS = [
   { label: "Profile", icon: User, href: "/profile" },
 ] as const;
 
-const FAB_ACTIONS = [
+const AUTH_FAB_ACTIONS = [
   {
     icon: Feather,
     label: "Journal Your Faith",
@@ -35,16 +35,50 @@ const FAB_ACTIONS = [
   },
 ] as const;
 
+const GUEST_FAB_ACTIONS = [
+  {
+    icon: Feather,
+    label: "Share Your Testimony",
+    sublabel: "Sign in to share what God has done",
+    color: "#ef4444",
+    href: "/signin",
+  },
+  {
+    icon: Sparkles,
+    label: "Get Encouraged",
+    sublabel: "Receive a word for today",
+    color: "#f59e0b",
+    href: "/bible",
+  },
+  {
+    icon: LogIn,
+    label: "Sign In or Create Account",
+    sublabel: "Unlock your full faith community",
+    color: "#3b82f6",
+    href: "/signin",
+  },
+] as const;
+
 export default function BottomTabBar() {
   const [location, navigate] = useLocation();
   const [fabOpen, setFabOpen] = useState(false);
   const { isAuthenticated } = useAuth();
 
-  if (!isAuthenticated) return null;
+  const FAB_ACTIONS = isAuthenticated ? AUTH_FAB_ACTIONS : GUEST_FAB_ACTIONS;
 
   const isActive = (href: string) => {
     if (href === "/home") return location === "/" || location === "/home";
     return location.startsWith(href);
+  };
+
+  const handleTabClick = (href: string) => {
+    setFabOpen(false);
+    // Profile tab for guests → sign in
+    if (href === "/profile" && !isAuthenticated) {
+      navigate("/signin");
+      return;
+    }
+    navigate(href);
   };
 
   return (
@@ -66,7 +100,7 @@ export default function BottomTabBar() {
               <button
                 key={action.label}
                 onClick={() => { setFabOpen(false); navigate(action.href); }}
-                className="flex items-center gap-4 rounded-2xl p-4 border text-left w-full transition-all hover-elevate"
+                className="flex items-center gap-4 rounded-2xl p-4 border text-left w-full hover-elevate"
                 style={{
                   background: "hsl(var(--card))",
                   borderColor: "hsl(var(--border))",
@@ -118,19 +152,32 @@ export default function BottomTabBar() {
             }
 
             const Icon = tab.icon;
-            const active = isActive(tab.href);
+            const active = tab.href === "/profile"
+              ? (isAuthenticated && isActive(tab.href))
+              : isActive(tab.href);
+
+            // Profile tab for non-auth shows sign-in indicator
+            const isProfileGuest = tab.href === "/profile" && !isAuthenticated;
 
             return (
-              <Link key={tab.label} href={tab.href} onClick={() => setFabOpen(false)}>
-                <button
-                  className="flex flex-col items-center gap-1 py-3 px-3 min-w-[56px] transition-colors"
-                  style={{ color: active ? "#ef4444" : "hsl(var(--muted-foreground))" }}
-                  data-testid={`tab-${tab.label.toLowerCase()}`}
-                >
-                  <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
-                  <span className="text-[10px] font-medium leading-none">{tab.label}</span>
-                </button>
-              </Link>
+              <button
+                key={tab.label}
+                className="flex flex-col items-center gap-1 py-3 px-3 min-w-[56px] transition-colors relative"
+                style={{ color: active ? "#ef4444" : "hsl(var(--muted-foreground))" }}
+                onClick={() => handleTabClick(tab.href)}
+                data-testid={`tab-${tab.label.toLowerCase()}`}
+              >
+                <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
+                <span className="text-[10px] font-medium leading-none">
+                  {isProfileGuest ? "Sign In" : tab.label}
+                </span>
+                {/* Dot indicator for guest profile tab */}
+                {isProfileGuest && (
+                  <span
+                    className="absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full bg-primary"
+                  />
+                )}
+              </button>
             );
           })}
         </div>

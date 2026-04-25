@@ -9,11 +9,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useLocation } from "wouter";
 
 export default function MobileHeader() {
   const { theme, toggleTheme } = useTheme();
   const { isAuthenticated } = useAuth();
   const { supported, permission, isSubscribed, isLoading, subscribe, unsubscribe } = usePushNotifications();
+  const [, navigate] = useLocation();
 
   const showBellDot = isAuthenticated && supported && !isSubscribed && permission !== "denied";
   const bellActive = isAuthenticated && isSubscribed;
@@ -74,17 +76,24 @@ export default function MobileHeader() {
           </Tooltip>
         )}
 
-        {/* Non-authenticated bell placeholder (decorative, no action) */}
+        {/* Non-authenticated bell — tap to sign in */}
         {!isAuthenticated && (
-          <button
-            className="relative w-9 h-9 flex items-center justify-center rounded-full border bg-card"
-            style={{ borderColor: "hsl(var(--border))" }}
-            data-testid="button-notifications"
-            aria-label="Notifications"
-            disabled
-          >
-            <Bell className="w-[18px] h-[18px] text-muted-foreground" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className="relative w-9 h-9 flex items-center justify-center rounded-full border bg-card hover-elevate"
+                style={{ borderColor: "hsl(var(--border))" }}
+                onClick={() => navigate("/signin")}
+                data-testid="button-notifications"
+                aria-label="Sign in to enable notifications"
+              >
+                <Bell className="w-[18px] h-[18px] text-muted-foreground" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              Sign in to enable notifications
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {/* Theme Toggle */}

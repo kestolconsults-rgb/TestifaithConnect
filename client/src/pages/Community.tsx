@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Search, Play, Heart, MessageCircle, Globe, RefreshCw } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { TestimonyWithUser } from "@shared/schema";
@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { EmptyState } from "@/components/EmptyState";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 const ALL_CATEGORIES = ["All", ...CATEGORIES] as const;
 
@@ -87,6 +89,8 @@ function TestimonyRow({ testimony, currentUser }: { testimony: TestimonyWithUser
   const [amenAnimating, setAmenAnimating] = useState(false);
   const [localAmen, setLocalAmen] = useState(testimony.userHasAmen);
   const [localCount, setLocalCount] = useState(testimony.amenCount || 0);
+  const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const amenMutation = useMutation({
     mutationFn: async () => apiRequest("POST", `/api/testimonies/${testimony.id}/amen`),
@@ -97,7 +101,18 @@ function TestimonyRow({ testimony, currentUser }: { testimony: TestimonyWithUser
   });
 
   const handleAmen = () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      toast({
+        title: "Sign in to say Amen",
+        description: "Join the community to encourage your brothers and sisters in faith.",
+        action: (
+          <ToastAction altText="Sign in" onClick={() => navigate("/signin")}>
+            Sign in
+          </ToastAction>
+        ),
+      });
+      return;
+    }
     const next = !localAmen;
     setLocalAmen(next);
     setLocalCount((c) => next ? c + 1 : Math.max(0, c - 1));
