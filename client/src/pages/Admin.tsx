@@ -12,7 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, LogOut, Star, StarOff, Plus, Trash2, Check, Video, X, CheckCircle,
   BarChart3, Users, MessageSquare, BookOpen, Shield, History,
-  UserX, UserCheck, Eye, EyeOff, Calendar, Heart, HandHeart, Upload, Play
+  UserX, UserCheck, Eye, EyeOff, Calendar, Heart, HandHeart, Upload, Play,
+  Headphones, ChevronDown, ChevronUp, Mail, Clock
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -1696,6 +1697,206 @@ function AuditLogs() {
   );
 }
 
+type SupportMsg = {
+  id: string;
+  userId: string | null;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: string;
+  adminNote: string | null;
+  createdAt: string | null;
+  resolvedAt: string | null;
+  user: { firstName: string | null; lastName: string | null; email: string | null } | null;
+};
+
+function SupportMessages() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [noteId, setNoteId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState("");
+
+  const { data: messages = [], isLoading } = useQuery<SupportMsg[]>({
+    queryKey: ["/api/admin/support-messages"],
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, update }: { id: string; update: Record<string, string | null> }) =>
+      apiRequest("PATCH", `/api/admin/support-messages/${id}`, update),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/support-messages"] });
+      setNoteId(null);
+      setNoteText("");
+    },
+    onError: () => toast({ variant: "destructive", title: "Update failed" }),
+  });
+
+  const statusColor: Record<string, string> = {
+    open: "bg-red-500/20 text-red-400 border-red-500/30",
+    read: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    resolved: "bg-green-500/20 text-green-400 border-green-500/30",
+  };
+
+  const openCount = messages.filter((m) => m.status === "open").length;
+
+  return (
+    <Card className="bg-zinc-900 border-zinc-800">
+      <CardHeader>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Headphones className="w-5 h-5" />
+              Support Messages
+              {openCount > 0 && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-500 text-white">
+                  {openCount} new
+                </span>
+              )}
+            </CardTitle>
+            <CardDescription className="text-zinc-400 mt-1">
+              Messages submitted by users through the Help &amp; Support form
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="text-center py-12 text-zinc-500">
+            <Mail className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p>No support messages yet</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {messages.map((msg) => (
+              <div key={msg.id} className="rounded-lg border border-zinc-800 bg-zinc-950 overflow-hidden">
+                {/* Header row */}
+                <div className="flex items-start justify-between gap-3 p-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusColor[msg.status] ?? statusColor.open}`}>
+                        {msg.status}
+                      </span>
+                      <span className="text-white font-medium text-sm truncate">{msg.subject}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 flex-wrap">
+                      <span className="font-medium text-zinc-400">{msg.name}</span>
+                      <span>·</span>
+                      <span>{msg.email}</span>
+                      <span>·</span>
+                      <Clock className="w-3 h-3" />
+                      <span>{msg.createdAt ? new Date(msg.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setExpandedId(expandedId === msg.id ? null : msg.id)}
+                    className="text-zinc-400 hover:text-white transition-colors shrink-0 mt-0.5"
+                    data-testid={`button-expand-message-${msg.id}`}
+                  >
+                    {expandedId === msg.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {/* Expanded content */}
+                {expandedId === msg.id && (
+                  <div className="border-t border-zinc-800 px-4 pb-4 pt-3 space-y-4">
+                    <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+
+                    {/* Admin note */}
+                    {noteId === msg.id ? (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={noteText}
+                          onChange={(e) => setNoteText(e.target.value)}
+                          placeholder="Add an internal note…"
+                          className="bg-zinc-900 border-zinc-700 text-white text-sm min-h-[80px] resize-none"
+                          data-testid={`input-admin-note-${msg.id}`}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => updateMutation.mutate({ id: msg.id, update: { adminNote: noteText } })}
+                            disabled={updateMutation.isPending}
+                            data-testid={`button-save-note-${msg.id}`}
+                          >
+                            {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                            Save note
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-zinc-400" onClick={() => setNoteId(null)}>Cancel</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        {msg.adminNote && (
+                          <div className="text-xs text-zinc-500 bg-zinc-900 rounded p-2 mb-2 italic">
+                            Note: {msg.adminNote}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => { setNoteId(msg.id); setNoteText(msg.adminNote ?? ""); }}
+                          className="text-xs text-zinc-500 hover:text-zinc-300 underline"
+                          data-testid={`button-add-note-${msg.id}`}
+                        >
+                          {msg.adminNote ? "Edit note" : "Add internal note"}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Status actions */}
+                    <div className="flex gap-2 flex-wrap pt-1">
+                      {msg.status === "open" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/10"
+                          onClick={() => updateMutation.mutate({ id: msg.id, update: { status: "read" } })}
+                          disabled={updateMutation.isPending}
+                          data-testid={`button-mark-read-${msg.id}`}
+                        >
+                          <Eye className="w-3 h-3 mr-1" /> Mark as read
+                        </Button>
+                      )}
+                      {msg.status !== "resolved" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-green-400 border-green-500/30 hover:bg-green-500/10"
+                          onClick={() => updateMutation.mutate({ id: msg.id, update: { status: "resolved" } })}
+                          disabled={updateMutation.isPending}
+                          data-testid={`button-resolve-${msg.id}`}
+                        >
+                          <CheckCircle className="w-3 h-3 mr-1" /> Mark as resolved
+                        </Button>
+                      )}
+                      {msg.status === "resolved" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-zinc-500"
+                          onClick={() => updateMutation.mutate({ id: msg.id, update: { status: "open" } })}
+                          disabled={updateMutation.isPending}
+                          data-testid={`button-reopen-${msg.id}`}
+                        >
+                          Reopen
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const { toast } = useToast();
 
@@ -1766,6 +1967,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <TabsTrigger value="admins" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-admins">
                 <Shield className="w-4 h-4 mr-2" />
                 Admins
+              </TabsTrigger>
+              <TabsTrigger value="support" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-support">
+                <Headphones className="w-4 h-4 mr-2" />
+                Support
               </TabsTrigger>
               <TabsTrigger value="logs" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-logs">
                 <History className="w-4 h-4 mr-2" />
@@ -1899,6 +2104,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <AdminUserManagement />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="support" className="mt-6">
+            <SupportMessages />
           </TabsContent>
 
           <TabsContent value="logs" className="mt-6">

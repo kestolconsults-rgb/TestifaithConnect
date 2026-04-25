@@ -13,11 +13,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
-import { updateProfileSchema, updateSettingsSchema, addPasswordSchema } from "@shared/schema";
+import { updateProfileSchema, updateSettingsSchema, addPasswordSchema, insertSupportMessageSchema, type InsertSupportMessage } from "@shared/schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, User as UserIcon, Bell, Shield, Loader2, Lock, Check, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, User as UserIcon, Bell, Shield, Loader2, Lock, Check, Eye, EyeOff, Headphones, Send, CheckCircle2 } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import { Link } from "wouter";
 import { z } from "zod";
@@ -45,6 +45,7 @@ export default function Settings() {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [supportSent, setSupportSent] = useState(false);
 
   const { data: profile, isLoading } = useQuery<ProfileWithStats>({
     queryKey: ["/api/profile"],
@@ -146,6 +147,22 @@ export default function Settings() {
         description: error.message || "Failed to add password. Please try again.",
         variant: "destructive",
       });
+    },
+  });
+
+  const supportForm = useForm<InsertSupportMessage>({
+    resolver: zodResolver(insertSupportMessageSchema),
+    defaultValues: { name: "", email: "", subject: "", message: "", userId: undefined },
+  });
+
+  const supportMutation = useMutation({
+    mutationFn: async (data: InsertSupportMessage) => apiRequest("POST", "/api/support", data),
+    onSuccess: () => {
+      setSupportSent(true);
+      supportForm.reset();
+    },
+    onError: (error: any) => {
+      toast({ variant: "destructive", title: "Failed to send", description: error.message || "Please try again." });
     },
   });
 
@@ -612,6 +629,127 @@ export default function Settings() {
                   Your account is fully linked! You can sign in with either Google or your email and password.
                 </p>
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Help & Support */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Headphones className="w-5 h-5 text-primary" />
+              <div>
+                <CardTitle className="text-base">Help &amp; Support</CardTitle>
+                <CardDescription className="text-sm mt-0.5">
+                  Send a message to the Testifaith team — we usually respond within 24 hours.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {supportSent ? (
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <CheckCircle2 className="w-10 h-10 text-green-500" />
+                <p className="font-semibold text-foreground">Message sent!</p>
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  Thank you for reaching out. Our team will get back to you shortly.
+                </p>
+                <Button variant="outline" size="sm" onClick={() => setSupportSent(false)} data-testid="button-send-another">
+                  Send another message
+                </Button>
+              </div>
+            ) : (
+              <Form {...supportForm}>
+                <form
+                  onSubmit={supportForm.handleSubmit((data) => supportMutation.mutate(data))}
+                  className="space-y-4"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={supportForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Your name</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder={profile ? `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() || "Your name" : "Your name"}
+                              data-testid="input-support-name"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={supportForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email address</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder={profile?.email ?? "you@example.com"}
+                              data-testid="input-support-email"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={supportForm.control}
+                    name="subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="What is this about?"
+                            data-testid="input-support-subject"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={supportForm.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Message</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Describe your question or issue in as much detail as you can…"
+                            className="min-h-[120px] resize-none"
+                            data-testid="input-support-message"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={supportMutation.isPending}
+                    data-testid="button-send-support"
+                  >
+                    {supportMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4 mr-2" />
+                    )}
+                    Send message
+                  </Button>
+                </form>
+              </Form>
             )}
           </CardContent>
         </Card>

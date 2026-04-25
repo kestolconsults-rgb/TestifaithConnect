@@ -541,6 +541,36 @@ export type AuditLogWithAdmin = AuditLog & {
   admin?: Admin;
 };
 
+// Support messages table
+export const supportMessages = pgTable("support_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 200 }).notNull(),
+  message: text("message").notNull(),
+  status: varchar("status", { length: 20 }).default("open").notNull(), // open | read | resolved
+  adminNote: text("admin_note"),
+  createdAt: timestamp("created_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export const insertSupportMessageSchema = createInsertSchema(supportMessages).omit({
+  id: true,
+  status: true,
+  adminNote: true,
+  createdAt: true,
+  resolvedAt: true,
+}).extend({
+  name: z.string().min(1, "Name is required").max(100),
+  email: z.string().email("A valid email is required"),
+  subject: z.string().min(3, "Please add a subject").max(200),
+  message: z.string().min(10, "Please provide more detail (at least 10 characters)").max(2000),
+});
+
+export type InsertSupportMessage = z.infer<typeof insertSupportMessageSchema>;
+export type SupportMessage = typeof supportMessages.$inferSelect;
+
 // Password reset tokens table
 export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

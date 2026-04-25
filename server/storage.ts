@@ -13,6 +13,9 @@ import {
   adminAuditLogs,
   pushSubscriptions,
   passwordResetTokens,
+  supportMessages,
+  type SupportMessage,
+  type InsertSupportMessage,
   type PasswordResetToken,
   type PushSubscription,
   type InsertPushSubscription,
@@ -194,6 +197,11 @@ export interface IStorage {
   // Audit logging
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
   getAuditLogs(limit?: number): Promise<AuditLogWithAdmin[]>;
+
+  // Support messages
+  createSupportMessage(msg: InsertSupportMessage): Promise<SupportMessage>;
+  getSupportMessages(): Promise<(SupportMessage & { user: User | null })[]>;
+  updateSupportMessage(id: string, update: Partial<Pick<SupportMessage, "status" | "adminNote" | "resolvedAt">>): Promise<SupportMessage | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1514,6 +1522,29 @@ export class DatabaseStorage implements IStorage {
       ...row.admin_audit_logs,
       admin: row.admins || undefined,
     }));
+  }
+
+  async createSupportMessage(msg: InsertSupportMessage): Promise<SupportMessage> {
+    const [created] = await db.insert(supportMessages).values(msg).returning();
+    return created;
+  }
+
+  async getSupportMessages(): Promise<(SupportMessage & { user: User | null })[]> {
+    const rows = await db
+      .select()
+      .from(supportMessages)
+      .leftJoin(users, eq(supportMessages.userId, users.id))
+      .orderBy(desc(supportMessages.createdAt));
+    return rows.map((row) => ({ ...row.support_messages, user: row.users ?? null }));
+  }
+
+  async updateSupportMessage(id: string, update: Partial<Pick<SupportMessage, "status" | "adminNote" | "resolvedAt">>): Promise<SupportMessage | undefined> {
+    const [updated] = await db
+      .update(supportMessages)
+      .set(update)
+      .where(eq(supportMessages.id, id))
+      .returning();
+    return updated;
   }
 }
 

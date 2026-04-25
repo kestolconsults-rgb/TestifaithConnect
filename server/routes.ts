@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./googleAuth";
 import { isAdminAuthenticated, verifyPassword, createInitialAdmin, hashPassword, checkLoginRateLimit, recordLoginAttempt, regenerateSession, destroySession } from "./adminAuth";
-import { insertTestimonySchema, insertEncouragementVerseSchema, insertCommentSchema, insertFaithDeclarationSchema, updateProfileSchema, updateSettingsSchema, completeOnboardingSchema, addPasswordSchema, insertFaithExpectationSchema, insertExpectationMilestoneSchema, insertExpectationScriptureSchema, answerExpectationSchema, updateMilestoneStatusSchema } from "@shared/schema";
+import { insertTestimonySchema, insertEncouragementVerseSchema, insertCommentSchema, insertFaithDeclarationSchema, updateProfileSchema, updateSettingsSchema, completeOnboardingSchema, addPasswordSchema, insertFaithExpectationSchema, insertExpectationMilestoneSchema, insertExpectationScriptureSchema, answerExpectationSchema, updateMilestoneStatusSchema, insertSupportMessageSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { ObjectStorageService } from "./replit_integrations/object_storage";
@@ -1791,6 +1791,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("api.bible chapter error:", err);
       res.status(502).json({ message: "Failed to fetch chapter" });
+    }
+  });
+
+  // ── Support messages ────────────────────────────────────────────────────────
+  // POST /api/support — any user (authenticated or not) can submit
+  app.post('/api/support', async (req: Request, res) => {
+    try {
+      const parsed = insertSupportMessageSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0].message });
+      }
+      const userId = (req as any).user?.id ?? null;
+      const msg = await storage.createSupportMessage({ ...parsed.data, userId });
+      res.json(msg);
+    } catch (err: any) {
+      console.error("Support message error:", err);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // GET /api/admin/support-messages — admin only
+  app.get('/api/admin/support-messages', isAdminAuthenticated, async (_req, res) => {
+    try {
+      const msgs = await storage.getSupportMessages();
+      res.json(msgs);
+    } catch (err: any) {
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // PATCH /api/admin/support-messages/:id — update status / add note
+  app.patch('/api/admin/support-messages/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, adminNote } = req.body as { status?: string; adminNote?: string };
+      const update: any = {};
+      if (status) update.status = status;
+      if (adminNote !== undefined) update.adminNote = adminNote;
+      if (status === 'resolved') update.resolvedAt = new Date();
+      else if (status === 'open' || status === 'read') update.resolvedAt = null;
+      const msg = await storage.updateSupportMessage(id, update);
+      if (!msg) return res.status(404).json({ message: "Message not found" });
+      res.json(msg);
+    } catch (err: any) {
+      res.status(500).json({ message: "Failed to update message" });
     }
   });
 
