@@ -58,9 +58,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
-  // Redirect bare root to /home so testifaith.com works the same as testifaith.com/home
-  app.get("/", (_req: Request, res: Response) => {
-    res.redirect(301, "/home");
+  // Health check endpoint for Koyeb (and any other uptime monitors)
+  app.get("/health", (_req: Request, res: Response) => {
+    res.status(200).json({ status: "ok" });
+  });
+
+  // Root path: redirect browsers to /home, but return 200 for health checks
+  app.get("/", (req: Request, res: Response) => {
+    if (req.accepts("html")) {
+      res.redirect(302, "/home");
+    } else {
+      res.status(200).json({ status: "ok" });
+    }
   });
 
   // Object storage service (Replit — used as fallback in dev if S3 not configured)
