@@ -24,39 +24,39 @@ interface StorySection {
 const STORY_SECTIONS: StorySection[] = [
   {
     id: "beginning",
-    title: "The Beginning",
-    subtitle: "Where your story starts",
-    prompt: "Describe your situation before God's intervention. What challenges, struggles, or circumstances were you facing? Paint a picture of where you were in life and in your faith.",
+    title: "Before He Moved",
+    subtitle: "What was life like going into this?",
+    prompt: "Where were you when this started? What were you carrying — emotionally, spiritually, practically? Don't dress it up. Write it the way it felt.",
     icon: BookOpen,
-    placeholder: "Share what your life or situation looked like before this testimony...\n\nExample: 'For months, I struggled with...' or 'I found myself in a difficult season where...'",
-    scripture: "\"In my distress I called to the Lord; I cried to my God for help.\" - Psalm 18:6"
+    placeholder: "Write whatever comes naturally. What was happening in your life before God stepped in?\n\nExample: 'For months I had been...' or 'I was at a point where I didn't know how...'",
+    scripture: "\"In my distress I called to the Lord; I cried to my God for help.\" — Psalm 18:6"
   },
   {
     id: "turning_point",
-    title: "The Turning Point",
-    subtitle: "When God showed up",
-    prompt: "Describe how God intervened in your situation. What happened? Was it a prayer answered, a sign, a person He sent, or a supernatural experience? Share the moment things began to change.",
+    title: "When Things Shifted",
+    subtitle: "What happened? When did you notice God in it?",
+    prompt: "At what point did something change? Was it a moment, a word, a person He sent, a prayer, a peace that came from nowhere? Describe it as honestly as you can.",
     icon: Sparkles,
-    placeholder: "Tell us about the moment God stepped in...\n\nExample: 'One day, while I was praying...' or 'God sent someone into my life who...'",
-    scripture: "\"I sought the Lord, and he answered me; he delivered me from all my fears.\" - Psalm 34:4"
+    placeholder: "When did you sense God moving? What did He do, say, or send?\n\nExample: 'One afternoon while I was...' or 'Out of nowhere, someone said to me...'",
+    scripture: "\"I sought the Lord, and he answered me; he delivered me from all my fears.\" — Psalm 34:4"
   },
   {
     id: "transformation",
-    title: "The Transformation",
-    subtitle: "How everything changed",
-    prompt: "Share the outcome and how your situation was transformed. What is different now? How has this experience strengthened your faith and relationship with God?",
+    title: "What He Did",
+    subtitle: "The answer, the change, the miracle — write it plainly.",
+    prompt: "Name what God did. Don't understate it. This is the part where you declare His faithfulness — write it clearly, specifically, and with gratitude.",
     icon: Sun,
-    placeholder: "Describe how things are different now...\n\nExample: 'Today, I can testify that...' or 'This experience has taught me...'",
-    scripture: "\"He put a new song in my mouth, a hymn of praise to our God.\" - Psalm 40:3"
+    placeholder: "What changed? What did He do? Be specific.\n\nExample: 'The results came back and...' or 'Within days, the situation...' or 'I woke up one morning and...'",
+    scripture: "\"He put a new song in my mouth, a hymn of praise to our God.\" — Psalm 40:3"
   },
   {
     id: "encouragement",
-    title: "Words of Encouragement",
-    subtitle: "Your message to others",
-    prompt: "What would you like to say to someone going through a similar situation? Share a word of hope, a lesson learned, or encouragement for others facing the same struggle.",
+    title: "What You're Carrying Forward",
+    subtitle: "What do you want to remember about this?",
+    prompt: "What lesson, reminder, or truth has stayed with you? And if someone is in the same place you were — what would you want them to know?",
     icon: Heart,
-    placeholder: "Leave an encouraging message for others...\n\nExample: 'If you're going through something similar, I want you to know...' or 'Hold on to faith because...'",
-    scripture: "\"Praise be to the God and Father of our Lord Jesus Christ, who comforts us in all our troubles, so that we can comfort those in any trouble.\" - 2 Corinthians 1:3-4"
+    placeholder: "Write what you'd say to yourself a year ago, or to someone in the middle of what you just came through.\n\nExample: 'What I know now that I didn't know then is...' or 'If you're reading this and you're still waiting...'",
+    scripture: "\"Praise be to the God and Father of our Lord Jesus Christ, who comforts us in all our troubles, so that we can comfort those in any trouble.\" — 2 Corinthians 1:3-4"
   }
 ];
 
@@ -85,11 +85,11 @@ export function GuidedTestimonyEditor({ value, onChange, isVideoMode = false }: 
       transformation: "",
       encouragement: ""
     };
-    
-    const beginningMatch = content.match(/\*\*The Beginning\*\*\n([\s\S]*?)(?=\n\n\*\*|$)/);
-    const turningMatch = content.match(/\*\*The Turning Point\*\*\n([\s\S]*?)(?=\n\n\*\*|$)/);
-    const transformMatch = content.match(/\*\*The Transformation\*\*\n([\s\S]*?)(?=\n\n\*\*|$)/);
-    const encourageMatch = content.match(/\*\*Words of Encouragement\*\*\n([\s\S]*?)$/);
+
+    const beginningMatch = content.match(/\*\*Before He Moved\*\*\n([\s\S]*?)(?=\n\n\*\*|$)/);
+    const turningMatch = content.match(/\*\*When Things Shifted\*\*\n([\s\S]*?)(?=\n\n\*\*|$)/);
+    const transformMatch = content.match(/\*\*What He Did\*\*\n([\s\S]*?)(?=\n\n\*\*|$)/);
+    const encourageMatch = content.match(/\*\*What You're Carrying Forward\*\*\n([\s\S]*?)$/);
 
     if (beginningMatch) result.beginning = beginningMatch[1].trim();
     if (turningMatch) result.turning_point = turningMatch[1].trim();
@@ -101,18 +101,18 @@ export function GuidedTestimonyEditor({ value, onChange, isVideoMode = false }: 
 
   const combineStory = (sections: Record<string, string>): string => {
     const parts: string[] = [];
-    
+
     if (sections.beginning.trim()) {
-      parts.push(`**The Beginning**\n${sections.beginning.trim()}`);
+      parts.push(`**Before He Moved**\n${sections.beginning.trim()}`);
     }
     if (sections.turning_point.trim()) {
-      parts.push(`**The Turning Point**\n${sections.turning_point.trim()}`);
+      parts.push(`**When Things Shifted**\n${sections.turning_point.trim()}`);
     }
     if (sections.transformation.trim()) {
-      parts.push(`**The Transformation**\n${sections.transformation.trim()}`);
+      parts.push(`**What He Did**\n${sections.transformation.trim()}`);
     }
     if (sections.encouragement.trim()) {
-      parts.push(`**Words of Encouragement**\n${sections.encouragement.trim()}`);
+      parts.push(`**What You're Carrying Forward**\n${sections.encouragement.trim()}`);
     }
 
     return parts.join("\n\n");
@@ -191,7 +191,7 @@ export function GuidedTestimonyEditor({ value, onChange, isVideoMode = false }: 
 
           {currentSection.scripture && (
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-              <p className="text-sm italic text-muted-foreground">
+              <p className="text-sm italic text-muted-foreground" style={{ fontFamily: "'Crimson Pro', serif" }}>
                 {currentSection.scripture}
               </p>
             </div>
@@ -216,7 +216,7 @@ export function GuidedTestimonyEditor({ value, onChange, isVideoMode = false }: 
               <ChevronLeft className="w-4 h-4 mr-1" />
               Previous
             </Button>
-            
+
             {currentStep < STORY_SECTIONS.length - 1 ? (
               <Button
                 type="button"
@@ -229,7 +229,7 @@ export function GuidedTestimonyEditor({ value, onChange, isVideoMode = false }: 
             ) : (
               <div className="flex items-center gap-2 text-green-600">
                 <Check className="w-5 h-5" />
-                <span className="font-medium">Story Complete</span>
+                <span className="font-medium">Entry complete</span>
               </div>
             )}
           </div>
@@ -239,8 +239,7 @@ export function GuidedTestimonyEditor({ value, onChange, isVideoMode = false }: 
       {isVideoMode && (
         <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
           <p className="text-sm text-amber-700 dark:text-amber-400">
-            <strong>Video Tip:</strong> Use these prompts to prepare your thoughts before recording. 
-            You don't need to read them word-for-word — let your heart speak naturally!
+            <strong>Before you record:</strong> Use these prompts to gather your thoughts. You don't need to follow them word for word — just let your heart speak.
           </p>
         </div>
       )}
@@ -257,24 +256,24 @@ export function GuidedVideoPrompts({ onReady }: GuidedVideoPromptsProps) {
 
   const prompts = [
     {
-      title: "Start with your situation",
-      description: "Briefly describe what you were going through before God's intervention.",
-      example: "Share the challenge, struggle, or need you faced."
+      title: "Before He moved",
+      description: "Where were you when this started? Give the raw version — what you were going through.",
+      example: "The situation, the struggle, the season you were in."
     },
     {
-      title: "Share the turning point",
-      description: "Tell us how God showed up in your life.",
-      example: "What prayer was answered? What moment changed everything?"
+      title: "When things shifted",
+      description: "What did God do, say, or send into your life?",
+      example: "The moment, the prayer, the person, the turning point."
     },
     {
-      title: "Describe the outcome",
-      description: "How is your life different now?",
-      example: "What has changed? How has your faith grown?"
+      title: "What He did",
+      description: "Name the change plainly. Don't understate it.",
+      example: "The healing, the provision, the breakthrough, the peace that came."
     },
     {
-      title: "Encourage others",
-      description: "End with words of hope for someone facing similar struggles.",
-      example: "What would you tell them to hold onto?"
+      title: "What you'd say to someone still in it",
+      description: "End with a word for the person watching who is where you used to be.",
+      example: "What would you tell them to hold on to?"
     }
   ];
 
@@ -283,10 +282,10 @@ export function GuidedVideoPrompts({ onReady }: GuidedVideoPromptsProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
           <Sparkles className="w-5 h-5 text-primary" />
-          Story Structure Guide
+          Before You Hit Record
         </CardTitle>
         <CardDescription>
-          Follow this structure to share a powerful testimony
+          Think through these four things. You don't have to be perfect — just be real.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -301,7 +300,7 @@ export function GuidedVideoPrompts({ onReady }: GuidedVideoPromptsProps) {
             onClick={() => setCurrentPrompt(index)}
           >
             <div className="flex items-start gap-3">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium shrink-0 ${
                 currentPrompt === index ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
               }`}>
                 {index + 1}
@@ -316,7 +315,7 @@ export function GuidedVideoPrompts({ onReady }: GuidedVideoPromptsProps) {
         ))}
 
         <Button onClick={onReady} className="w-full mt-4" data-testid="button-ready-to-record">
-          I'm Ready to Record
+          I'm ready — start recording
         </Button>
       </CardContent>
     </Card>

@@ -248,10 +248,10 @@ export default function PostTestimony() {
             <div className="max-w-2xl mx-auto">
               <div className="mb-8 text-center">
                 <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  Prepare Your Story
+                  Before You Hit Record
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                  Review these prompts before recording to share your testimony effectively
+                  Think through these prompts, then speak naturally — no script needed
                 </p>
               </div>
               <GuidedVideoPrompts onReady={() => {
@@ -282,10 +282,10 @@ export default function PostTestimony() {
             <div className="max-w-3xl mx-auto">
               <div className="mb-8 text-center">
                 <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  Record Your Testimony
+                  Say It Out Loud
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                  Share your story through video (up to 3 minutes)
+                  Up to 3 minutes — just speak honestly. God did the miracle; you just tell the story.
                 </p>
               </div>
               <VideoRecorder
@@ -306,19 +306,19 @@ export default function PostTestimony() {
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-3xl mx-auto">
             <div className="mb-8 text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-page-title">
-                Share Your Testimony
+              <h1 className="text-4xl md:text-5xl font-bold mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-page-title">
+                Write What God Did
               </h1>
-              <p className="text-lg text-muted-foreground">
-                Your story could be the encouragement someone needs today
+              <p className="text-lg text-muted-foreground italic" style={{ fontFamily: "'Crimson Pro', serif" }}>
+                This is your page. Take your time. He's worth remembering.
               </p>
             </div>
 
             <Card className="rounded-2xl">
               <CardHeader>
-                <CardTitle>Tell Your Story</CardTitle>
+                <CardTitle style={{ fontFamily: "'Space Grotesk', sans-serif" }}>A New Entry</CardTitle>
                 <CardDescription>
-                  Share how God has worked in your life. Your testimony will encourage and inspire others.
+                  Start wherever feels right — the beginning, the miracle, or what you're still holding onto.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -326,11 +326,11 @@ export default function PostTestimony() {
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="text" className="gap-2" data-testid="tab-text">
                       <FileText className="w-4 h-4" />
-                      Written Testimony
+                      Write It
                     </TabsTrigger>
                     <TabsTrigger value="video" className="gap-2" data-testid="tab-video">
                       <Video className="w-4 h-4" />
-                      Video Testimony
+                      Record It
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
@@ -342,16 +342,16 @@ export default function PostTestimony() {
                       name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Title</FormLabel>
+                          <FormLabel>What do you call this chapter?</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Give your testimony a meaningful title"
+                              placeholder="e.g. 'The season He showed up' or 'When the answer finally came'"
                               {...field}
                               data-testid="input-title"
                             />
                           </FormControl>
                           <FormDescription>
-                            A brief, descriptive title for your testimony
+                            A title you'll remember — keep it personal
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -363,11 +363,11 @@ export default function PostTestimony() {
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel>What area of your life did He touch?</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger data-testid="select-category">
-                                <SelectValue placeholder="Select a category" />
+                                <SelectValue placeholder="Choose what this is about" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -379,7 +379,7 @@ export default function PostTestimony() {
                             </SelectContent>
                           </Select>
                           <FormDescription>
-                            Choose the category that best fits your testimony
+                            Pick the one that best captures what God touched
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -412,7 +412,7 @@ export default function PostTestimony() {
                           <div className="border-2 border-dashed rounded-xl p-8 text-center space-y-4">
                             <Video className="w-12 h-12 mx-auto text-muted-foreground" />
                             <p className="text-muted-foreground">
-                              Record a new video or upload an existing one
+                              Speak your story — record directly or upload a video you already have
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                               <Button
@@ -422,7 +422,7 @@ export default function PostTestimony() {
                                 data-testid="button-record-video"
                               >
                                 <Sparkles className="w-4 h-4 mr-2" />
-                                Guided Recording
+                                Prepare &amp; Record
                               </Button>
                               <Button
                                 type="button"
@@ -431,7 +431,7 @@ export default function PostTestimony() {
                                 data-testid="button-record-direct"
                               >
                                 <Video className="w-4 h-4 mr-2" />
-                                Record Directly
+                                Record Now
                               </Button>
                               <label>
                                 <Button type="button" variant="outline" asChild>
@@ -450,7 +450,7 @@ export default function PostTestimony() {
                               </label>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              Maximum file size: 100MB. Supported formats: MP4, WebM, MOV
+                              Max 100MB · MP4, WebM, MOV supported
                             </p>
                           </div>
                         )}
@@ -458,7 +458,7 @@ export default function PostTestimony() {
                         <div className="flex items-start gap-2 p-4 rounded-lg bg-muted/50">
                           <AlertCircle className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
                           <p className="text-sm text-muted-foreground">
-                            Video testimonies are reviewed before being published to ensure they meet our community guidelines.
+                            Video entries are reviewed before going live — usually within 24 hours.
                           </p>
                         </div>
                       </div>
@@ -467,7 +467,7 @@ export default function PostTestimony() {
                     {testimonyType === "text" && (
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <FormLabel className="text-base">Your Story</FormLabel>
+                          <FormLabel className="text-base">In your own words…</FormLabel>
                           <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
                             <Button
                               type="button"
@@ -508,14 +508,14 @@ export default function PostTestimony() {
                                 <>
                                   <FormControl>
                                     <Textarea
-                                      placeholder="Share your testimony in detail. How did God work in your life? What happened? How has it impacted your faith?"
+                                      placeholder="Write whatever comes to mind. The details, the feelings, what you saw, what you heard, what changed. Start anywhere — you can always come back and edit."
                                       className="min-h-[300px] resize-none"
                                       {...field}
                                       data-testid="textarea-story"
                                     />
                                   </FormControl>
                                   <FormDescription>
-                                    Share the details of your testimony (minimum 10 characters)
+                                    No format required — just write it the way it happened
                                   </FormDescription>
                                 </>
                               )}
@@ -532,17 +532,17 @@ export default function PostTestimony() {
                         name="story"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Description</FormLabel>
+                            <FormLabel>A few words about this entry</FormLabel>
                             <FormControl>
                               <Textarea
-                                placeholder="Add a brief description of your video testimony"
+                                placeholder="Give people a sense of what your video is about, or simply name what God did..."
                                 className="min-h-[100px] resize-none"
                                 {...field}
                                 data-testid="textarea-story"
                               />
                             </FormControl>
                             <FormDescription>
-                              A brief description to accompany your video (minimum 10 characters)
+                              A short description to go with your video
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -556,9 +556,9 @@ export default function PostTestimony() {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base">Keep Private</FormLabel>
+                            <FormLabel className="text-base">Just for my journal</FormLabel>
                             <FormDescription>
-                              Only you can see this — saved to your personal faith journal
+                              Only you can see this — it won't appear in the community feed
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -578,9 +578,9 @@ export default function PostTestimony() {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base">Post Anonymously</FormLabel>
+                            <FormLabel className="text-base">Keep my name out of it</FormLabel>
                             <FormDescription>
-                              Your name will not be displayed with this testimony
+                              The testimony still matters, even without the name
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -672,14 +672,14 @@ export default function PostTestimony() {
                           htmlFor="guidelines-checkbox"
                           className="text-sm font-medium cursor-pointer leading-relaxed"
                         >
-                          I have read and agree to the Testimony Submission Guidelines. My testimony glorifies Jesus Christ and follows the community standards.
+                          I've read the guidelines. My testimony points to Jesus and follows the community standards.
                         </label>
                       </div>
                     </div>
 
                     {isUploading && (
                       <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Uploading video...</p>
+                        <p className="text-sm text-muted-foreground">Uploading your video…</p>
                         <Progress value={uploadProgress} className="h-2" />
                       </div>
                     )}
@@ -691,7 +691,7 @@ export default function PostTestimony() {
                         className="flex-1"
                         data-testid="button-submit"
                       >
-                        {mutation.isPending || isUploading ? "Posting..." : "Share Testimony"}
+                        {mutation.isPending || isUploading ? "Saving…" : "Save My Testimony"}
                       </Button>
                       <Button
                         type="button"
@@ -700,7 +700,7 @@ export default function PostTestimony() {
                         disabled={mutation.isPending || isUploading}
                         data-testid="button-cancel"
                       >
-                        Cancel
+                        Not yet
                       </Button>
                     </div>
                   </form>
