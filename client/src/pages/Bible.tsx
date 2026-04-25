@@ -156,6 +156,7 @@ function VersionPicker({
   onSelectPremium,
   premiumVersions,
   hasKey,
+  keyInvalid,
 }: {
   selectedId: string;
   selectedAbbrev: string;
@@ -163,6 +164,7 @@ function VersionPicker({
   onSelectPremium: (v: PremiumVersionInfo) => void;
   premiumVersions: PremiumVersionInfo[];
   hasKey: boolean;
+  keyInvalid: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -206,18 +208,18 @@ function VersionPicker({
 
             {/* Premium versions */}
             <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-              Premium versions {!hasKey && "· API key required"}
+              Premium versions {!hasKey && "· API key required"}{keyInvalid && "· Key invalid"}
             </p>
             {PREMIUM_VERSION_ABBREVS.map((abbrev) => {
               const found = premiumVersions.find((v) => v.abbreviation === abbrev);
               const isSelected = selectedAbbrev === abbrev;
-              const locked = !hasKey || !found;
+              const locked = !hasKey || keyInvalid || !found;
               return (
                 <button
                   key={abbrev}
                   onClick={() => {
                     if (!locked && found) { onSelectPremium(found); setOpen(false); }
-                    else if (!hasKey) setOpen(false);
+                    else setOpen(false);
                   }}
                   disabled={locked}
                   className="flex items-center justify-between w-full px-4 py-3 text-left border-b last:border-0 disabled:opacity-50"
@@ -236,19 +238,36 @@ function VersionPicker({
               );
             })}
 
-            {/* Setup link if no key */}
-            {!hasKey && (
+            {/* Setup link if no key or key invalid */}
+            {(!hasKey || keyInvalid) && (
               <div className="px-4 py-3 border-t" style={{ borderColor: "hsl(var(--border))" }}>
-                <p className="text-xs text-muted-foreground mb-2">Get a free API key at api.bible to unlock these versions.</p>
-                <a
-                  href="https://scripture.api.bible/signup"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs font-semibold text-primary"
-                  onClick={() => setOpen(false)}
-                >
-                  Get free key <ExternalLink className="w-3 h-3" />
-                </a>
+                {keyInvalid ? (
+                  <>
+                    <p className="text-xs text-muted-foreground mb-2">The API key appears to be invalid or not yet activated. Make sure you've copied the key from your api.bible app dashboard.</p>
+                    <a
+                      href="https://scripture.api.bible/faq"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs font-semibold text-primary"
+                      onClick={() => setOpen(false)}
+                    >
+                      api.bible help <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground mb-2">Get a free API key at api.bible to unlock these versions.</p>
+                    <a
+                      href="https://scripture.api.bible/signup"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs font-semibold text-primary"
+                      onClick={() => setOpen(false)}
+                    >
+                      Get free key <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -547,12 +566,14 @@ export default function Bible() {
   const hasKey = premiumStatus?.configured ?? false;
 
   // Fetch premium version IDs (only if key configured)
-  const { data: premiumVersionsData } = useQuery<{ versions: PremiumVersionInfo[] }>({
+  const { data: premiumVersionsData, isError: premiumVersionsError } = useQuery<{ versions: PremiumVersionInfo[] }>({
     queryKey: ["/api/bible/premium/versions"],
     enabled: hasKey,
     staleTime: 60 * 60 * 1000,
+    retry: false,
   });
   const premiumVersions = premiumVersionsData?.versions ?? [];
+  const premiumKeyInvalid = hasKey && premiumVersionsError;
 
   const books = testament === "OT" ? OT_BOOKS : NT_BOOKS;
   const filteredBooks = useMemo(
@@ -586,6 +607,7 @@ export default function Bible() {
     onSelectPremium: handleSelectPremiumVersion,
     premiumVersions,
     hasKey,
+    keyInvalid: !!premiumKeyInvalid,
   };
 
   // ── Reading view ──

@@ -1659,7 +1659,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const resp = await fetch("https://api.scripture.api.bible/v1/bibles?language=eng", {
       headers: { "api-key": apiKey },
     });
-    if (!resp.ok) throw new Error("api.bible request failed");
+    if (!resp.ok) {
+      const body = await resp.text();
+      console.error(`api.bible /bibles HTTP ${resp.status}:`, body.slice(0, 200));
+      throw new Error(`api.bible request failed: HTTP ${resp.status}`);
+    }
     const data = await resp.json();
     const TARGETS = ["NKJV", "MSG", "AMP", "TPT"];
     const versions = (data.data ?? [])
@@ -1723,9 +1727,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const versions = await getPremiumVersions(apiKey);
       res.json({ versions });
-    } catch (err) {
-      console.error("api.bible versions error:", err);
-      res.status(502).json({ message: "Failed to fetch Bible versions" });
+    } catch (err: any) {
+      const msg = err?.message ?? "Failed to fetch Bible versions";
+      const isAuthError = msg.includes("401") || msg.includes("403");
+      console.error("api.bible versions error:", msg);
+      res.status(isAuthError ? 401 : 502).json({ message: msg, versions: [] });
     }
   });
 
