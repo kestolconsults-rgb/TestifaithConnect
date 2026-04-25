@@ -138,11 +138,16 @@ export default function Home() {
 
       {/* Stone of the Day */}
       <section className="px-5 mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Star className="w-4 h-4 text-amber-500" />
-          <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground" data-testid="section-testimony-of-day">
-            Stone of the Day
-          </h2>
+        <div className="mb-3">
+          <div className="flex items-center gap-2">
+            <Star className="w-4 h-4 text-amber-500 shrink-0" />
+            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground" data-testid="section-testimony-of-day">
+              Stone of the Day
+            </h2>
+          </div>
+          <p className="font-['Crimson_Pro'] italic text-muted-foreground text-[13px] leading-snug mt-0.5 pl-6">
+            "Then Samuel took a stone and set it up… and called it Ebenezer, saying, 'Thus far the <span className="uppercase tracking-wider text-[11px] not-italic">Lord</span> has helped us.'" — 1 Sam. 7:12
+          </p>
         </div>
         {featuredLoading ? (
           <Skeleton className="h-52 rounded-2xl" />
