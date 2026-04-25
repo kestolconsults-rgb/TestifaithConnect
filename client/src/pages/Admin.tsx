@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, LogOut, Star, StarOff, Plus, Trash2, Check, Video, X, CheckCircle,
-  BarChart3, Users, MessageSquare, BookOpen, Shield, History, AlertTriangle,
+  BarChart3, Users, MessageSquare, BookOpen, Shield, History,
   UserX, UserCheck, Eye, Calendar, Heart, HandHeart, Upload, Play
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -287,6 +287,16 @@ function UserManagement() {
               </div>
             </div>
             <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
+                data-testid={`button-view-profile-${user.id}`}
+              >
+                <a href={`/profile/${user.id}`} target="_blank" rel="noopener noreferrer">
+                  <Eye className="w-4 h-4 text-zinc-400" />
+                </a>
+              </Button>
               {user.isSuspended ? (
                 <Button
                   variant="outline"
@@ -526,6 +536,7 @@ function TestimonyModeration() {
 function CommentModeration() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [search, setSearch] = useState("");
 
   const { data: comments, isLoading } = useQuery<(Comment & { user?: { firstName: string; lastName: string } })[]>({
     queryKey: ["/api/admin/comments"],
@@ -540,6 +551,13 @@ function CommentModeration() {
     },
   });
 
+  const filteredComments = (comments ?? []).filter((c) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    const name = `${c.user?.firstName ?? ""} ${c.user?.lastName ?? ""}`.toLowerCase();
+    return c.content.toLowerCase().includes(q) || name.includes(q);
+  });
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
@@ -552,11 +570,19 @@ function CommentModeration() {
     <div className="space-y-4">
       <div className="flex justify-between items-center gap-2">
         <h3 className="text-lg font-semibold text-white">All Comments</h3>
-        <Badge className="bg-zinc-700">{comments?.length || 0} comments</Badge>
+        <Badge className="bg-zinc-700">{filteredComments.length}/{comments?.length || 0} comments</Badge>
       </div>
 
+      <Input
+        placeholder="Search by content or author..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="bg-zinc-800 border-zinc-700 text-white"
+        data-testid="input-search-comments"
+      />
+
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
-        {comments?.map((comment) => (
+        {filteredComments.map((comment) => (
           <div
             key={comment.id}
             className="p-3 bg-zinc-800 rounded-lg"
@@ -586,8 +612,10 @@ function CommentModeration() {
             </div>
           </div>
         ))}
-        {comments?.length === 0 && (
-          <p className="text-zinc-500 text-center py-4">No comments yet</p>
+        {filteredComments.length === 0 && (
+          <p className="text-zinc-500 text-center py-4">
+            {search.trim() ? "No comments match your search" : "No comments yet"}
+          </p>
         )}
       </div>
     </div>
@@ -1515,17 +1543,12 @@ function AdminUserManagement() {
 }
 
 function AuditLogs() {
+  const [search, setSearch] = useState("");
+  const [actionFilter, setActionFilter] = useState("all");
+
   const { data: logs, isLoading } = useQuery<AuditLog[]>({
     queryKey: ["/api/admin/audit-logs"],
   });
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-8">
-        <Loader2 className="w-8 h-8 animate-spin text-red-500" />
-      </div>
-    );
-  }
 
   const getActionColor = (action: string) => {
     if (action.includes('delete') || action.includes('suspend')) return 'text-red-400';
@@ -1537,15 +1560,64 @@ function AuditLogs() {
     return action.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   };
 
+  const filteredLogs = (logs ?? []).filter((log) => {
+    if (actionFilter !== "all") {
+      if (actionFilter === "create" && !log.action.includes("create")) return false;
+      if (actionFilter === "delete" && !log.action.includes("delete")) return false;
+      if (actionFilter === "suspend" && !log.action.includes("suspend")) return false;
+      if (actionFilter === "approve" && !log.action.includes("approve")) return false;
+      if (actionFilter === "feature" && !log.action.includes("feature")) return false;
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const adminName = (log.admin?.username ?? "").toLowerCase();
+      const action = formatAction(log.action).toLowerCase();
+      const details = (log.details ?? "").toLowerCase();
+      if (!adminName.includes(q) && !action.includes(q) && !details.includes(q) && !log.targetType.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="w-8 h-8 animate-spin text-red-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center gap-2">
+      <div className="flex justify-between items-center gap-2 flex-wrap">
         <h3 className="text-lg font-semibold text-white">Audit Logs</h3>
-        <Badge className="bg-zinc-700">{logs?.length || 0} entries</Badge>
+        <Badge className="bg-zinc-700">{filteredLogs.length}/{logs?.length || 0} entries</Badge>
+      </div>
+
+      <div className="flex gap-2 flex-wrap">
+        <Input
+          placeholder="Search by action, admin, or details..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="bg-zinc-800 border-zinc-700 text-white flex-1 min-w-0"
+          data-testid="input-search-logs"
+        />
+        <Select value={actionFilter} onValueChange={setActionFilter}>
+          <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white w-40 shrink-0" data-testid="select-log-filter">
+            <SelectValue placeholder="All actions" />
+          </SelectTrigger>
+          <SelectContent className="bg-zinc-800 border-zinc-700">
+            <SelectItem value="all" className="text-white">All actions</SelectItem>
+            <SelectItem value="create" className="text-white">Creates</SelectItem>
+            <SelectItem value="delete" className="text-white">Deletes</SelectItem>
+            <SelectItem value="suspend" className="text-white">Suspensions</SelectItem>
+            <SelectItem value="approve" className="text-white">Approvals</SelectItem>
+            <SelectItem value="feature" className="text-white">Featured</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2 max-h-[500px] overflow-y-auto">
-        {logs?.map((log) => (
+        {filteredLogs.map((log) => (
           <div
             key={log.id}
             className="p-3 bg-zinc-800 rounded-lg"
@@ -1576,8 +1648,10 @@ function AuditLogs() {
             </div>
           </div>
         ))}
-        {logs?.length === 0 && (
-          <p className="text-zinc-500 text-center py-4">No audit logs yet</p>
+        {filteredLogs.length === 0 && (
+          <p className="text-zinc-500 text-center py-4">
+            {search.trim() || actionFilter !== "all" ? "No logs match your filters" : "No audit logs yet"}
+          </p>
         )}
       </div>
     </div>
