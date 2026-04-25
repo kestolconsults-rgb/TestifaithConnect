@@ -1,5 +1,6 @@
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { useEffect } from "react";
+import InstallBanner from "@/components/InstallBanner";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -116,6 +117,7 @@ function Router() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <MobileHeader />
+      <InstallBanner />
       <main className="flex-1">
         <Switch>
           {/* ── Public routes — accessible to everyone ── */}

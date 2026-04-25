@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, LogOut, Star, StarOff, Plus, Trash2, Check, Video, X, CheckCircle,
   BarChart3, Users, MessageSquare, BookOpen, Shield, History,
-  UserX, UserCheck, Eye, Calendar, Heart, HandHeart, Upload, Play
+  UserX, UserCheck, Eye, EyeOff, Calendar, Heart, HandHeart, Upload, Play
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -61,6 +61,7 @@ type UserWithStats = User;
 function AdminLogin({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -104,15 +105,24 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
                 data-testid="input-admin-username"
               />
             </div>
-            <div>
+            <div className="relative">
               <Input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white"
+                className="bg-zinc-800 border-zinc-700 text-white pr-10"
                 data-testid="input-admin-password"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200"
+                tabIndex={-1}
+                data-testid="button-toggle-admin-password"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
             <Button 
               type="submit" 
@@ -1345,6 +1355,9 @@ function ChangePassword() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const { toast } = useToast();
 
   const changeMutation = useMutation({
@@ -1378,30 +1391,48 @@ function ChangePassword() {
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white">Change Your Password</h3>
       <form onSubmit={handleSubmit} className="space-y-3 p-4 bg-zinc-800 rounded-lg max-w-sm">
-        <Input
-          type="password"
-          placeholder="Current password"
-          value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
-          className="bg-zinc-900 border-zinc-700 text-white"
-          data-testid="input-current-password"
-        />
-        <Input
-          type="password"
-          placeholder="New password (min 8 characters)"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          className="bg-zinc-900 border-zinc-700 text-white"
-          data-testid="input-new-password"
-        />
-        <Input
-          type="password"
-          placeholder="Confirm new password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="bg-zinc-900 border-zinc-700 text-white"
-          data-testid="input-confirm-password"
-        />
+        <div className="relative">
+          <Input
+            type={showCurrent ? "text" : "password"}
+            placeholder="Current password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="bg-zinc-900 border-zinc-700 text-white pr-10"
+            data-testid="input-current-password"
+          />
+          <button type="button" onClick={() => setShowCurrent((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200" tabIndex={-1}>
+            {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+        <div className="relative">
+          <Input
+            type={showNew ? "text" : "password"}
+            placeholder="New password (min 8 characters)"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="bg-zinc-900 border-zinc-700 text-white pr-10"
+            data-testid="input-new-password"
+          />
+          <button type="button" onClick={() => setShowNew((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200" tabIndex={-1}>
+            {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+        <div className="relative">
+          <Input
+            type={showConfirm ? "text" : "password"}
+            placeholder="Confirm new password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="bg-zinc-900 border-zinc-700 text-white pr-10"
+            data-testid="input-confirm-password"
+          />
+          <button type="button" onClick={() => setShowConfirm((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200" tabIndex={-1}>
+            {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
         <Button
           type="submit"
           disabled={changeMutation.isPending || !currentPassword || !newPassword || !confirmPassword}
@@ -1420,6 +1451,7 @@ function AdminUserManagement() {
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newDisplayName, setNewDisplayName] = useState("");
+  const [showNewAdminPwd, setShowNewAdminPwd] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -1475,14 +1507,20 @@ function AdminUserManagement() {
           className="bg-zinc-900 border-zinc-700 text-white"
           data-testid="input-admin-new-username"
         />
-        <Input
-          type="password"
-          placeholder="Password (min 8 characters)"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          className="bg-zinc-900 border-zinc-700 text-white"
-          data-testid="input-admin-new-password"
-        />
+        <div className="relative">
+          <Input
+            type={showNewAdminPwd ? "text" : "password"}
+            placeholder="Password (min 8 characters)"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="bg-zinc-900 border-zinc-700 text-white pr-10"
+            data-testid="input-admin-new-password"
+          />
+          <button type="button" onClick={() => setShowNewAdminPwd((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200" tabIndex={-1}>
+            {showNewAdminPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
         <Input
           placeholder="Display Name (optional)"
           value={newDisplayName}
