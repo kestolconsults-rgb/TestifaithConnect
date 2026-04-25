@@ -248,8 +248,11 @@ export default function Home() {
             </Link>
           </div>
         )}
-        <p className="text-xs text-muted-foreground mb-3">
+        <p className="text-xs text-muted-foreground mb-1">
           {user ? "Your private faith journal — only visible to you" : "A private place to record what God has done — only you can see it"}
+        </p>
+        <p className="font-['Crimson_Pro'] italic text-muted-foreground text-[13px] leading-snug mb-3">
+          "Write the vision; make it plain on tablets, so he may run who reads it." — Hab. 2:2
         </p>
 
         {!user ? (
