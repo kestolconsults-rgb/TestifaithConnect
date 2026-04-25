@@ -95,21 +95,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Cover banner */}
-      <div className="h-32 sm:h-40 bg-gradient-to-br from-primary/80 via-primary/60 to-rose-700/50 relative">
-        {/* Settings icon top-right for own profile */}
-        {isOwnProfile && (
-          <Link href="/settings">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-3 right-3 text-white/80 hover:text-white hover:bg-white/15"
-              data-testid="button-settings"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
-          </Link>
-        )}
-      </div>
+      <div className="h-32 sm:h-40 bg-gradient-to-br from-primary/80 via-primary/60 to-rose-700/50" />
 
       <div className="max-w-2xl mx-auto px-4">
         {/* Avatar — overlaps the banner */}
@@ -184,13 +170,18 @@ export default function Profile() {
           )}
         </div>
 
-        {/* Edit profile button — own profile only */}
+        {/* Edit profile + settings buttons — own profile only */}
         {isOwnProfile && (
-          <div className="flex justify-center mb-5">
+          <div className="flex justify-center items-center gap-2 mb-5">
             <Link href="/edit-profile">
               <Button variant="outline" size="sm" className="gap-1.5" data-testid="button-edit-profile">
                 <Edit className="h-3.5 w-3.5" />
                 Edit Profile
+              </Button>
+            </Link>
+            <Link href="/settings">
+              <Button variant="ghost" size="icon" data-testid="button-settings">
+                <Settings className="h-4 w-4" />
               </Button>
             </Link>
           </div>
