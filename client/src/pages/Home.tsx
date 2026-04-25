@@ -176,7 +176,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">
-              God's Faithfulness in the Past
+              Stone of Remembrance
             </h2>
           </div>
           <Link href="/my-testimonies">
