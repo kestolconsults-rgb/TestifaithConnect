@@ -96,13 +96,18 @@ export function destroySession(req: Request): Promise<void> {
 export async function createInitialAdmin(): Promise<void> {
   const existingAdmin = await storage.getAdminByUsername("admin");
   if (!existingAdmin) {
-    const passwordHash = await hashPassword("testifaith2024");
+    const initialPassword = process.env.ADMIN_PASSWORD || "testifaith2024";
+    const passwordHash = await hashPassword(initialPassword);
     await storage.createAdmin({
       username: "admin",
       passwordHash,
       displayName: "Testifaith Admin",
     });
-    console.log("Initial admin account created. Username: admin, Password: testifaith2024");
-    console.log("Please change this password immediately after first login!");
+    if (process.env.ADMIN_PASSWORD) {
+      console.log("Initial admin account created. Username: admin (password from ADMIN_PASSWORD env var)");
+    } else {
+      console.log("Initial admin account created. Username: admin, Password: testifaith2024");
+      console.log("Set ADMIN_PASSWORD env var before first deploy to use a secure password!");
+    }
   }
 }
