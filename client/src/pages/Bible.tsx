@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Search, ChevronRight, ChevronLeft, ArrowLeft, X, Check, Lock, ExternalLink } from "lucide-react";
+import { BookOpen, Search, ChevronRight, ChevronLeft, ArrowLeft, X, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiRequest } from "@/lib/queryClient";
 
 // ── Bible data ──────────────────────────────────────────────────────────────
 
@@ -154,18 +153,31 @@ function VersionPicker({
   onSelectFree,
   onSelectPremium,
   premiumVersions,
-  hasKey,
-  keyInvalid,
 }: {
   selectedId: string;
   selectedAbbrev: string;
   onSelectFree: (id: string) => void;
   onSelectPremium: (v: PremiumVersionInfo) => void;
   premiumVersions: PremiumVersionInfo[];
-  hasKey: boolean;
-  keyInvalid: boolean;
 }) {
   const [open, setOpen] = useState(false);
+
+  // Build a single sorted list from free + available premium versions
+  const allVersions = useMemo(() => {
+    const free = FREE_VERSIONS.map((v) => ({
+      id: v.id,
+      abbrev: v.name,
+      full: v.full,
+      premium: null as PremiumVersionInfo | null,
+    }));
+    const premium = premiumVersions.map((v) => ({
+      id: v.abbreviation.toLowerCase(),
+      abbrev: v.abbreviation,
+      full: PREMIUM_VERSION_LABELS[v.abbreviation] ?? v.name,
+      premium: v,
+    }));
+    return [...free, ...premium].sort((a, b) => a.abbrev.localeCompare(b.abbrev));
+  }, [premiumVersions]);
 
   return (
     <div className="relative">
@@ -187,88 +199,28 @@ function VersionPicker({
             className="absolute right-0 top-full mt-2 z-50 rounded-2xl border shadow-lg overflow-hidden min-w-[240px] max-h-[80vh] overflow-y-auto"
             style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
           >
-            {/* Free versions */}
-            <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Free versions</p>
-            {FREE_VERSIONS.map((v) => (
-              <button
-                key={v.id}
-                onClick={() => { onSelectFree(v.id); setOpen(false); }}
-                className="flex items-center justify-between w-full px-4 py-3 text-left hover-elevate border-b last:border-0"
-                style={{ borderColor: "hsl(var(--border))" }}
-                data-testid={`version-option-${v.id}`}
-              >
-                <div>
-                  <p className="text-sm font-bold text-foreground">{v.name}</p>
-                  <p className="text-xs text-muted-foreground">{v.full}</p>
-                </div>
-                {selectedId === v.id && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
-              </button>
-            ))}
-
-            {/* Premium versions */}
-            <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-              Premium versions {!hasKey && "· API key required"}{keyInvalid && "· Key invalid"}
-            </p>
-            {PREMIUM_VERSION_ABBREVS.map((abbrev) => {
-              const found = premiumVersions.find((v) => v.abbreviation === abbrev);
-              const isSelected = selectedAbbrev === abbrev;
-              const locked = !hasKey || keyInvalid || !found;
+            {allVersions.map((v) => {
+              const isSelected = selectedId === v.id || selectedAbbrev === v.abbrev;
               return (
                 <button
-                  key={abbrev}
+                  key={v.abbrev}
                   onClick={() => {
-                    if (!locked && found) { onSelectPremium(found); setOpen(false); }
-                    else setOpen(false);
+                    if (v.premium) onSelectPremium(v.premium);
+                    else onSelectFree(v.id);
+                    setOpen(false);
                   }}
-                  disabled={locked}
-                  className="flex items-center justify-between w-full px-4 py-3 text-left border-b last:border-0 disabled:opacity-50"
+                  className="flex items-center justify-between w-full px-4 py-3 text-left hover-elevate border-b last:border-0"
                   style={{ borderColor: "hsl(var(--border))" }}
-                  data-testid={`version-option-${abbrev.toLowerCase()}`}
+                  data-testid={`version-option-${v.abbrev.toLowerCase()}`}
                 >
                   <div>
-                    <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                      {abbrev}
-                      {locked && <Lock className="w-3 h-3 text-muted-foreground" />}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{PREMIUM_VERSION_LABELS[abbrev]}</p>
+                    <p className="text-sm font-bold text-foreground">{v.abbrev}</p>
+                    <p className="text-xs text-muted-foreground">{v.full}</p>
                   </div>
-                  {isSelected && !locked && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
+                  {isSelected && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
                 </button>
               );
             })}
-
-            {/* Setup link if no key or key invalid */}
-            {(!hasKey || keyInvalid) && (
-              <div className="px-4 py-3 border-t" style={{ borderColor: "hsl(var(--border))" }}>
-                {keyInvalid ? (
-                  <>
-                    <p className="text-xs text-muted-foreground mb-2">The API key appears to be invalid or not yet activated. Make sure you've copied the key from your api.bible app dashboard.</p>
-                    <a
-                      href="https://scripture.api.bible/faq"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs font-semibold text-primary"
-                      onClick={() => setOpen(false)}
-                    >
-                      api.bible help <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-xs text-muted-foreground mb-2">Get a free API key at api.bible to unlock these versions.</p>
-                    <a
-                      href="https://scripture.api.bible/signup"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs font-semibold text-primary"
-                      onClick={() => setOpen(false)}
-                    >
-                      Get free key <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </>
-                )}
-              </div>
-            )}
           </div>
         </>
       )}
@@ -565,14 +517,13 @@ export default function Bible() {
   const hasKey = premiumStatus?.configured ?? false;
 
   // Fetch premium version IDs (only if key configured)
-  const { data: premiumVersionsData, isError: premiumVersionsError } = useQuery<{ versions: PremiumVersionInfo[] }>({
+  const { data: premiumVersionsData } = useQuery<{ versions: PremiumVersionInfo[] }>({
     queryKey: ["/api/bible/premium/versions"],
     enabled: hasKey,
     staleTime: 60 * 60 * 1000,
     retry: false,
   });
   const premiumVersions = premiumVersionsData?.versions ?? [];
-  const premiumKeyInvalid = hasKey && premiumVersionsError;
 
   const books = testament === "OT" ? OT_BOOKS : NT_BOOKS;
   const filteredBooks = useMemo(
@@ -605,8 +556,6 @@ export default function Bible() {
     onSelectFree: handleSelectFreeVersion,
     onSelectPremium: handleSelectPremiumVersion,
     premiumVersions,
-    hasKey,
-    keyInvalid: !!premiumKeyInvalid,
   };
 
   // ── Reading view ──
