@@ -99,8 +99,11 @@ export default function Home() {
               <BookOpen size={64} className="text-primary" />
             </div>
             <div className="relative z-10">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-primary mb-3">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-primary mb-1">
                 Declare it today
+              </p>
+              <p className="font-['Crimson_Pro'] italic text-primary/60 text-[12px] leading-snug mb-3">
+                "The tongue has the power of life and death." — Prov. 18:21
               </p>
               <p
                 className="font-['Space_Grotesk'] text-base leading-snug mb-2 font-semibold text-foreground"
