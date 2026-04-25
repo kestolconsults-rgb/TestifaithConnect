@@ -23,6 +23,7 @@ The app is a **mobile-first PWA** with a bottom tab bar (Home, Community, FAB, B
 
 ### Feature Specifications
 - **Core Features**: User authentication (Google OAuth), browsing/posting testimonies, 7 dedicated category pages, testimony detail view, Amen/Encourage interactions, personal testimony dashboard, daily "Testimony of the Day," daily faith declarations, and daily encouragement verses.
+- **Bible Reader**: Full Bible reader powered by bible-api.com (no API key). Supports KJV, WEB, ASV, YLT, DARBY, BBE versions with multi-version picker. Features: book browser (OT/NT tabs), chapter grid, verse-by-verse reading with prev/next navigation, scripture search by reference, quick access to popular passages.
 - **Video Testimonies**: In-app video recording (up to 3 minutes) and file upload (up to 100MB) using Replit App Storage. Videos require admin moderation before publication. VideoRecorder component with cross-browser support, VideoPlayer component with playback controls.
 - **User Profiles**: Complete profile pages with bio, avatar, location, website, faith interests display, and stats (testimonies count, amens received, encouragements received).
 - **Settings**: Profile editing (name, bio, location, website), notification preferences (amen, encourage, comment, daily verse), privacy settings (public/private profile).
