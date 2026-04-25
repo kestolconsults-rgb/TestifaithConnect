@@ -183,7 +183,7 @@ export default function Settings() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+            <h1 className="text-3xl font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Settings
             </h1>
             <p className="text-muted-foreground">Manage your profile and preferences</p>

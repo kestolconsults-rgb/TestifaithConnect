@@ -61,7 +61,7 @@ export default function SearchResults() {
         </div>
 
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+          <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             {isLoading ? (
               "Searching..."
             ) : (

@@ -177,7 +177,7 @@ export function GuidedTestimonyEditor({ value, onChange, isVideoMode = false }: 
               <IconComponent className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-xl" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+              <CardTitle className="text-xl" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 {currentSection.title}
               </CardTitle>
               <CardDescription>{currentSection.subtitle}</CardDescription>
@@ -281,7 +281,7 @@ export function GuidedVideoPrompts({ onReady }: GuidedVideoPromptsProps) {
   return (
     <Card className="rounded-xl">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+        <CardTitle className="flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
           <Sparkles className="w-5 h-5 text-primary" />
           Story Structure Guide
         </CardTitle>

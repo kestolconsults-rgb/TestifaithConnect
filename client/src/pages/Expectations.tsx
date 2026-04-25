@@ -211,7 +211,7 @@ export default function Expectations() {
             <div>
               <h1 
                 className="text-4xl md:text-5xl font-bold tracking-tight mb-3"
-                style={{ fontFamily: "'League Spartan', sans-serif" }}
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                 data-testid="text-expectations-title"
               >
                 Faith Expectations

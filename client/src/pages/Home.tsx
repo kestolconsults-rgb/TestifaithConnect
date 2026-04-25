@@ -71,7 +71,7 @@ export default function Home() {
                 Daily Declaration
               </span>
               <p
-                className="font-['League_Spartan'] text-base leading-snug mb-2 font-semibold text-foreground"
+                className="font-['Space_Grotesk'] text-base leading-snug mb-2 font-semibold text-foreground"
                 data-testid="text-faith-declaration"
               >
                 "{faithDeclaration.declaration}"
@@ -93,7 +93,7 @@ export default function Home() {
 
       {/* Testimony of the Day */}
       <section className="px-5 mb-6">
-        <h2 className="font-['League_Spartan'] text-base font-semibold text-foreground mb-3" data-testid="section-testimony-of-day">
+        <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground mb-3" data-testid="section-testimony-of-day">
           Testimony of the Day
         </h2>
         {featuredLoading ? (
@@ -125,7 +125,7 @@ export default function Home() {
                 </span>
               </div>
               {featuredTestimony.title && (
-                <p className="font-['League_Spartan'] text-base font-bold text-foreground mb-2">{featuredTestimony.title}</p>
+                <p className="font-['Space_Grotesk'] text-base font-bold text-foreground mb-2">{featuredTestimony.title}</p>
               )}
               <p className="text-sm leading-relaxed italic text-card-foreground mb-4 line-clamp-3 font-serif">
                 "{featuredTestimony.story}"
@@ -161,7 +161,7 @@ export default function Home() {
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-            <h2 className="font-['League_Spartan'] text-base font-semibold text-foreground">
+            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">
               God's Faithfulness in the Past
             </h2>
           </div>
@@ -192,7 +192,7 @@ export default function Home() {
                 <Sparkles className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-['League_Spartan'] text-sm font-bold text-foreground mb-1">
+                <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1">
                   Keep a private faith journal
                 </p>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-4">
@@ -251,7 +251,7 @@ export default function Home() {
                     </span>
                   </div>
                   {t.title && (
-                    <p className="font-['League_Spartan'] text-sm font-bold text-foreground mb-1">{t.title}</p>
+                    <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1">{t.title}</p>
                   )}
                   <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">{t.story}</p>
                 </div>

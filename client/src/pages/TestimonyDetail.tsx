@@ -153,7 +153,7 @@ export default function TestimonyDetail() {
                   {testimony.category}
                 </Badge>
 
-                <h1 className="text-3xl md:text-4xl font-bold" style={{ fontFamily: "'League Spartan', sans-serif" }} data-testid="text-title">
+                <h1 className="text-3xl md:text-4xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-title">
                   {testimony.title}
                 </h1>
 

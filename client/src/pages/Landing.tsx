@@ -28,7 +28,7 @@ export default function Landing() {
       <section className="px-4 py-16 md:py-24">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Today's Faith Declaration
             </h2>
             <p className="text-muted-foreground">
@@ -43,7 +43,7 @@ export default function Landing() {
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10">
                   <BookOpen className="h-7 w-7 text-primary" />
                 </div>
-                <blockquote className="text-lg md:text-xl leading-relaxed whitespace-pre-line" style={{ fontFamily: "'League Spartan', sans-serif" }} data-testid="text-faith-declaration">
+                <blockquote className="text-lg md:text-xl leading-relaxed whitespace-pre-line" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-faith-declaration">
                   {faithDeclaration.declaration}
                 </blockquote>
                 <div className="pt-4 border-t border-border">
@@ -75,7 +75,7 @@ export default function Landing() {
       <section className="px-4 py-16 md:py-24 bg-muted/30">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Testimony of the Day
             </h2>
             <p className="text-muted-foreground">
@@ -105,7 +105,7 @@ export default function Landing() {
       <section className="py-16 md:py-24 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Explore by Category
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -124,7 +124,7 @@ export default function Landing() {
       {/* Final CTA Section */}
       <section className="py-20 md:py-28 px-4 bg-gradient-to-b from-muted/30 to-background">
         <div className="max-w-3xl mx-auto text-center space-y-8">
-          <h2 className="text-3xl md:text-5xl font-bold tracking-tight" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             Ready to Share Your Story?
           </h2>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">

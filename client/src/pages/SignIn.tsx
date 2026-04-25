@@ -69,7 +69,7 @@ export default function SignIn() {
             <div className="flex justify-center mb-6">
               <Logo className="scale-125" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+            <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Welcome Back
             </h1>
             <p className="text-muted-foreground text-sm mt-2">

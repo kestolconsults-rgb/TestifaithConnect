@@ -247,7 +247,7 @@ export default function PostTestimony() {
           <div className="container mx-auto px-4 py-12">
             <div className="max-w-2xl mx-auto">
               <div className="mb-8 text-center">
-                <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+                <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                   Prepare Your Story
                 </h1>
                 <p className="text-lg text-muted-foreground">
@@ -281,7 +281,7 @@ export default function PostTestimony() {
           <div className="container mx-auto px-4 py-12">
             <div className="max-w-3xl mx-auto">
               <div className="mb-8 text-center">
-                <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+                <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                   Record Your Testimony
                 </h1>
                 <p className="text-lg text-muted-foreground">
@@ -306,7 +306,7 @@ export default function PostTestimony() {
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-3xl mx-auto">
             <div className="mb-8 text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "'League Spartan', sans-serif" }} data-testid="text-page-title">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-page-title">
                 Share Your Testimony
               </h1>
               <p className="text-lg text-muted-foreground">

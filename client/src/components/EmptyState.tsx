@@ -74,7 +74,7 @@ export function EmptyState({ type, title, description, actionLabel, actionHref }
   return (
     <div className="flex flex-col items-center text-center py-10 px-4">
       <Icon className="w-20 h-20 text-muted-foreground mb-4" />
-      <p className="font-['League_Spartan'] text-sm font-semibold text-foreground mb-1">{title}</p>
+      <p className="font-['Space_Grotesk'] text-sm font-semibold text-foreground mb-1">{title}</p>
       {description && (
         <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">{description}</p>
       )}

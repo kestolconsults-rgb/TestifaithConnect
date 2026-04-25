@@ -100,7 +100,7 @@ export default function Onboarding() {
             {step === 2 && <Sparkles className="h-8 w-8 text-primary" />}
             {step === 3 && <Check className="h-8 w-8 text-primary" />}
           </div>
-          <CardTitle className="text-2xl" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+          <CardTitle className="text-2xl" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             {step === 1 && "Welcome to Testifaith!"}
             {step === 2 && "Tell Us About Yourself"}
             {step === 3 && "Your Faith Journey"}

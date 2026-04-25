@@ -83,7 +83,7 @@ export default function Profile() {
           <div className="flex-1 space-y-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ fontFamily: "'League Spartan', sans-serif" }} data-testid="text-profile-name">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-profile-name">
                   {displayName}
                 </h1>
                 <div className="flex flex-wrap items-center gap-4 mt-2 text-muted-foreground">
@@ -148,7 +148,7 @@ export default function Profile() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
                 <BookOpen className="h-6 w-6 text-primary" />
               </div>
-              <p className="text-3xl font-bold" style={{ fontFamily: "'League Spartan', sans-serif" }} data-testid="text-testimonies-count">
+              <p className="text-3xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-testimonies-count">
                 {profile.stats.testimoniesCount}
               </p>
               <p className="text-sm text-muted-foreground">Testimonies</p>
@@ -160,7 +160,7 @@ export default function Profile() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-500/10 mb-3">
                 <Heart className="h-6 w-6 text-red-500" />
               </div>
-              <p className="text-3xl font-bold" style={{ fontFamily: "'League Spartan', sans-serif" }} data-testid="text-amen-count">
+              <p className="text-3xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-amen-count">
                 {profile.stats.amenReceived}
               </p>
               <p className="text-sm text-muted-foreground">Amens Received</p>
@@ -172,7 +172,7 @@ export default function Profile() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-500/10 mb-3">
                 <Sparkles className="h-6 w-6 text-amber-500" />
               </div>
-              <p className="text-3xl font-bold" style={{ fontFamily: "'League Spartan', sans-serif" }} data-testid="text-encourage-count">
+              <p className="text-3xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-encourage-count">
                 {profile.stats.encourageReceived}
               </p>
               <p className="text-sm text-muted-foreground">Encouragements</p>
@@ -183,7 +183,7 @@ export default function Profile() {
         {/* Testimonies Section */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+            <h2 className="text-2xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               {isOwnProfile ? "My Testimonies" : `${profile.firstName}'s Testimonies`}
             </h2>
             {isOwnProfile && (

@@ -434,7 +434,7 @@ export default function ExpectationDetail() {
 
           <h1 
             className="text-3xl md:text-4xl font-bold mb-4"
-            style={{ fontFamily: "'League Spartan', sans-serif" }}
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             data-testid="text-expectation-title"
           >
             {expectation.title}

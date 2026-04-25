@@ -26,7 +26,7 @@ export default function Bible() {
             <BookOpen className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="font-['League_Spartan'] text-2xl font-bold text-foreground leading-tight">Bible</h1>
+            <h1 className="font-['Space_Grotesk'] text-2xl font-bold text-foreground leading-tight">Bible</h1>
             <p className="text-xs text-muted-foreground">Read and study God's Word</p>
           </div>
         </div>
@@ -42,7 +42,7 @@ export default function Bible() {
 
       {/* Today's Verse */}
       <section className="px-5 mb-6">
-        <h2 className="font-['League_Spartan'] text-base font-semibold text-foreground mb-3">Verse for Today</h2>
+        <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground mb-3">Verse for Today</h2>
         <Card className="rounded-2xl border-primary/20 bg-primary/5">
           <CardContent className="p-5">
             <div className="flex items-start gap-3">
@@ -60,7 +60,7 @@ export default function Bible() {
 
       {/* Popular Books */}
       <section className="px-5 mb-6">
-        <h2 className="font-['League_Spartan'] text-base font-semibold text-foreground mb-3">Popular Books</h2>
+        <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground mb-3">Popular Books</h2>
         <div className="grid grid-cols-2 gap-3">
           {POPULAR_BOOKS.map((book) => (
             <button
@@ -80,7 +80,7 @@ export default function Bible() {
 
       {/* Faith Verses */}
       <section className="px-5">
-        <h2 className="font-['League_Spartan'] text-base font-semibold text-foreground mb-3">Faith & Promises</h2>
+        <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground mb-3">Faith & Promises</h2>
         <div className="space-y-3">
           {FAITH_VERSES.map((verse) => (
             <Card key={verse.ref} className="rounded-2xl">

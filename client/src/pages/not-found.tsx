@@ -12,7 +12,7 @@ export default function NotFound() {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-xl bg-primary/10 mb-4">
               <AlertCircle className="h-10 w-10 text-primary" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+            <h1 className="text-4xl md:text-5xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               404 - Page Not Found
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto">

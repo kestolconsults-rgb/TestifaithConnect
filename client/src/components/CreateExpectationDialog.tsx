@@ -128,7 +128,7 @@ export default function CreateExpectationDialog({ open, onOpenChange }: CreateEx
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-xl" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+          <DialogTitle className="text-xl" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             {step === 1 && "What are you believing God for?"}
             {step === 2 && "Privacy & Timing"}
           </DialogTitle>

@@ -22,7 +22,7 @@ function getWelcomeEmailHtml(firstName: string): string {
           <!-- Header with Logo -->
           <tr>
             <td style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); padding: 40px 40px 30px; text-align: center;">
-              <h1 style="margin: 0; font-family: 'League Spartan', 'Segoe UI', sans-serif; font-size: 36px; font-weight: 700; color: #FFFFFF; letter-spacing: 1px;">
+              <h1 style="margin: 0; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 36px; font-weight: 700; color: #FFFFFF; letter-spacing: 1px;">
                 TESTIFAITH
               </h1>
               <p style="margin: 10px 0 0; font-size: 14px; color: rgba(255,255,255,0.9); letter-spacing: 2px; text-transform: uppercase;">
@@ -34,7 +34,7 @@ function getWelcomeEmailHtml(firstName: string): string {
           <!-- Welcome Message -->
           <tr>
             <td style="padding: 40px;">
-              <h2 style="margin: 0 0 20px; font-family: 'League Spartan', 'Segoe UI', sans-serif; font-size: 28px; color: #FFFFFF;">
+              <h2 style="margin: 0 0 20px; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 28px; color: #FFFFFF;">
                 Welcome, ${firstName}!
               </h2>
               <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #CCCCCC;">
@@ -51,7 +51,7 @@ function getWelcomeEmailHtml(firstName: string): string {
           <!-- Getting Started Section -->
           <tr>
             <td style="padding: 0 40px 40px;">
-              <h3 style="margin: 0 0 20px; font-size: 20px; color: #FFFFFF; font-family: 'League Spartan', 'Segoe UI', sans-serif;">
+              <h3 style="margin: 0 0 20px; font-size: 20px; color: #FFFFFF; font-family: 'Space Grotesk', 'Segoe UI', sans-serif;">
                 Here's How to Get Started:
               </h3>
               

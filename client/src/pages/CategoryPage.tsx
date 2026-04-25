@@ -127,7 +127,7 @@ export default function CategoryPage() {
               >
                 {categoryName}
               </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold text-white" style={{ fontFamily: "'League Spartan', sans-serif" }} data-testid="text-page-title">
+              <h1 className="text-4xl md:text-5xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-page-title">
                 {categoryName} Testimonies
               </h1>
             </div>
@@ -141,7 +141,7 @@ export default function CategoryPage() {
               >
                 {categoryName}
               </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold" style={{ fontFamily: "'League Spartan', sans-serif" }} data-testid="text-page-title">
+              <h1 className="text-4xl md:text-5xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-page-title">
                 {categoryName} Testimonies
               </h1>
             </div>

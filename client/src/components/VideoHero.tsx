@@ -39,7 +39,7 @@ export default function VideoHero({
           <p 
             className="text-lg md:text-2xl lg:text-3xl text-white leading-relaxed font-medium" 
             style={{ 
-              fontFamily: 'League Spartan, sans-serif',
+              fontFamily: 'Space Grotesk, sans-serif',
               textShadow: '0 2px 8px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.5)'
             }}
             data-testid="hero-headline"
@@ -50,7 +50,7 @@ export default function VideoHero({
             <p 
               className="text-lg md:text-2xl lg:text-3xl text-white leading-relaxed font-medium" 
               style={{ 
-                fontFamily: 'League Spartan, sans-serif',
+                fontFamily: 'Space Grotesk, sans-serif',
                 textShadow: '0 2px 8px rgba(0, 0, 0, 0.8)' 
               }}
               data-testid="hero-subheadline"

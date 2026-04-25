@@ -7,7 +7,7 @@ export default function Categories() {
       <div className="flex-1">
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-4xl mx-auto text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "'League Spartan', sans-serif" }} data-testid="text-page-title">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }} data-testid="text-page-title">
               Browse by Category
             </h1>
             <p className="text-lg text-muted-foreground">

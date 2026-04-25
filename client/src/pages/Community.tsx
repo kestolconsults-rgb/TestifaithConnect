@@ -63,7 +63,7 @@ function VideoCard({ testimony }: { testimony: TestimonyWithUser }) {
           </div>
         </div>
         <div className="p-3">
-          <p className="font-['League_Spartan'] text-sm font-bold text-foreground mb-2 line-clamp-1">{testimony.title || "Video Testimony"}</p>
+          <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-2 line-clamp-1">{testimony.title || "Video Testimony"}</p>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Avatar className="w-6 h-6">
@@ -144,7 +144,7 @@ function TestimonyRow({ testimony, currentUser }: { testimony: TestimonyWithUser
         </Badge>
       </div>
       {testimony.title && (
-        <p className="font-['League_Spartan'] text-sm font-bold text-foreground mb-1.5">{testimony.title}</p>
+        <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1.5">{testimony.title}</p>
       )}
       <Link href={`/testimony/${testimony.id}`}>
         <p className="text-xs leading-relaxed text-card-foreground mb-3 line-clamp-3 cursor-pointer">
@@ -265,7 +265,7 @@ export default function Community() {
       <div className="px-5 pt-4 pb-3">
         <div className="flex items-center gap-2 mb-0.5">
           <Globe className="w-5 h-5 text-primary" />
-          <h1 className="font-['League_Spartan'] text-2xl font-bold text-foreground">Community</h1>
+          <h1 className="font-['Space_Grotesk'] text-2xl font-bold text-foreground">Community</h1>
         </div>
         <p className="text-xs text-muted-foreground">Stories from the body of Christ</p>
       </div>
@@ -316,7 +316,7 @@ export default function Community() {
       {!debouncedQuery && activeCategory === "All" && (
         <section className="px-5 mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-['League_Spartan'] text-base font-semibold text-foreground">Video Testimonies</h2>
+            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Video Testimonies</h2>
             <Link href="/testimonies">
               <button className="text-xs font-medium text-primary" data-testid="link-see-all-videos">See all</button>
             </Link>
@@ -342,7 +342,7 @@ export default function Community() {
       {/* Text Testimonies */}
       <section className="px-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-['League_Spartan'] text-base font-semibold text-foreground">
+          <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">
             {debouncedQuery || activeCategory !== "All" ? "Results" : "Read Testimonies"}
           </h2>
           {!debouncedQuery && activeCategory === "All" && (
