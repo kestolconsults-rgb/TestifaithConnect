@@ -37,7 +37,8 @@ The app is a **mobile-first PWA** with a bottom tab bar (Home, Community, FAB, B
 - `/home` - Authenticated user home
 - `/profile` - Current user's profile
 - `/profile/:userId` - View another user's profile
-- `/settings` - Profile and notification settings
+- `/edit-profile` - Dedicated profile editing (name, bio, location, website)
+- `/settings` - App preferences (notifications, privacy, security, help)
 - `/onboarding` - New user onboarding flow
 - `/post` - Create new testimony
 - `/testimonies` - Browse all testimonies

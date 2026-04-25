@@ -7,17 +7,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
-import { updateProfileSchema, updateSettingsSchema, addPasswordSchema, insertSupportMessageSchema, type InsertSupportMessage } from "@shared/schema";
+import { updateSettingsSchema, addPasswordSchema, insertSupportMessageSchema, type InsertSupportMessage } from "@shared/schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, User as UserIcon, Bell, Shield, Loader2, Lock, Check, Eye, EyeOff, Headphones, Send, CheckCircle2 } from "lucide-react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { ArrowLeft, Bell, Shield, Loader2, Lock, Check, Eye, EyeOff, Headphones, Send, CheckCircle2 } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import { Link } from "wouter";
 import { z } from "zod";
@@ -29,10 +28,6 @@ type ProfileWithStats = User & {
     encourageReceived: number;
   };
 };
-
-const profileFormSchema = updateProfileSchema.extend({
-  firstName: z.string().min(1, "First name is required").max(50),
-});
 
 type PasswordStatus = {
   hasPassword: boolean;
@@ -55,45 +50,6 @@ export default function Settings() {
   const { data: passwordStatus } = useQuery<PasswordStatus>({
     queryKey: ["/api/profile/has-password"],
     enabled: !!currentUser,
-  });
-
-  const profileForm = useForm({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      firstName: profile?.firstName || "",
-      lastName: profile?.lastName || "",
-      bio: profile?.bio || "",
-      location: profile?.location || "",
-      website: profile?.website || "",
-    },
-    values: {
-      firstName: profile?.firstName || "",
-      lastName: profile?.lastName || "",
-      bio: profile?.bio || "",
-      location: profile?.location || "",
-      website: profile?.website || "",
-    },
-  });
-
-  const updateProfileMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof profileFormSchema>) => {
-      return apiRequest("PATCH", "/api/profile", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-    },
   });
 
   const updateSettingsMutation = useMutation({
@@ -186,9 +142,6 @@ export default function Settings() {
     );
   }
 
-  const displayName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "Anonymous";
-  const initials = [profile?.firstName?.[0], profile?.lastName?.[0]].filter(Boolean).join("").toUpperCase() || "?";
-
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-12 space-y-8">
@@ -203,127 +156,9 @@ export default function Settings() {
             <h1 className="text-3xl font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Settings
             </h1>
-            <p className="text-muted-foreground">Manage your profile and preferences</p>
+            <p className="text-muted-foreground">Manage your notifications, privacy &amp; security</p>
           </div>
         </div>
-
-        {/* Profile Section */}
-        <Card className="rounded-xl">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <UserIcon className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>Update your personal details</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-6 mb-8">
-              <Avatar className="w-20 h-20 border-2 border-primary/20">
-                <AvatarImage src={profile?.profileImageUrl || undefined} alt={displayName} />
-                <AvatarFallback className="text-xl bg-primary/10 text-primary">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="text-sm text-muted-foreground">
-                <p>Your profile picture is synced from your Google account.</p>
-              </div>
-            </div>
-
-            <Form {...profileForm}>
-              <form onSubmit={profileForm.handleSubmit((data) => updateProfileMutation.mutate(data))} className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <FormField
-                    control={profileForm.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your first name" {...field} data-testid="input-first-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={profileForm.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your last name" {...field} data-testid="input-last-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={profileForm.control}
-                  name="bio"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bio</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Tell others about yourself and your faith journey..." 
-                          className="resize-none min-h-[100px]"
-                          {...field} 
-                          data-testid="input-bio"
-                        />
-                      </FormControl>
-                      <FormDescription>Max 500 characters</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={profileForm.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <FormControl>
-                        <Input placeholder="City, Country" {...field} data-testid="input-location" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={profileForm.control}
-                  name="website"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Website</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://yourwebsite.com" {...field} data-testid="input-website" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button 
-                  type="submit" 
-                  disabled={updateProfileMutation.isPending}
-                  data-testid="button-save-profile"
-                >
-                  {updateProfileMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Save Changes
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
 
         {/* Notification Settings */}
         <Card className="rounded-xl">

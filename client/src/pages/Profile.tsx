@@ -114,12 +114,19 @@ export default function Profile() {
               </div>
               
               {isOwnProfile && (
-                <Link href="/settings">
-                  <Button variant="outline" size="sm" data-testid="button-edit-profile">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link href="/edit-profile">
+                    <Button variant="outline" size="sm" data-testid="button-edit-profile">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  </Link>
+                  <Link href="/settings">
+                    <Button variant="ghost" size="icon" data-testid="button-settings">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
               )}
             </div>
             

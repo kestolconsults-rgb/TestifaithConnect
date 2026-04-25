@@ -22,6 +22,7 @@ import SearchResults from "@/pages/SearchResults";
 import Admin from "@/pages/Admin";
 import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
+import EditProfile from "@/pages/EditProfile";
 import Onboarding from "@/pages/Onboarding";
 import SignIn from "@/pages/SignIn";
 import CreateAccount from "@/pages/CreateAccount";
@@ -144,6 +145,9 @@ function Router() {
           </Route>
           <Route path="/settings">
             {isAuthenticated ? <Settings /> : <Redirect to="/signin" />}
+          </Route>
+          <Route path="/edit-profile">
+            {isAuthenticated ? <EditProfile /> : <Redirect to="/signin" />}
           </Route>
           <Route path="/expectations">
             {isAuthenticated ? <Expectations /> : <Redirect to="/signin" />}
