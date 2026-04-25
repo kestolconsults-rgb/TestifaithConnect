@@ -297,8 +297,8 @@ export function Unified() {
             </button>
           </div>
           <button className="flex flex-col items-center gap-1 p-1" style={{ color: t.barText }}>
-            <Bell className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Alerts</span>
+            <BookOpen className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Bible</span>
           </button>
           <button className="flex flex-col items-center gap-1 p-1" style={{ color: t.barText }}>
             <User className="w-5 h-5" />
