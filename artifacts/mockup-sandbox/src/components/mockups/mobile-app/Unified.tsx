@@ -12,11 +12,18 @@ import {
   Signal,
   Sun,
   Moon,
+  Lock,
+  Feather,
+  Sparkles,
+  HelpCircle,
+  X,
+  Globe,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function Unified() {
   const [dark, setDark] = useState(true);
+  const [fabOpen, setFabOpen] = useState(false);
 
   const t = dark
     ? {
@@ -51,6 +58,11 @@ export function Unified() {
         avatarText: "#d4d4d8",
         sectionHead: "#fff",
         titleColor: "#fafafa",
+        privateBg: "rgba(59,130,246,0.06)",
+        privateBorder: "rgba(59,130,246,0.18)",
+        privateLock: "#60a5fa",
+        divider: "#27272a",
+        fabScrim: "rgba(0,0,0,0.7)",
       }
     : {
         bg: "#FAFAF8",
@@ -84,7 +96,33 @@ export function Unified() {
         avatarText: "#475569",
         sectionHead: "#0f172a",
         titleColor: "#0f172a",
+        privateBg: "#eff6ff",
+        privateBorder: "#bfdbfe",
+        privateLock: "#3b82f6",
+        divider: "#f1f5f9",
+        fabScrim: "rgba(0,0,0,0.4)",
       };
+
+  const fabActions = [
+    {
+      icon: <Feather className="w-5 h-5" />,
+      label: "Journal Your Faith",
+      sublabel: "Log what God has done",
+      color: "#ef4444",
+    },
+    {
+      icon: <Sparkles className="w-5 h-5" />,
+      label: "Get Encouraged",
+      sublabel: "Receive a word for today",
+      color: "#f59e0b",
+    },
+    {
+      icon: <HelpCircle className="w-5 h-5" />,
+      label: "Ask a Question",
+      sublabel: "Seek clarity in faith",
+      color: "#8b5cf6",
+    },
+  ];
 
   return (
     <div
@@ -130,7 +168,7 @@ export function Unified() {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-24 px-5 space-y-5 hide-scrollbar">
+      <div className="flex-1 overflow-y-auto pb-28 px-5 space-y-5 hide-scrollbar">
 
         {/* Daily Declaration */}
         <div
@@ -194,14 +232,17 @@ export function Unified() {
           </div>
         </section>
 
-        {/* Feed */}
+        {/* Community Testimonies — public */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-['League_Spartan'] text-base font-semibold" style={{ color: t.sectionHead }}>Recent Testimonies</h2>
-            <button className="text-xs font-medium text-red-500">View all</button>
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-red-500" />
+              <h2 className="font-['League_Spartan'] text-base font-semibold" style={{ color: t.sectionHead }}>From the Community</h2>
+            </div>
+            <button className="text-xs font-medium text-red-500">See all</button>
           </div>
 
-          {/* Card 1 */}
+          {/* Community Card 1 */}
           <div className="rounded-2xl p-4 border" style={{ background: t.bgCard, borderColor: t.cardBorder }}>
             <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2.5">
@@ -224,7 +265,7 @@ export function Unified() {
             <p className="text-xs leading-relaxed mb-3" style={{ color: t.textCard }}>
               We were short on rent and had prayed as a family. A check arrived for the exact amount we needed. God is so faithful!
             </p>
-            <div className="flex gap-4 pt-2.5 border-t" style={{ borderColor: dark ? "#27272a" : "#f1f5f9" }}>
+            <div className="flex gap-4 pt-2.5 border-t" style={{ borderColor: t.divider }}>
               <button className="flex items-center gap-1.5" style={{ color: t.barText }}>
                 <Heart className="w-4 h-4" />
                 <span className="text-xs">342</span>
@@ -236,7 +277,7 @@ export function Unified() {
             </div>
           </div>
 
-          {/* Card 2 */}
+          {/* Community Card 2 */}
           <div className="rounded-2xl p-4 border" style={{ background: t.bgCard, borderColor: t.cardBorder }}>
             <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2.5">
@@ -259,7 +300,7 @@ export function Unified() {
             <p className="text-xs leading-relaxed mb-3" style={{ color: t.textCard }}>
               Just back from the oncologist — scans completely clear. The doctors call it remarkable, but we know who the Great Physician is.
             </p>
-            <div className="flex gap-4 pt-2.5 border-t" style={{ borderColor: dark ? "#27272a" : "#f1f5f9" }}>
+            <div className="flex gap-4 pt-2.5 border-t" style={{ borderColor: t.divider }}>
               <button className="flex items-center gap-1.5" style={{ color: t.barText }}>
                 <Heart className="w-4 h-4" />
                 <span className="text-xs">891</span>
@@ -271,7 +312,80 @@ export function Unified() {
             </div>
           </div>
         </section>
+
+        {/* God's Faithfulness in the Past — private journal */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Lock className="w-4 h-4" style={{ color: t.privateLock }} />
+              <h2 className="font-['League_Spartan'] text-base font-semibold" style={{ color: t.sectionHead }}>God's Faithfulness in the Past</h2>
+            </div>
+            <button className="text-xs font-medium" style={{ color: t.privateLock }}>See all</button>
+          </div>
+          <p className="text-xs -mt-2" style={{ color: t.textMuted }}>Your private faith journal — only visible to you</p>
+
+          {/* Private Entry 1 */}
+          <div className="rounded-2xl p-4 border" style={{ background: t.privateBg, borderColor: t.privateBorder }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: dark ? "rgba(59,130,246,0.15)" : "#dbeafe", color: dark ? "#93c5fd" : "#1d4ed8" }}>Breakthrough</span>
+              <span className="text-[10px]" style={{ color: t.textMuted }}>Mar 3, 2025</span>
+            </div>
+            <p className="font-['League_Spartan'] text-sm font-bold mb-1" style={{ color: t.titleColor }}>The job offer I prayed 8 months for</p>
+            <p className="text-xs leading-relaxed" style={{ color: t.textCard }}>
+              Lord, I remember the day you said "wait." Today the call came. You are never late.
+            </p>
+          </div>
+
+          {/* Private Entry 2 */}
+          <div className="rounded-2xl p-4 border" style={{ background: t.privateBg, borderColor: t.privateBorder }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: dark ? "rgba(59,130,246,0.15)" : "#dbeafe", color: dark ? "#93c5fd" : "#1d4ed8" }}>Healing</span>
+              <span className="text-[10px]" style={{ color: t.textMuted }}>Jan 18, 2025</span>
+            </div>
+            <p className="font-['League_Spartan'] text-sm font-bold mb-1" style={{ color: t.titleColor }}>Mum's recovery — the miracle I journaled</p>
+            <p className="text-xs leading-relaxed" style={{ color: t.textCard }}>
+              Six months of prayer. Doctors were baffled. I knew it was God. This one's just between me and Him.
+            </p>
+          </div>
+        </section>
+
       </div>
+
+      {/* FAB Action Sheet Scrim */}
+      {fabOpen && (
+        <div
+          className="absolute inset-0 z-30"
+          style={{ background: t.fabScrim, backdropFilter: "blur(2px)" }}
+          onClick={() => setFabOpen(false)}
+        />
+      )}
+
+      {/* FAB Action Menu */}
+      {fabOpen && (
+        <div className="absolute bottom-32 left-0 right-0 px-5 z-40 flex flex-col gap-3">
+          {fabActions.map((action) => (
+            <div
+              key={action.label}
+              className="flex items-center gap-4 rounded-2xl p-4 border"
+              style={{
+                background: dark ? "#18181b" : "#fff",
+                borderColor: dark ? "rgba(63,63,70,0.6)" : "#e2e8f0",
+              }}
+            >
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: action.color + "1a", color: action.color }}
+              >
+                {action.icon}
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: t.text }}>{action.label}</p>
+                <p className="text-xs" style={{ color: t.textSub }}>{action.sublabel}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Bottom Tab Bar */}
       <div
@@ -289,8 +403,14 @@ export function Unified() {
           </button>
           <div className="relative -top-5">
             <button
-              className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center text-white border-4 shadow-lg"
-              style={{ borderColor: t.bg, boxShadow: "0 8px 20px -4px rgba(239,68,68,0.45)" }}
+              onClick={() => setFabOpen(!fabOpen)}
+              className="w-14 h-14 rounded-full flex items-center justify-center text-white border-4 shadow-lg transition-transform"
+              style={{
+                background: fabOpen ? "#dc2626" : "#ef4444",
+                borderColor: t.bg,
+                boxShadow: "0 8px 20px -4px rgba(239,68,68,0.45)",
+                transform: fabOpen ? "rotate(45deg)" : "rotate(0deg)",
+              }}
             >
               <Plus className="w-7 h-7" />
             </button>
