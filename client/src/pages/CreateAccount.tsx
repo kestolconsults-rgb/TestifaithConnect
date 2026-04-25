@@ -56,7 +56,7 @@ export default function CreateAccount() {
         </div>
 
         <div className="relative z-10 flex flex-col justify-between p-14 h-full">
-          <Logo />
+          <Logo onDark />
 
           <div className="space-y-6 max-w-xs">
             <h2 className="font-['Space_Grotesk'] text-[2.4rem] font-bold text-white leading-[1.18]">
