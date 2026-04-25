@@ -249,6 +249,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string | 
   try {
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      reply_to: REPLY_TO,
       to: email,
       subject: "Reset your Testifaith password",
       html: getPasswordResetEmailHtml(displayName, resetUrl),
@@ -279,6 +280,7 @@ export async function sendWelcomeEmail(email: string, firstName?: string): Promi
   try {
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      reply_to: REPLY_TO,
       to: email,
       subject: `Welcome to Testifaith, ${displayName}!`,
       html: getWelcomeEmailHtml(displayName),
