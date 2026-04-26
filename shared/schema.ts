@@ -330,6 +330,7 @@ export const faithDeclarations = pgTable("faith_declarations", {
   bibleReference: varchar("bible_reference", { length: 100 }).notNull(),
   isActive: boolean("is_active").default(false).notNull(),
   activeDate: timestamp("active_date"),
+  scheduledDate: varchar("scheduled_date", { length: 10 }),
   createdBy: varchar("created_by").references(() => admins.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -343,6 +344,7 @@ export const insertFaithDeclarationSchema = createInsertSchema(faithDeclarations
   declaration: z.string().min(10, "Declaration must be at least 10 characters").max(500, "Declaration is too long"),
   bibleVerse: z.string().min(10, "Bible verse must be at least 10 characters").max(1000, "Bible verse is too long"),
   bibleReference: z.string().min(3, "Reference is required").max(100, "Reference is too long"),
+  scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD").optional().nullable(),
 });
 
 export type InsertFaithDeclaration = z.infer<typeof insertFaithDeclarationSchema>;

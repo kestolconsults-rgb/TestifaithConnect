@@ -104,7 +104,7 @@ export interface IStorage {
   // Faith declaration operations
   createFaithDeclaration(declaration: InsertFaithDeclaration): Promise<FaithDeclaration>;
   getFaithDeclarations(): Promise<FaithDeclaration[]>;
-  getActiveFaithDeclaration(): Promise<FaithDeclaration | undefined>;
+  getActiveFaithDeclaration(localDateStr?: string): Promise<FaithDeclaration | undefined>;
   setActiveFaithDeclaration(id: string): Promise<void>;
   deleteFaithDeclaration(id: string): Promise<boolean>;
 
@@ -822,13 +822,25 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(faithDeclarations.createdAt));
   }
 
-  async getActiveFaithDeclaration(): Promise<FaithDeclaration | undefined> {
-    const [declaration] = await db
+  async getActiveFaithDeclaration(localDateStr?: string): Promise<FaithDeclaration | undefined> {
+    // If a local date string (YYYY-MM-DD) was provided, look for a scheduled declaration first
+    if (localDateStr && /^\d{4}-\d{2}-\d{2}$/.test(localDateStr)) {
+      const [scheduled] = await db
+        .select()
+        .from(faithDeclarations)
+        .where(eq(faithDeclarations.scheduledDate, localDateStr))
+        .limit(1);
+      if (scheduled) return scheduled;
+    }
+
+    // Fallback: return the most recently activated (isActive = true) declaration
+    const [active] = await db
       .select()
       .from(faithDeclarations)
       .where(eq(faithDeclarations.isActive, true))
+      .orderBy(desc(faithDeclarations.activeDate))
       .limit(1);
-    return declaration;
+    return active;
   }
 
   async setActiveFaithDeclaration(id: string): Promise<void> {

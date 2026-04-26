@@ -742,6 +742,7 @@ function FaithDeclarationManagement() {
   const [newDeclaration, setNewDeclaration] = useState("");
   const [newBibleVerse, setNewBibleVerse] = useState("");
   const [newBibleReference, setNewBibleReference] = useState("");
+  const [scheduledDate, setScheduledDate] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -750,13 +751,14 @@ function FaithDeclarationManagement() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { declaration: string; bibleVerse: string; bibleReference: string }) =>
+    mutationFn: (data: { declaration: string; bibleVerse: string; bibleReference: string; scheduledDate?: string }) =>
       apiRequest("POST", "/api/admin/faith-declarations", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/faith-declarations"] });
       setNewDeclaration("");
       setNewBibleVerse("");
       setNewBibleReference("");
+      setScheduledDate("");
       toast({ title: "Faith declaration created" });
     },
     onError: (error: any) => {
@@ -788,8 +790,19 @@ function FaithDeclarationManagement() {
       declaration: newDeclaration.trim(),
       bibleVerse: newBibleVerse.trim(),
       bibleReference: newBibleReference.trim(),
+      scheduledDate: scheduledDate || undefined,
     });
   };
+
+  // Format a YYYY-MM-DD string for display
+  const formatDate = (d: string) => {
+    const [y, m, day] = d.split("-");
+    const date = new Date(Number(y), Number(m) - 1, Number(day));
+    return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  };
+
+  // Today in local time for min-date on picker
+  const todayStr = new Date().toLocaleDateString("en-CA"); // gives YYYY-MM-DD
 
   return (
     <div className="space-y-4">
@@ -819,6 +832,24 @@ function FaithDeclarationManagement() {
           className="bg-zinc-900 border-zinc-700 text-white"
           data-testid="input-declaration-reference"
         />
+        <div className="space-y-1">
+          <label className="text-xs text-zinc-400 font-medium">
+            Schedule for a specific date <span className="text-zinc-600">(optional — leave blank to set manually)</span>
+          </label>
+          <Input
+            type="date"
+            min={todayStr}
+            value={scheduledDate}
+            onChange={(e) => setScheduledDate(e.target.value)}
+            className="bg-zinc-900 border-zinc-700 text-white"
+            data-testid="input-declaration-date"
+          />
+          {scheduledDate && (
+            <p className="text-xs text-green-400">
+              Will automatically go live on {formatDate(scheduledDate)} in each user's local timezone
+            </p>
+          )}
+        </div>
         <Button
           type="submit"
           disabled={createMutation.isPending || !newDeclaration.trim() || !newBibleVerse.trim() || !newBibleReference.trim()}
@@ -826,7 +857,7 @@ function FaithDeclarationManagement() {
           data-testid="button-create-declaration"
         >
           {createMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-          Add Declaration
+          {scheduledDate ? "Schedule Declaration" : "Add Declaration"}
         </Button>
       </form>
 
@@ -835,13 +866,18 @@ function FaithDeclarationManagement() {
           <Loader2 className="w-6 h-6 animate-spin text-red-500" />
         </div>
       ) : (
-        <div className="space-y-2 max-h-64 overflow-y-auto">
-          {declarations?.map((declaration) => (
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {declarations?.map((declaration) => {
+            const isScheduled = !!declaration.scheduledDate;
+            const isPast = isScheduled && declaration.scheduledDate! < todayStr;
+            return (
             <div
               key={declaration.id}
               className={`p-3 rounded-lg border ${
                 declaration.isActive
                   ? "bg-green-500/10 border-green-500/30"
+                  : isScheduled && !isPast
+                  ? "bg-blue-500/10 border-blue-500/30"
                   : "bg-zinc-800 border-zinc-700"
               }`}
               data-testid={`declaration-${declaration.id}`}
@@ -850,9 +886,21 @@ function FaithDeclarationManagement() {
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm">{declaration.declaration}</p>
                   <p className="text-zinc-400 text-xs mt-1">"{declaration.bibleVerse}" — {declaration.bibleReference}</p>
-                  {declaration.isActive && (
-                    <Badge className="mt-2 bg-green-500 text-white">Active</Badge>
-                  )}
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {declaration.isActive && (
+                      <Badge className="bg-green-500 text-white text-[10px]">Active (fallback)</Badge>
+                    )}
+                    {isScheduled && !isPast && (
+                      <Badge className="bg-blue-500 text-white text-[10px]">
+                        Scheduled: {formatDate(declaration.scheduledDate!)}
+                      </Badge>
+                    )}
+                    {isScheduled && isPast && (
+                      <Badge className="bg-zinc-600 text-zinc-300 text-[10px]">
+                        Was scheduled: {formatDate(declaration.scheduledDate!)}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1.5 items-end">
                   {!declaration.isActive ? (
@@ -864,10 +912,10 @@ function FaithDeclarationManagement() {
                       data-testid={`button-activate-${declaration.id}`}
                     >
                       <Check className="w-3.5 h-3.5 mr-1" />
-                      Set as Today's
+                      Set as Fallback
                     </Button>
                   ) : (
-                    <span className="text-[11px] text-green-400 font-medium px-2">Currently active</span>
+                    <span className="text-[11px] text-green-400 font-medium px-2">Fallback active</span>
                   )}
                   <Button
                     variant="ghost"
@@ -883,7 +931,7 @@ function FaithDeclarationManagement() {
                 </div>
               </div>
             </div>
-          ))}
+          );})}
           {declarations?.length === 0 && (
             <p className="text-zinc-500 text-center py-4">No faith declarations yet</p>
           )}

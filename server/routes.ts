@@ -904,7 +904,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Faith Declaration routes
   app.get('/api/faith-declaration/active', async (req, res) => {
     try {
-      const declaration = await storage.getActiveFaithDeclaration();
+      // Accept a local date (YYYY-MM-DD) from the client so scheduled declarations
+      // switch at midnight in the user's own timezone
+      const localDate = typeof req.query.date === "string" ? req.query.date : undefined;
+      const declaration = await storage.getActiveFaithDeclaration(localDate);
       res.json(declaration || null);
     } catch (error) {
       console.error("Error fetching active faith declaration:", error);

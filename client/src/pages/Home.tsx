@@ -52,6 +52,12 @@ export default function Home() {
 
   const { data: faithDeclaration, isLoading: declarationLoading } = useQuery<FaithDeclaration | null>({
     queryKey: ["/api/faith-declaration/active"],
+    queryFn: async () => {
+      const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local timezone
+      const res = await fetch(`/api/faith-declaration/active?date=${today}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
   });
 
   const { data: myTestimonies, isLoading: myLoading } = useQuery<TestimonyWithUser[]>({
