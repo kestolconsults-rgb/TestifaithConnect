@@ -854,28 +854,31 @@ function FaithDeclarationManagement() {
                     <Badge className="mt-2 bg-green-500 text-white">Active</Badge>
                   )}
                 </div>
-                <div className="flex gap-1">
-                  {!declaration.isActive && (
+                <div className="flex flex-col gap-1.5 items-end">
+                  {!declaration.isActive ? (
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      size="sm"
                       onClick={() => activateMutation.mutate(declaration.id)}
                       disabled={activateMutation.isPending}
-                      className="text-green-400 hover:text-green-300"
+                      className="bg-green-600 hover:bg-green-500 text-white text-xs px-3"
                       data-testid={`button-activate-${declaration.id}`}
                     >
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3.5 h-3.5 mr-1" />
+                      Set as Today's
                     </Button>
+                  ) : (
+                    <span className="text-[11px] text-green-400 font-medium px-2">Currently active</span>
                   )}
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => deleteMutation.mutate(declaration.id)}
                     disabled={deleteMutation.isPending}
-                    className="text-red-400 hover:text-red-300"
+                    className="text-red-400 hover:text-red-300 text-xs"
                     data-testid={`button-delete-${declaration.id}`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                    Delete
                   </Button>
                 </div>
               </div>
