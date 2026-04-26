@@ -1142,21 +1142,37 @@ function UploadTestimony() {
   );
 }
 
+type FeaturedScheduleEntry = { id: string; testimonyId: string; scheduledDate: string; createdAt?: string | null; testimony?: any };
+
 function FeaturedTestimonyManagement() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [view, setView] = useState<"fallback" | "schedule">("fallback");
+  const [schedulingId, setSchedulingId] = useState<string | null>(null);
+  const [scheduleDate, setScheduleDate] = useState("");
+
+  const todayStr = new Date().toLocaleDateString("en-CA");
+
+  const formatDate = (d: string) => {
+    const [y, m, day] = d.split("-");
+    const date = new Date(Number(y), Number(m) - 1, Number(day));
+    return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  };
 
   const { data: approvedTestimonies, isLoading } = useQuery<TestimonyWithUser[]>({
     queryKey: ["/api/admin/testimonies/approved"],
+  });
+
+  const { data: featuredScheduleData, isLoading: scheduleLoading } = useQuery<FeaturedScheduleEntry[]>({
+    queryKey: ["/api/admin/featured-schedule"],
   });
 
   const featureMutation = useMutation({
     mutationFn: (id: string) => apiRequest("POST", `/api/admin/testimonies/${id}/feature`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/testimonies/approved"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/testimonies"] });
       queryClient.invalidateQueries({ queryKey: ["/api/testimonies/featured"] });
-      toast({ title: "Testimony set as Testimony of the Day" });
+      toast({ title: "Set as fallback Stone of the Day" });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -1167,9 +1183,32 @@ function FeaturedTestimonyManagement() {
     mutationFn: () => apiRequest("POST", "/api/admin/testimonies/clear-featured"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/testimonies/approved"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/testimonies"] });
       queryClient.invalidateQueries({ queryKey: ["/api/testimonies/featured"] });
-      toast({ title: "Featured testimony cleared" });
+      toast({ title: "Fallback cleared" });
+    },
+  });
+
+  const scheduleMutation = useMutation({
+    mutationFn: ({ testimonyId, scheduledDate }: { testimonyId: string; scheduledDate: string }) =>
+      apiRequest("POST", "/api/admin/featured-schedule", { testimonyId, scheduledDate }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/featured-schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/testimonies/featured"] });
+      setSchedulingId(null);
+      setScheduleDate("");
+      toast({ title: "Stone of the Day scheduled" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteScheduleMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/featured-schedule/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/featured-schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/testimonies/featured"] });
+      toast({ title: "Schedule entry removed" });
     },
   });
 
@@ -1182,85 +1221,205 @@ function FeaturedTestimonyManagement() {
   }
 
   const featuredTestimony = approvedTestimonies?.find(t => t.isFeatured);
-  const nonFeaturedTestimonies = approvedTestimonies?.filter(t => !t.isFeatured) || [];
+  const allTestimonies = approvedTestimonies || [];
+
+  const upcomingSchedule = (featuredScheduleData || []).filter(e => e.scheduledDate >= todayStr);
+  const pastSchedule = (featuredScheduleData || []).filter(e => e.scheduledDate < todayStr);
 
   return (
-    <div className="space-y-6">
-      {featuredTestimony && (
-        <div className="p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-lg">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                <span className="text-sm text-yellow-400 font-medium">Current Testimony of the Day</span>
-              </div>
-              <h4 className="text-white font-semibold text-lg">{featuredTestimony.title}</h4>
-              <p className="text-zinc-400 text-sm mt-1 line-clamp-2">{featuredTestimony.story}</p>
-              <div className="flex items-center gap-3 mt-2">
-                <Badge className="bg-zinc-700">{featuredTestimony.category}</Badge>
-                {featuredTestimony.videoUrl && (
-                  <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                    <Play className="w-3 h-3 mr-1" />
-                    Video
-                  </Badge>
-                )}
+    <div className="space-y-4">
+      {/* View toggle */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setView("fallback")}
+          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${view === "fallback" ? "bg-yellow-500 text-black" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
+          data-testid="tab-fallback"
+        >
+          Set Fallback
+        </button>
+        <button
+          onClick={() => setView("schedule")}
+          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${view === "schedule" ? "bg-blue-500 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
+          data-testid="tab-schedule"
+        >
+          Schedule Ahead ({upcomingSchedule.length})
+        </button>
+      </div>
+
+      {view === "fallback" && (
+        <div className="space-y-4">
+          <p className="text-xs text-zinc-500">
+            The fallback is shown on any day that doesn't have a scheduled Stone of the Day.
+          </p>
+
+          {featuredTestimony && (
+            <div className="p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-lg">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                    <span className="text-sm text-yellow-400 font-medium">Current Fallback</span>
+                  </div>
+                  <h4 className="text-white font-semibold">{featuredTestimony.title}</h4>
+                  <p className="text-zinc-400 text-xs mt-1 line-clamp-2">{featuredTestimony.story}</p>
+                  <Badge className="bg-zinc-700 text-xs mt-2">{featuredTestimony.category}</Badge>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => clearFeaturedMutation.mutate()}
+                  disabled={clearFeaturedMutation.isPending}
+                  className="border-zinc-700 text-zinc-300 shrink-0"
+                  data-testid="button-clear-featured-main"
+                >
+                  <StarOff className="w-4 h-4 mr-1" />
+                  Clear
+                </Button>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => clearFeaturedMutation.mutate()}
-              disabled={clearFeaturedMutation.isPending}
-              className="border-zinc-700 text-zinc-300 shrink-0"
-              data-testid="button-clear-featured-main"
-            >
-              <StarOff className="w-4 h-4 mr-1" />
-              Clear
-            </Button>
+          )}
+
+          <div className="space-y-2 max-h-[360px] overflow-y-auto">
+            {allTestimonies.map((testimony) => (
+              <div
+                key={testimony.id}
+                className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg gap-3"
+                data-testid={`featured-select-${testimony.id}`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h5 className="text-white font-medium text-sm truncate">{testimony.title}</h5>
+                    {testimony.videoUrl && <Video className="w-3.5 h-3.5 text-blue-400 shrink-0" />}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="outline" className="text-xs border-zinc-600">{testimony.category}</Badge>
+                    <span className="text-zinc-500 text-xs">{testimony.amenCount || 0} amens</span>
+                    {testimony.isFeatured && <Badge className="bg-yellow-500 text-black text-xs">Fallback</Badge>}
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => featureMutation.mutate(testimony.id)}
+                  disabled={featureMutation.isPending || testimony.isFeatured}
+                  className={testimony.isFeatured ? "bg-yellow-500/30 text-yellow-400 text-xs shrink-0" : "bg-yellow-500 hover:bg-yellow-600 text-black shrink-0"}
+                  data-testid={`button-feature-${testimony.id}`}
+                >
+                  <Star className="w-3.5 h-3.5 mr-1" />
+                  {testimony.isFeatured ? "Current" : "Set Fallback"}
+                </Button>
+              </div>
+            ))}
+            {allTestimonies.length === 0 && (
+              <p className="text-zinc-500 text-center py-4">No approved testimonies available</p>
+            )}
           </div>
         </div>
       )}
 
-      <div>
-        <h4 className="text-white font-medium mb-3">Select Testimony of the Day</h4>
-        <div className="space-y-2 max-h-[400px] overflow-y-auto">
-          {nonFeaturedTestimonies.map((testimony) => (
-            <div
-              key={testimony.id}
-              className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg gap-3"
-              data-testid={`featured-select-${testimony.id}`}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h5 className="text-white font-medium truncate">{testimony.title}</h5>
-                  {testimony.videoUrl && (
-                    <Video className="w-4 h-4 text-blue-400 shrink-0" />
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline" className="text-xs border-zinc-600">{testimony.category}</Badge>
-                  <span className="text-zinc-500 text-xs">
-                    {testimony.amenCount || 0} amens
-                  </span>
-                </div>
+      {view === "schedule" && (
+        <div className="space-y-4">
+          <p className="text-xs text-zinc-500">
+            Schedule a specific testimony as Stone of the Day for any future date. It will switch automatically at midnight in each user's local timezone.
+          </p>
+
+          {/* Schedule an entry */}
+          <div className="p-3 bg-zinc-800 rounded-lg space-y-2">
+            <p className="text-white text-sm font-medium">Schedule a new date</p>
+            <Input
+              type="date"
+              min={todayStr}
+              value={scheduleDate}
+              onChange={(e) => setScheduleDate(e.target.value)}
+              className="bg-zinc-900 border-zinc-700 text-white"
+              data-testid="input-schedule-date"
+            />
+            {scheduleDate && (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                <p className="text-xs text-zinc-400">Pick the testimony for {formatDate(scheduleDate)}:</p>
+                {allTestimonies.map((testimony) => (
+                  <div
+                    key={testimony.id}
+                    className={`flex items-center justify-between p-2.5 rounded-lg gap-2 cursor-pointer border transition-colors ${schedulingId === testimony.id ? "bg-blue-500/20 border-blue-500/40" : "bg-zinc-900 border-zinc-700 hover:border-zinc-500"}`}
+                    onClick={() => setSchedulingId(schedulingId === testimony.id ? null : testimony.id)}
+                    data-testid={`schedule-select-${testimony.id}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-xs font-medium truncate">{testimony.title}</p>
+                      <Badge variant="outline" className="text-[10px] border-zinc-600 mt-0.5">{testimony.category}</Badge>
+                    </div>
+                    {schedulingId === testimony.id && <Check className="w-4 h-4 text-blue-400 shrink-0" />}
+                  </div>
+                ))}
               </div>
-              <Button
-                size="sm"
-                onClick={() => featureMutation.mutate(testimony.id)}
-                disabled={featureMutation.isPending}
-                className="bg-yellow-500 hover:bg-yellow-600 text-black shrink-0"
-                data-testid={`button-feature-${testimony.id}`}
-              >
-                <Star className="w-4 h-4 mr-1" />
-                Feature
-              </Button>
+            )}
+            <Button
+              size="sm"
+              disabled={!schedulingId || !scheduleDate || scheduleMutation.isPending}
+              onClick={() => schedulingId && scheduleMutation.mutate({ testimonyId: schedulingId, scheduledDate: scheduleDate })}
+              className="bg-blue-600 hover:bg-blue-500 text-white w-full"
+              data-testid="button-confirm-schedule"
+            >
+              {scheduleMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Star className="w-4 h-4 mr-2" />}
+              Confirm Schedule
+            </Button>
+          </div>
+
+          {/* Upcoming schedule */}
+          {scheduleLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin text-zinc-500 mx-auto" />
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-zinc-300">Upcoming ({upcomingSchedule.length})</p>
+              {upcomingSchedule.length === 0 && (
+                <p className="text-zinc-500 text-xs text-center py-3">No upcoming scheduled entries</p>
+              )}
+              {upcomingSchedule.map((entry) => (
+                <div key={entry.id} className="flex items-center justify-between p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg gap-2" data-testid={`schedule-entry-${entry.id}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-blue-300 text-xs font-semibold">{formatDate(entry.scheduledDate)}</p>
+                    <p className="text-white text-sm font-medium truncate mt-0.5">{entry.testimony?.title || "Unknown testimony"}</p>
+                    <Badge variant="outline" className="text-[10px] border-zinc-600 mt-0.5">{entry.testimony?.category || ""}</Badge>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => deleteScheduleMutation.mutate(entry.id)}
+                    disabled={deleteScheduleMutation.isPending}
+                    className="text-red-400 hover:text-red-300 shrink-0"
+                    data-testid={`button-delete-schedule-${entry.id}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ))}
+
+              {pastSchedule.length > 0 && (
+                <>
+                  <p className="text-sm font-medium text-zinc-500 mt-3">Past ({pastSchedule.length})</p>
+                  {pastSchedule.map((entry) => (
+                    <div key={entry.id} className="flex items-center justify-between p-3 bg-zinc-800/60 border border-zinc-700 rounded-lg gap-2 opacity-60">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-zinc-400 text-xs font-semibold">{formatDate(entry.scheduledDate)}</p>
+                        <p className="text-zinc-300 text-sm truncate mt-0.5">{entry.testimony?.title || "Unknown"}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteScheduleMutation.mutate(entry.id)}
+                        disabled={deleteScheduleMutation.isPending}
+                        className="text-red-400 hover:text-red-300 shrink-0"
+                        data-testid={`button-delete-past-${entry.id}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
-          ))}
-          {nonFeaturedTestimonies.length === 0 && !featuredTestimony && (
-            <p className="text-zinc-500 text-center py-4">No approved testimonies available</p>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

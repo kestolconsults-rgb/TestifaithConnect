@@ -206,7 +206,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/testimonies/featured', async (req: Request, res) => {
     try {
       const userId = req.user?.id;
-      const testimony = await storage.getFeaturedTestimony(userId);
+      const localDate = typeof req.query.date === "string" ? req.query.date : undefined;
+      const testimony = await storage.getFeaturedTestimony(userId, localDate);
       res.json(testimony || null);
     } catch (error) {
       console.error("Error fetching featured testimony:", error);
@@ -898,6 +899,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error clearing featured testimony:", error);
       res.status(500).json({ message: "Failed to clear featured testimony" });
+    }
+  });
+
+  // Get featured schedule
+  app.get('/api/admin/featured-schedule', isAdminAuthenticated, async (req, res) => {
+    try {
+      const schedule = await storage.getFeaturedSchedule();
+      res.json(schedule);
+    } catch (error) {
+      console.error("Error fetching featured schedule:", error);
+      res.status(500).json({ message: "Failed to fetch featured schedule" });
+    }
+  });
+
+  // Schedule a testimony for a specific date
+  app.post('/api/admin/featured-schedule', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { testimonyId, scheduledDate } = req.body;
+      if (!testimonyId || !scheduledDate || !/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) {
+        return res.status(400).json({ message: "testimonyId and scheduledDate (YYYY-MM-DD) are required" });
+      }
+      const entry = await storage.scheduleFeaturedTestimony(testimonyId, scheduledDate);
+      res.json(entry);
+    } catch (error) {
+      console.error("Error scheduling featured testimony:", error);
+      res.status(500).json({ message: "Failed to schedule featured testimony" });
+    }
+  });
+
+  // Delete a scheduled entry
+  app.delete('/api/admin/featured-schedule/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteFeaturedSchedule(id);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ message: "Schedule entry not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting featured schedule:", error);
+      res.status(500).json({ message: "Failed to delete featured schedule" });
     }
   });
 

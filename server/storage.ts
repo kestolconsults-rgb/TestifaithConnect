@@ -7,6 +7,7 @@ import {
   comments,
   admins,
   faithDeclarations,
+  featuredSchedule,
   faithExpectations,
   expectationMilestones,
   expectationScriptures,
@@ -35,6 +36,7 @@ import {
   type InsertAdmin,
   type FaithDeclaration,
   type InsertFaithDeclaration,
+  type FeaturedScheduleEntry,
   type UpdateProfile,
   type UpdateSettings,
   type CompleteOnboarding,
@@ -74,7 +76,7 @@ export interface IStorage {
   getRecentTestimonies(limit: number, userId?: string): Promise<TestimonyWithUser[]>;
   getTestimoniesByCategory(category: string, userId?: string): Promise<TestimonyWithUser[]>;
   getUserTestimonies(userId: string): Promise<TestimonyWithUser[]>;
-  getFeaturedTestimony(userId?: string): Promise<TestimonyWithUser | undefined>;
+  getFeaturedTestimony(userId?: string, localDateStr?: string): Promise<TestimonyWithUser | undefined>;
   searchTestimonies(query: string, categories?: string[], startDate?: Date, endDate?: Date, userId?: string): Promise<TestimonyWithUser[]>;
   getPersonalizedTestimonies(userId: string, limit: number): Promise<TestimonyWithUser[]>;
   deleteTestimony(id: string, userId: string): Promise<boolean>;
@@ -111,6 +113,9 @@ export interface IStorage {
   // Featured testimony management (admin)
   setFeaturedTestimony(testimonyId: string): Promise<void>;
   clearFeaturedTestimony(): Promise<void>;
+  scheduleFeaturedTestimony(testimonyId: string, scheduledDate: string): Promise<FeaturedScheduleEntry>;
+  getFeaturedSchedule(): Promise<(FeaturedScheduleEntry & { testimony?: TestimonyWithUser })[]>;
+  deleteFeaturedSchedule(id: string): Promise<boolean>;
   getApprovedTestimonies(): Promise<TestimonyWithUser[]>;
 
   // Video moderation (admin)
@@ -526,17 +531,35 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getFeaturedTestimony(userId?: string): Promise<TestimonyWithUser | undefined> {
-    // First try to get admin-selected featured testimony
-    let [result] = await db
-      .select()
-      .from(testimonies)
-      .leftJoin(users, eq(testimonies.userId, users.id))
-      .where(eq(testimonies.isFeatured, true))
-      .orderBy(desc(testimonies.featuredDate))
-      .limit(1);
+  async getFeaturedTestimony(userId?: string, localDateStr?: string): Promise<TestimonyWithUser | undefined> {
+    let result: any = null;
 
-    // If no admin-selected, auto-select based on popularity (most amens + encourages)
+    // 1. Check for a scheduled Stone of the Day for today's local date
+    if (localDateStr && /^\d{4}-\d{2}-\d{2}$/.test(localDateStr)) {
+      const [scheduled] = await db
+        .select()
+        .from(featuredSchedule)
+        .leftJoin(testimonies, eq(featuredSchedule.testimonyId, testimonies.id))
+        .leftJoin(users, eq(testimonies.userId, users.id))
+        .where(eq(featuredSchedule.scheduledDate, localDateStr))
+        .limit(1);
+      if (scheduled?.testimonies) {
+        result = { testimonies: scheduled.testimonies, users: scheduled.users };
+      }
+    }
+
+    // 2. Fallback: admin-selected featured testimony
+    if (!result) {
+      [result] = await db
+        .select()
+        .from(testimonies)
+        .leftJoin(users, eq(testimonies.userId, users.id))
+        .where(eq(testimonies.isFeatured, true))
+        .orderBy(desc(testimonies.featuredDate))
+        .limit(1);
+    }
+
+    // 3. Fallback: auto-select based on popularity (most amens + encourages)
     if (!result) {
       [result] = await db
         .select()
@@ -878,6 +901,42 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(testimonies)
       .set({ isFeatured: false, featuredDate: null });
+  }
+
+  async scheduleFeaturedTestimony(testimonyId: string, scheduledDate: string): Promise<FeaturedScheduleEntry> {
+    // Upsert: if a schedule already exists for that date, replace it
+    await db
+      .delete(featuredSchedule)
+      .where(eq(featuredSchedule.scheduledDate, scheduledDate));
+    const [entry] = await db
+      .insert(featuredSchedule)
+      .values({ testimonyId, scheduledDate })
+      .returning();
+    return entry;
+  }
+
+  async getFeaturedSchedule(): Promise<(FeaturedScheduleEntry & { testimony?: TestimonyWithUser })[]> {
+    const entries = await db
+      .select()
+      .from(featuredSchedule)
+      .leftJoin(testimonies, eq(featuredSchedule.testimonyId, testimonies.id))
+      .leftJoin(users, eq(testimonies.userId, users.id))
+      .orderBy(asc(featuredSchedule.scheduledDate));
+
+    return entries.map((e) => ({
+      ...e.featured_schedule,
+      testimony: e.testimonies
+        ? { ...e.testimonies, user: e.users ?? undefined } as unknown as TestimonyWithUser
+        : undefined,
+    }));
+  }
+
+  async deleteFeaturedSchedule(id: string): Promise<boolean> {
+    const result = await db
+      .delete(featuredSchedule)
+      .where(eq(featuredSchedule.id, id))
+      .returning();
+    return result.length > 0;
   }
 
   async getApprovedTestimonies(): Promise<TestimonyWithUser[]> {

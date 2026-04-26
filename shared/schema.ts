@@ -362,6 +362,16 @@ export const faithDeclarationsRelations = relations(faithDeclarations, ({ one })
   }),
 }));
 
+// Featured testimony schedule (Stone of the Day scheduling)
+export const featuredSchedule = pgTable("featured_schedule", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  testimonyId: varchar("testimony_id").references(() => testimonies.id, { onDelete: "cascade" }).notNull(),
+  scheduledDate: varchar("scheduled_date", { length: 10 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type FeaturedScheduleEntry = typeof featuredSchedule.$inferSelect;
+
 // =====================================================
 // FAITH EXPECTATIONS FEATURE
 // =====================================================

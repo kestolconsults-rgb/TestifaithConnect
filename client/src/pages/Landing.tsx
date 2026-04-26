@@ -13,6 +13,12 @@ import type { TestimonyWithUser, FaithDeclaration } from "@shared/schema";
 export default function Landing() {
   const { data: featuredTestimony, isLoading: featuredLoading } = useQuery<TestimonyWithUser>({
     queryKey: ["/api/testimonies/featured"],
+    queryFn: async () => {
+      const today = new Date().toLocaleDateString("en-CA");
+      const res = await fetch(`/api/testimonies/featured?date=${today}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
   });
 
   const { data: faithDeclaration, isLoading: declarationLoading } = useQuery<FaithDeclaration | null>({
