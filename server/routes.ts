@@ -117,16 +117,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Proxy video upload — browser POSTs raw bytes here, server stores to Object Storage.
-  // Avoids CORS issues with S3/GCS presigned URLs entirely.
+  // Helper: upload a buffer to whichever storage is available
+  async function proxyUpload(buffer: Buffer, contentType: string): Promise<string> {
+    if (s3StorageService.isConfigured()) {
+      return s3StorageService.uploadBuffer(buffer, contentType);
+    }
+    return objectStorageService.uploadBuffer(buffer, contentType);
+  }
+
+  // Proxy video upload — browser POSTs raw bytes here, server stores to S3 or Object Storage.
+  // Avoids CORS issues with presigned URLs entirely.
   app.post('/api/uploads/proxy-video', isAuthenticated, express.raw({ type: '*/*', limit: '110mb' }), async (req: Request, res) => {
     try {
-      const contentType = (req.headers['x-content-type'] as string) || req.headers['content-type'] || 'video/webm';
+      const contentType = (req.headers['x-content-type'] as string) || (req.headers['content-type'] as string) || 'video/webm';
       const buffer = req.body as Buffer;
       if (!buffer || buffer.length === 0) {
         return res.status(400).json({ error: "No file data received" });
       }
-      const objectPath = await objectStorageService.uploadBuffer(buffer, contentType);
+      const objectPath = await proxyUpload(buffer, contentType);
       res.json({ objectPath });
     } catch (error) {
       console.error("Error in proxy video upload:", error);
@@ -137,12 +145,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin proxy video upload
   app.post('/api/admin/uploads/proxy-video', isAdminAuthenticated, express.raw({ type: '*/*', limit: '110mb' }), async (req: Request, res) => {
     try {
-      const contentType = (req.headers['x-content-type'] as string) || req.headers['content-type'] || 'video/mp4';
+      const contentType = (req.headers['x-content-type'] as string) || (req.headers['content-type'] as string) || 'video/mp4';
       const buffer = req.body as Buffer;
       if (!buffer || buffer.length === 0) {
         return res.status(400).json({ error: "No file data received" });
       }
-      const objectPath = await objectStorageService.uploadBuffer(buffer, contentType);
+      const objectPath = await proxyUpload(buffer, contentType);
       res.json({ objectPath });
     } catch (error) {
       console.error("Error in admin proxy video upload:", error);

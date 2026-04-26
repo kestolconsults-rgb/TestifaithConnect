@@ -52,6 +52,22 @@ export class S3StorageService {
   }
 
   /**
+   * Upload a buffer directly to S3 from the server (no presigned URL, no CORS).
+   * Use this for server-side proxy uploads where the browser POSTs to Express
+   * and Express forwards to S3.
+   */
+  async uploadBuffer(buffer: Buffer, contentType: string): Promise<string> {
+    const key = `uploads/${randomUUID()}`;
+    await s3.send(new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    }));
+    return `/objects/${key}`;
+  }
+
+  /**
    * Generate a presigned PUT URL so the browser can upload a video directly
    * to S3. Returns both the signed upload URL and the normalized objectPath
    * that should be stored in the database.
