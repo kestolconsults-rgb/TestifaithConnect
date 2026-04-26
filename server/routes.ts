@@ -93,10 +93,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Video file too large. Maximum size is 100MB." });
       }
 
-      // Use S3 when configured (production/Koyeb), fall back to Replit Object Storage
+      // Try S3 first when configured, fall back to Replit Object Storage on any failure
       if (s3StorageService.isConfigured()) {
-        const { uploadURL, objectPath } = await s3StorageService.getVideoUploadURL(contentType);
-        return res.json({ uploadURL, objectPath, metadata: { name, size, contentType } });
+        try {
+          const { uploadURL, objectPath } = await s3StorageService.getVideoUploadURL(contentType);
+          return res.json({ uploadURL, objectPath, metadata: { name, size, contentType } });
+        } catch (s3Error) {
+          console.warn("S3 upload URL failed, falling back to Replit Object Storage:", s3Error);
+        }
       }
 
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
@@ -109,6 +113,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error generating video upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  // General file upload URL (used by useUpload hook) — same logic as video-url but no content-type restriction
+  app.post('/api/uploads/request-url', isAuthenticated, async (req: Request, res) => {
+    try {
+      const { name, size, contentType } = req.body;
+
+      if (!name || !contentType) {
+        return res.status(400).json({ error: "Missing required fields: name, contentType" });
+      }
+
+      const maxSize = 100 * 1024 * 1024; // 100MB
+      if (size && size > maxSize) {
+        return res.status(400).json({ error: "File too large. Maximum size is 100MB." });
+      }
+
+      // Try S3 first, fall back to Replit Object Storage
+      if (s3StorageService.isConfigured()) {
+        try {
+          const { uploadURL, objectPath } = await s3StorageService.getVideoUploadURL(contentType);
+          return res.json({ uploadURL, objectPath, metadata: { name, size, contentType } });
+        } catch (s3Error) {
+          console.warn("S3 upload URL failed, falling back to Replit Object Storage:", s3Error);
+        }
+      }
+
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+
+      res.json({ uploadURL, objectPath, metadata: { name, size, contentType } });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
       res.status(500).json({ error: "Failed to generate upload URL" });
     }
   });
@@ -799,6 +837,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Video file too large. Maximum size is 100MB." });
       }
       
+      // Try S3 first, fall back to Replit Object Storage
+      if (s3StorageService.isConfigured()) {
+        try {
+          const { uploadURL, objectPath } = await s3StorageService.getVideoUploadURL(contentType);
+          return res.json({ uploadURL, objectPath, metadata: { name, size, contentType } });
+        } catch (s3Error) {
+          console.warn("S3 admin upload URL failed, falling back to Replit Object Storage:", s3Error);
+        }
+      }
+
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
       const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
       
