@@ -47,12 +47,11 @@ export default function Onboarding() {
     mutationFn: async (data: CompleteOnboarding) => {
       return apiRequest("POST", "/api/profile/onboarding", data);
     },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["/api/profile"] }),
-        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] }),
-        queryClient.invalidateQueries({ queryKey: ["/api/profile/onboarding-status"] }),
-      ]);
+    onSuccess: () => {
+      // ⚠️ Do NOT invalidate onboarding-status here.
+      // If we do, needsOnboarding flips to false before the welcome screen
+      // renders, which swaps the routing tree and causes a 404.
+      // Instead we update the cache right before navigating away.
       setShowWelcome(true);
     },
     onError: () => {
@@ -63,6 +62,16 @@ export default function Onboarding() {
       });
     },
   });
+
+  // Called by both welcome-screen buttons — flushes the cache then navigates.
+  const leaveOnboarding = (path: string) => {
+    // Mark onboarding complete first so the routing tree switches to the
+    // main router before we call setLocation. This prevents a 404.
+    queryClient.setQueryData(["/api/profile/onboarding-status"], { needsOnboarding: false });
+    queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    setLocation(path);
+  };
 
   const handleNext = async () => {
     if (step === 1) {
@@ -103,7 +112,7 @@ export default function Onboarding() {
           </p>
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => setLocation("/post")}
+              onClick={() => leaveOnboarding("/post")}
               className="w-full py-3 rounded-xl font-semibold text-white text-sm"
               style={{ background: "#ef4444" }}
               data-testid="button-welcome-post"
@@ -111,7 +120,7 @@ export default function Onboarding() {
               Share Your First Testimony
             </button>
             <button
-              onClick={() => setLocation("/home")}
+              onClick={() => leaveOnboarding("/home")}
               className="w-full py-3 rounded-xl font-semibold text-sm border bg-card text-foreground"
               data-testid="button-welcome-home"
             >
