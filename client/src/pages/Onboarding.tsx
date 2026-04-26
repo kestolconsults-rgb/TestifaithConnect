@@ -117,7 +117,7 @@ export default function Onboarding() {
               style={{ background: "#ef4444" }}
               data-testid="button-welcome-post"
             >
-              Share Your First Testimony
+              Start Your Faith Journal
             </button>
             <button
               onClick={() => leaveOnboarding("/home")}
