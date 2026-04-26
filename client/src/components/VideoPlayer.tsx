@@ -1,7 +1,5 @@
-import { useState, useRef, useCallback } from "react";
-import { Play, Volume2, VolumeX, Maximize, Pause } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { useState, useRef, useEffect } from "react";
+import { Play, Volume2, VolumeX, Maximize, Pause, RotateCcw } from "lucide-react";
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -16,123 +14,172 @@ export function VideoPlayer({
   duration,
   className = "",
 }: VideoPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [videoDuration, setVideoDuration] = useState(duration || 0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [showThumbnail, setShowThumbnail] = useState(!!thumbnailUrl);
-  // Controls are always visible; only auto-hide while actively playing,
-  // and immediately reappear on any tap/click.
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [totalDuration, setTotalDuration] = useState(duration || 0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [isEnded, setIsEnded] = useState(false);
 
-  const scheduleHide = useCallback(() => {
-    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    hideTimerRef.current = setTimeout(() => setControlsVisible(false), 3500);
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
   }, []);
 
-  const bringUpControls = useCallback(() => {
+  const showControls = () => {
     setControlsVisible(true);
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-  }, []);
+  };
 
-  const togglePlay = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    setShowThumbnail(false);
-    if (video.paused) {
-      video.play();
-    } else {
-      video.pause();
+  const scheduleHide = () => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => setControlsVisible(false), 3000);
+  };
+
+  const formatTime = (s: number) => {
+    if (!isFinite(s) || isNaN(s)) return "0:00";
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  // ── Video area tap: show controls OR toggle play ──────────────────────────
+  const handleVideoTap = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    // Prevent onClick firing after onTouchEnd on the same gesture
+    if (e.type === "touchend") {
+      (e as React.TouchEvent).preventDefault();
     }
-  }, []);
 
-  // Tap on the video body: show controls if hidden, toggle play if already visible
-  const handleVideoAreaClick = useCallback(() => {
+    if (!hasStarted) {
+      // First tap — start playback
+      videoRef.current?.play();
+      return;
+    }
+
     if (!controlsVisible) {
-      bringUpControls();
+      showControls();
+      if (isPlaying) scheduleHide();
     } else {
       togglePlay();
-      if (!videoRef.current?.paused) scheduleHide();
-    }
-  }, [controlsVisible, bringUpControls, togglePlay, scheduleHide]);
-
-  const handlePlay = () => {
-    setIsPlaying(true);
-    scheduleHide();
-  };
-
-  const handlePause = () => {
-    setIsPlaying(false);
-    bringUpControls(); // always show controls when paused
-  };
-
-  const handleEnded = () => {
-    setIsPlaying(false);
-    bringUpControls();
-  };
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
-  };
-
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) setVideoDuration(videoRef.current.duration);
-  };
-
-  const handleSeek = (value: number[]) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = value[0];
-      setCurrentTime(value[0]);
     }
   };
 
-  const handleMuteToggle = (e: React.MouseEvent | React.TouchEvent) => {
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused || v.ended) {
+      v.play();
+    } else {
+      v.pause();
+    }
+  };
+
+  // ── Button handlers — stop propagation so they don't bubble to video area ─
+  const handlePlayPause = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    if (e.type === "touchend") (e as React.TouchEvent).preventDefault();
+    togglePlay();
+    showControls();
+    if (isPlaying) scheduleHide();
+  };
+
+  const handleMute = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    if (e.type === "touchend") (e as React.TouchEvent).preventDefault();
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+      const next = !isMuted;
+      videoRef.current.muted = next;
+      setIsMuted(next);
     }
+    showControls();
+    if (isPlaying) scheduleHide();
   };
 
   const handleFullscreen = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    if (e.type === "touchend") (e as React.TouchEvent).preventDefault();
     if (videoRef.current?.requestFullscreen) {
       videoRef.current.requestFullscreen();
     }
   };
 
-  const handlePlayPauseClick = (e: React.MouseEvent | React.TouchEvent) => {
+  const handleReplay = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
-    togglePlay();
-    if (isPlaying) {
-      bringUpControls();
-    } else {
-      scheduleHide();
+    if (e.type === "touchend") (e as React.TouchEvent).preventDefault();
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play();
     }
   };
 
-  const handleSliderInteraction = (e: React.PointerEvent) => {
-    e.stopPropagation();
-    bringUpControls();
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    if (videoRef.current) {
+      videoRef.current.currentTime = val;
+      setCurrentTime(val);
+    }
+    showControls();
+    if (isPlaying) scheduleHide();
   };
+
+  // ── Video element event callbacks ─────────────────────────────────────────
+  const onPlay = () => {
+    setIsPlaying(true);
+    setIsEnded(false);
+    setHasStarted(true);
+    scheduleHide();
+  };
+
+  const onPause = () => {
+    setIsPlaying(false);
+    showControls();
+  };
+
+  const onEnded = () => {
+    setIsPlaying(false);
+    setIsEnded(true);
+    showControls();
+  };
+
+  const onTimeUpdate = () => {
+    if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
+  };
+
+  const onLoadedMetadata = () => {
+    if (videoRef.current) setTotalDuration(videoRef.current.duration);
+  };
+
+  const progress = totalDuration > 0 ? currentTime / totalDuration : 0;
 
   return (
     <div
-      className={`relative aspect-video bg-black rounded-xl overflow-hidden select-none ${className}`}
-      onClick={handleVideoAreaClick}
-      onTouchEnd={handleVideoAreaClick}
+      className={`relative aspect-video bg-black rounded-xl overflow-hidden ${className}`}
+      style={{ touchAction: "manipulation" }}
       data-testid="video-player-container"
     >
-      {/* Thumbnail overlay */}
-      {showThumbnail && thumbnailUrl && (
+      {/* Video element */}
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        className="w-full h-full object-contain"
+        onPlay={onPlay}
+        onPause={onPause}
+        onEnded={onEnded}
+        onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={onLoadedMetadata}
+        playsInline
+        data-testid="video-player"
+      />
+
+      {/* Thumbnail shown before first play */}
+      {!hasStarted && thumbnailUrl && (
         <div className="absolute inset-0 z-10 pointer-events-none">
           <img
             src={thumbnailUrl}
@@ -141,113 +188,126 @@ export function VideoPlayer({
           />
           <div className="absolute inset-0 bg-black/30" />
           {duration && (
-            <div className="absolute bottom-3 right-3 bg-black/70 px-2 py-1 rounded text-white text-xs font-mono">
+            <div className="absolute bottom-16 right-3 bg-black/70 px-2 py-1 rounded text-white text-xs font-mono">
               {formatTime(duration)}
             </div>
           )}
         </div>
       )}
 
-      {/* Video element */}
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        className="w-full h-full object-contain"
-        onPlay={handlePlay}
-        onPause={handlePause}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={handleEnded}
-        playsInline
-        data-testid="video-player"
+      {/* Transparent click/tap layer over the video (below controls) */}
+      <div
+        className="absolute inset-0 z-20"
+        onClick={handleVideoTap}
+        onTouchEnd={handleVideoTap}
       />
 
-      {/* Big centred play button — shown when paused/stopped */}
-      {!isPlaying && (
-        <div
-          className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none"
-        >
+      {/* Centred play / replay button — shown when paused or ended */}
+      {(!isPlaying) && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
           <div className="w-16 h-16 rounded-full bg-red-500/90 flex items-center justify-center shadow-lg">
-            <Play className="w-8 h-8 text-white fill-white ml-1" />
+            {isEnded ? (
+              <RotateCcw className="w-7 h-7 text-white" />
+            ) : (
+              <Play className="w-8 h-8 text-white fill-white ml-1" />
+            )}
           </div>
         </div>
       )}
 
-      {/* Bottom control bar — always rendered, visibility via opacity */}
+      {/* Bottom control bar */}
       <div
-        className={`absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/80 to-transparent pt-8 pb-3 px-3 transition-opacity duration-200 ${
+        className={`absolute bottom-0 left-0 right-0 z-40 transition-opacity duration-200 ${
           controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
-        onClick={(e) => e.stopPropagation()}
-        onTouchEnd={(e) => e.stopPropagation()}
       >
-        {/* Progress bar */}
-        <div
-          className="mb-2"
-          onPointerDown={handleSliderInteraction}
-        >
-          <Slider
-            value={[currentTime]}
-            max={videoDuration || 100}
-            step={0.1}
-            onValueChange={handleSeek}
-            className="cursor-pointer"
-            data-testid="slider-video-progress"
-          />
-        </div>
-
-        {/* Controls row */}
-        <div className="flex items-center gap-2">
-          {/* Play / Pause */}
-          <Button
-            size="icon"
-            variant="ghost"
-            className="text-white shrink-0"
-            onClick={handlePlayPauseClick}
-            onTouchEnd={handlePlayPauseClick}
-            data-testid="button-play-pause"
+        {/* Gradient backdrop */}
+        <div className="bg-gradient-to-t from-black/85 via-black/40 to-transparent pt-10 pb-3 px-3">
+          {/* Seek bar */}
+          <div
+            className="mb-2 px-1"
+            onClick={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
           >
-            {isPlaying ? (
-              <Pause className="w-5 h-5 fill-white" />
-            ) : (
-              <Play className="w-5 h-5 fill-white" />
+            <input
+              type="range"
+              min={0}
+              max={totalDuration || 100}
+              step={0.1}
+              value={currentTime}
+              onChange={handleSeek}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full h-1 accent-red-500 cursor-pointer"
+              style={{ accentColor: "#ef4444" }}
+              data-testid="slider-video-progress"
+            />
+          </div>
+
+          {/* Buttons row */}
+          <div className="flex items-center gap-1">
+            {/* Play / Pause */}
+            <button
+              className="p-2 text-white rounded-full active:bg-white/20"
+              onClick={handlePlayPause}
+              onTouchEnd={handlePlayPause}
+              data-testid="button-play-pause"
+              style={{ touchAction: "manipulation" }}
+            >
+              {isPlaying ? (
+                <Pause className="w-5 h-5 fill-white" />
+              ) : isEnded ? (
+                <RotateCcw className="w-5 h-5" />
+              ) : (
+                <Play className="w-5 h-5 fill-white" />
+              )}
+            </button>
+
+            {/* Replay on ended */}
+            {isEnded && (
+              <button
+                className="p-2 text-white rounded-full active:bg-white/20"
+                onClick={handleReplay}
+                onTouchEnd={handleReplay}
+                data-testid="button-replay"
+                style={{ touchAction: "manipulation" }}
+              >
+                <RotateCcw className="w-5 h-5" />
+              </button>
             )}
-          </Button>
 
-          {/* Time */}
-          <span className="text-white text-xs font-mono shrink-0">
-            {formatTime(currentTime)} / {formatTime(videoDuration)}
-          </span>
+            {/* Timestamps */}
+            <span className="text-white text-xs font-mono ml-1 shrink-0">
+              {formatTime(currentTime)} / {formatTime(totalDuration)}
+            </span>
 
-          <div className="flex-1" />
+            <div className="flex-1" />
 
-          {/* Mute */}
-          <Button
-            size="icon"
-            variant="ghost"
-            className="text-white shrink-0"
-            onClick={handleMuteToggle}
-            onTouchEnd={handleMuteToggle}
-            data-testid="button-mute"
-          >
-            {isMuted ? (
-              <VolumeX className="w-5 h-5" />
-            ) : (
-              <Volume2 className="w-5 h-5" />
-            )}
-          </Button>
+            {/* Mute */}
+            <button
+              className="p-2 text-white rounded-full active:bg-white/20"
+              onClick={handleMute}
+              onTouchEnd={handleMute}
+              data-testid="button-mute"
+              style={{ touchAction: "manipulation" }}
+            >
+              {isMuted ? (
+                <VolumeX className="w-5 h-5" />
+              ) : (
+                <Volume2 className="w-5 h-5" />
+              )}
+            </button>
 
-          {/* Fullscreen */}
-          <Button
-            size="icon"
-            variant="ghost"
-            className="text-white shrink-0"
-            onClick={handleFullscreen}
-            onTouchEnd={handleFullscreen}
-            data-testid="button-fullscreen"
-          >
-            <Maximize className="w-5 h-5" />
-          </Button>
+            {/* Fullscreen */}
+            <button
+              className="p-2 text-white rounded-full active:bg-white/20"
+              onClick={handleFullscreen}
+              onTouchEnd={handleFullscreen}
+              data-testid="button-fullscreen"
+              style={{ touchAction: "manipulation" }}
+            >
+              <Maximize className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
