@@ -120,7 +120,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Helper: upload a buffer to whichever storage is available
   async function proxyUpload(buffer: Buffer, contentType: string): Promise<string> {
     if (s3StorageService.isConfigured()) {
-      return s3StorageService.uploadBuffer(buffer, contentType);
+      try {
+        return await s3StorageService.uploadBuffer(buffer, contentType);
+      } catch (err: any) {
+        const code = err.Code || err.name || "";
+        if (code === "AccessDenied" || err.$metadata?.httpStatusCode === 403) {
+          throw new Error(
+            "S3 access denied: your API key does not have write (PutObject) permission on this bucket. " +
+            "Go to your S3 provider, create a new API token with Object Read & Write permissions, " +
+            "and update S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY in your Koyeb environment variables."
+          );
+        }
+        throw err;
+      }
     }
     return objectStorageService.uploadBuffer(buffer, contentType);
   }
@@ -1030,6 +1042,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting featured schedule:", error);
       res.status(500).json({ message: "Failed to delete featured schedule" });
+    }
+  });
+
+  // Storage diagnostics — lets admin verify S3 credentials are working
+  app.get('/api/admin/test-storage', isAdminAuthenticated, async (req, res) => {
+    try {
+      if (!s3StorageService.isConfigured()) {
+        return res.json({
+          provider: "Replit Object Storage",
+          configured: true,
+          note: "S3 env vars not set — using Replit Object Storage",
+        });
+      }
+      const result = await s3StorageService.testPermissions();
+      res.json({ provider: "S3", ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 

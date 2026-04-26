@@ -121,6 +121,59 @@ export class S3StorageService {
       return false;
     }
   }
+
+  /**
+   * Test S3 connectivity and permissions. Returns a diagnostic report.
+   */
+  async testPermissions(): Promise<{
+    configured: boolean;
+    bucket: string;
+    endpoint: string | undefined;
+    region: string;
+    canWrite: boolean;
+    writeError: string | null;
+    canRead: boolean;
+    readError: string | null;
+  }> {
+    const testKey = `_diagnostics/test-${Date.now()}.txt`;
+    const result = {
+      configured: this.isConfigured(),
+      bucket: BUCKET,
+      endpoint: process.env.S3_ENDPOINT,
+      region: process.env.S3_REGION || "auto",
+      canWrite: false,
+      writeError: null as string | null,
+      canRead: false,
+      readError: null as string | null,
+    };
+
+    // Test write
+    try {
+      await s3.send(new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: testKey,
+        Body: Buffer.from("testifaith-diagnostics"),
+        ContentType: "text/plain",
+      }));
+      result.canWrite = true;
+    } catch (e: any) {
+      result.writeError = `${e.Code || e.name}: ${e.message}`;
+    }
+
+    // Test read (only if write succeeded — we need a real object to HEAD)
+    if (result.canWrite) {
+      try {
+        await s3.send(new HeadObjectCommand({ Bucket: BUCKET, Key: testKey }));
+        result.canRead = true;
+      } catch (e: any) {
+        result.readError = `${e.Code || e.name}: ${e.message}`;
+      }
+    } else {
+      result.readError = "Skipped (write failed)";
+    }
+
+    return result;
+  }
 }
 
 export const s3StorageService = new S3StorageService();
