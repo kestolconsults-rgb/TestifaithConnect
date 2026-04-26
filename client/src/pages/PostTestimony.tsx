@@ -147,30 +147,25 @@ export default function PostTestimony() {
     setUploadProgress(10);
 
     try {
-      const response = await fetch('/api/uploads/video-url', {
+      const videoContentType = videoBlob.type || 'video/webm';
+      setUploadProgress(20);
+
+      const response = await fetch('/api/uploads/proxy-video', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: `testimony-${Date.now()}.webm`,
-          size: videoBlob.size,
-          contentType: videoBlob.type || 'video/webm',
-        }),
+        headers: {
+          'Content-Type': videoContentType,
+          'X-Content-Type': videoContentType,
+        },
+        body: videoBlob,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get upload URL');
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Upload failed');
       }
 
-      const { uploadURL, objectPath } = await response.json();
-      setUploadProgress(30);
-
-      await fetch(uploadURL, {
-        method: 'PUT',
-        body: videoBlob,
-        headers: { 'Content-Type': videoBlob.type || 'video/webm' },
-      });
-
       setUploadProgress(100);
+      const { objectPath } = await response.json();
       return objectPath;
     } catch (error) {
       console.error('Video upload error:', error);

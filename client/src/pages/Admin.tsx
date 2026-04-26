@@ -996,31 +996,22 @@ function UploadTestimony() {
 
     setIsUploading(true);
     try {
-      const response = await fetch("/api/admin/uploads/video-url", {
+      const response = await fetch("/api/admin/uploads/proxy-video", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": file.type || "video/mp4",
+          "X-Content-Type": file.type || "video/mp4",
+        },
         credentials: "include",
-        body: JSON.stringify({
-          name: file.name,
-          size: file.size,
-          contentType: file.type,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to get upload URL");
-      }
-      
-      const { uploadURL, objectPath } = await response.json();
-
-      const uploadResponse = await fetch(uploadURL, {
-        method: "PUT",
         body: file,
-        headers: { "Content-Type": file.type },
       });
 
-      if (!uploadResponse.ok) throw new Error("Upload failed");
-      
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Upload failed");
+      }
+
+      const { objectPath } = await response.json();
       setVideoUrl(objectPath);
       toast({ title: "Video uploaded successfully" });
     } catch (error: any) {

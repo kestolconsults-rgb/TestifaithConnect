@@ -1,4 +1,4 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./googleAuth";
@@ -114,6 +114,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating video upload URL:", error);
       res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  // Proxy video upload — browser POSTs raw bytes here, server stores to Object Storage.
+  // Avoids CORS issues with S3/GCS presigned URLs entirely.
+  app.post('/api/uploads/proxy-video', isAuthenticated, express.raw({ type: '*/*', limit: '110mb' }), async (req: Request, res) => {
+    try {
+      const contentType = (req.headers['x-content-type'] as string) || req.headers['content-type'] || 'video/webm';
+      const buffer = req.body as Buffer;
+      if (!buffer || buffer.length === 0) {
+        return res.status(400).json({ error: "No file data received" });
+      }
+      const objectPath = await objectStorageService.uploadBuffer(buffer, contentType);
+      res.json({ objectPath });
+    } catch (error) {
+      console.error("Error in proxy video upload:", error);
+      res.status(500).json({ error: "Failed to upload video" });
+    }
+  });
+
+  // Admin proxy video upload
+  app.post('/api/admin/uploads/proxy-video', isAdminAuthenticated, express.raw({ type: '*/*', limit: '110mb' }), async (req: Request, res) => {
+    try {
+      const contentType = (req.headers['x-content-type'] as string) || req.headers['content-type'] || 'video/mp4';
+      const buffer = req.body as Buffer;
+      if (!buffer || buffer.length === 0) {
+        return res.status(400).json({ error: "No file data received" });
+      }
+      const objectPath = await objectStorageService.uploadBuffer(buffer, contentType);
+      res.json({ objectPath });
+    } catch (error) {
+      console.error("Error in admin proxy video upload:", error);
+      res.status(500).json({ error: "Failed to upload video" });
     }
   });
 
