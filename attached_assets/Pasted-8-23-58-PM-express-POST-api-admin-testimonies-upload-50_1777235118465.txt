@@ -1,0 +1,50 @@
+8:23:58 PM [express] POST /api/admin/testimonies/upload 500 in 1458ms :: {"message":"Failed to uploa…
+Error uploading admin testimony: error: insert or update on table "testimonies" violates foreign key constraint "testimonies_user_id_users_id_fk"
+    at /workspace/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///workspace/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async DatabaseStorage.createTestimony (file:///workspace/dist/index.js:605:23)
+    at async file:///workspace/dist/index.js:3235:25 {
+  length: 291,
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (user_id)=(admin-system) is not present in table "users".',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'testimonies',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'testimonies_user_id_users_id_fk',
+  file: 'ri_triggers.c',
+  line: '2599',
+  routine: 'ri_ReportViolation'
+}
+Error uploading admin testimony: error: insert or update on table "testimonies" violates foreign key constraint "testimonies_user_id_users_id_fk"
+    at /workspace/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///workspace/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async DatabaseStorage.createTestimony (file:///workspace/dist/index.js:605:23)
+    at async file:///workspace/dist/index.js:3235:25 {
+  length: 291,
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (user_id)=(admin-system) is not present in table "users".',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'testimonies',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'testimonies_user_id_users_id_fk',
+  file: 'ri_triggers.c',
+  line: '2599',
+  routine: 'ri_ReportViolation'
+}
+8:24:27 PM [express] POST /api/admin/testimonies/upload 500 in 1434ms :: {"message":"Failed to uploa…

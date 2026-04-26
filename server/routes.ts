@@ -924,11 +924,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Title, story, and category are required" });
       }
       
-      // Create a special admin user ID or use a system account
-      const adminUserId = 'admin-system';
-      
+      // Ensure the system user row exists — required by the FK constraint.
+      // Uses a fixed ID so it's a no-op on every subsequent upload.
+      const ADMIN_SYSTEM_ID = 'admin-system';
+      await storage.upsertUser({
+        id: ADMIN_SYSTEM_ID,
+        firstName: 'Testifaith',
+        lastName: 'Team',
+        authProvider: 'email',
+        hasCompletedOnboarding: true,
+      });
+
       const testimony = await storage.createTestimony({
-        userId: adminUserId,
+        userId: ADMIN_SYSTEM_ID,
         title,
         story,
         category,
