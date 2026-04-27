@@ -63,6 +63,17 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
+    // Prevent index.html from being cached by the browser so new deployments
+    // take effect immediately without users needing to clear site data.
+    app.use((req, res, next) => {
+      const isStaticAsset = /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|otf|map|webp|mp4|webm)$/.test(req.path);
+      if (!req.path.startsWith("/api") && !isStaticAsset) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+      }
+      next();
+    });
     serveStatic(app);
   }
 
