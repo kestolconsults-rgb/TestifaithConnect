@@ -105,7 +105,7 @@ export default function Onboarding() {
             You're all set{user?.firstName ? `, ${user.firstName}` : ""}!
           </h1>
           <p className="text-muted-foreground mb-2 leading-relaxed">
-            Welcome to the Testifaith community — a place to share what God has done and be encouraged by others' stories.
+            You're in the right place. Your faith is about to grow stronger — surrounded by real testimonies of God's goodness and a community walking the journey with you.
           </p>
           <p className="font-['Crimson_Pro'] italic text-muted-foreground text-sm mb-8">
             "They triumphed over him by the blood of the Lamb and by the word of their testimony." — Rev. 12:11
