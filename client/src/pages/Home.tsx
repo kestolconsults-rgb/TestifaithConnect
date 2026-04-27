@@ -267,7 +267,7 @@ export default function Home() {
         <section className="px-5 mb-6">
           <div className="flex items-center gap-2 mb-3">
             <BookOpen className="w-4 h-4 text-primary" />
-            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Word for Today</h2>
+            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">A Word Just for You</h2>
           </div>
           <EncouragementCard verse={encouragementVerse} />
         </section>
