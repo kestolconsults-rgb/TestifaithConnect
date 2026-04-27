@@ -265,9 +265,14 @@ export default function Home() {
       {/* Daily Encouragement Verse */}
       {encouragementVerse && (
         <section className="px-5 mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <BookOpen className="w-4 h-4 text-primary" />
-            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">A Word Just for You</h2>
+          <div className="mb-3">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-primary shrink-0" />
+              <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">A Word Just for You</h2>
+            </div>
+            <p className="font-['Crimson_Pro'] italic text-muted-foreground text-[13px] leading-snug mt-0.5 pl-6">
+              "Your word is a lamp for my feet, a light on my path." — Ps. 119:105
+            </p>
           </div>
           <EncouragementCard verse={encouragementVerse} />
         </section>
