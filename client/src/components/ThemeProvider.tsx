@@ -19,9 +19,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (stored === "light" || stored === "dark") {
         return stored;
       }
-      return "dark";
+      return "light";
     }
-    return "dark";
+    return "light";
   });
 
   useEffect(() => {
