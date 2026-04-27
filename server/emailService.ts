@@ -288,14 +288,14 @@ export async function sendWelcomeEmail(email: string, firstName?: string): Promi
     });
 
     if (error) {
-      console.error('Error sending welcome email:', error);
+      console.error('Welcome email error from Resend:', JSON.stringify(error));
       return false;
     }
 
-    console.log('Welcome email sent successfully:', data?.id);
+    console.log('Welcome email sent successfully:', data?.id, '→', email);
     return true;
-  } catch (error) {
-    console.error('Failed to send welcome email:', error);
+  } catch (error: any) {
+    console.error('Welcome email exception:', error?.message || error);
     return false;
   }
 }

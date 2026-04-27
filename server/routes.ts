@@ -2,6 +2,7 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./googleAuth";
+import { sendWelcomeEmail } from "./emailService";
 import { isAdminAuthenticated, verifyPassword, createInitialAdmin, hashPassword, checkLoginRateLimit, recordLoginAttempt, regenerateSession, destroySession } from "./adminAuth";
 import { insertTestimonySchema, insertEncouragementVerseSchema, insertCommentSchema, insertFaithDeclarationSchema, updateProfileSchema, updateSettingsSchema, completeOnboardingSchema, addPasswordSchema, insertFaithExpectationSchema, insertExpectationMilestoneSchema, insertExpectationScriptureSchema, answerExpectationSchema, updateMilestoneStatusSchema, insertSupportMessageSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
@@ -1065,6 +1066,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const result = await s3StorageService.testPermissions();
       res.json({ provider: "S3", ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Email diagnostics — send a test welcome email and return the full result
+  app.post('/api/admin/test-email', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { to } = req.body;
+      if (!to) return res.status(400).json({ error: "Provide a 'to' email address in the body" });
+
+      if (!process.env.RESEND_API_KEY) {
+        return res.json({
+          success: false,
+          issue: "RESEND_API_KEY is not set in environment variables — emails are disabled.",
+        });
+      }
+
+      const ok = await sendWelcomeEmail(to, "Test");
+      res.json({
+        success: ok,
+        from: process.env.FROM_EMAIL || "Testifaith <noreply@testifaith.com>",
+        to,
+        note: ok
+          ? "Email sent. Check the inbox (and spam folder)."
+          : "Resend returned an error — check server logs for details.",
+      });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

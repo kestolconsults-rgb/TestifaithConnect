@@ -1649,6 +1649,60 @@ function ChangePassword() {
   );
 }
 
+function EmailDiagnostics() {
+  const [toEmail, setToEmail] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const { toast } = useToast();
+
+  const testMutation = useMutation({
+    mutationFn: (email: string) =>
+      apiRequest("POST", "/api/admin/test-email", { to: email }),
+    onSuccess: (data: any) => {
+      setResult(data);
+    },
+    onError: (error: any) => {
+      toast({ title: "Request failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <p className="text-zinc-400 text-sm">
+        Send a test welcome email to any address to verify Resend is configured and the domain is working.
+      </p>
+      <div className="flex gap-2">
+        <input
+          type="email"
+          placeholder="test@example.com"
+          value={toEmail}
+          onChange={(e) => setToEmail(e.target.value)}
+          className="flex-1 bg-zinc-800 border border-zinc-700 text-white rounded-lg px-3 py-2 text-sm"
+        />
+        <button
+          onClick={() => testMutation.mutate(toEmail)}
+          disabled={!toEmail || testMutation.isPending}
+          className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium"
+        >
+          {testMutation.isPending ? "Sending…" : "Send Test"}
+        </button>
+      </div>
+      {result && (
+        <div className={`rounded-lg p-4 text-sm font-mono space-y-1 ${result.success ? "bg-green-900/40 border border-green-700" : "bg-red-900/40 border border-red-700"}`}>
+          {Object.entries(result).map(([k, v]) => (
+            <div key={k}>
+              <span className="text-zinc-400">{k}: </span>
+              <span className="text-white">{String(v)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="text-zinc-500 text-xs">
+        If <code className="text-zinc-300">success: false</code> — check that: (1) RESEND_API_KEY is set in your Koyeb env vars, (2) the sending domain <code className="text-zinc-300">testifaith.com</code> is verified in your Resend dashboard, and (3) your Resend account is not in test-only mode.
+      </p>
+    </div>
+  );
+}
+
 function AdminUserManagement() {
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -2314,6 +2368,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </CardHeader>
               <CardContent>
                 <AdminUserManagement />
+              </CardContent>
+            </Card>
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardHeader>
+                <CardTitle className="text-white">Email Diagnostics</CardTitle>
+                <CardDescription className="text-zinc-400">Test that welcome emails are being delivered</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <EmailDiagnostics />
               </CardContent>
             </Card>
           </TabsContent>
