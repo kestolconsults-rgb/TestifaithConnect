@@ -10,6 +10,7 @@ import { formatDistanceToNow, format, subDays, parseISO } from "date-fns";
 import type { TestimonyWithUser, EncouragementVerse, FaithDeclaration } from "@shared/schema";
 import { CATEGORY_COLORS } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
+import EncouragementCard from "@/components/EncouragementCard";
 
 function getInitials(firstName?: string | null, lastName?: string | null) {
   return ((firstName?.[0] || "") + (lastName?.[0] || "")).toUpperCase() || "?";
@@ -69,6 +70,10 @@ export default function Home() {
   const { data: myTestimonies, isLoading: myLoading } = useQuery<TestimonyWithUser[]>({
     queryKey: ["/api/testimonies/my"],
     enabled: !!user,
+  });
+
+  const { data: encouragementVerse } = useQuery<EncouragementVerse | null>({
+    queryKey: ["/api/encouragement-verse"],
   });
 
   const privateTestimonies = myTestimonies?.filter((t) => t.privacy === "private") ?? [];
@@ -256,6 +261,17 @@ export default function Home() {
           </Card>
         )}
       </section>
+
+      {/* Daily Encouragement Verse */}
+      {encouragementVerse && (
+        <section className="px-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="w-4 h-4 text-primary" />
+            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Word for Today</h2>
+          </div>
+          <EncouragementCard verse={encouragementVerse} />
+        </section>
+      )}
 
       {/* Stone of Remembrance — Private Journal */}
       <section className="px-5 mb-6">

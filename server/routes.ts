@@ -1112,6 +1112,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public: return today's encouragement verse (deterministic pick based on date)
+  app.get('/api/encouragement-verse', async (req, res) => {
+    try {
+      const verses = await storage.getActiveVerses();
+      if (!verses.length) return res.json(null);
+      // Pick deterministically by day-of-year so it stays the same all day
+      const dayOfYear = Math.floor(
+        (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+      );
+      const verse = verses[dayOfYear % verses.length];
+      res.json(verse);
+    } catch (error) {
+      console.error("Error fetching encouragement verse:", error);
+      res.status(500).json({ message: "Failed to fetch encouragement verse" });
+    }
+  });
+
   app.get('/api/admin/faith-declarations', isAdminAuthenticated, async (req, res) => {
     try {
       const declarations = await storage.getFaithDeclarations();
