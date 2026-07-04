@@ -13,6 +13,7 @@ import { sendPushNotification } from "./pushService";
 import { sendNewsletterEmail, sendDailyDeclarationEmail } from "./emailService";
 import { insertNewsletterSchema, updateAppSettingsSchema } from "@shared/schema";
 import { sendDailyDeclarationNow, sendNewsletterNow } from "./notificationJobs";
+import { verifyUnsubscribeToken } from "./unsubscribeToken";
 
 interface AuthUser {
   id: string;
@@ -449,6 +450,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Push unsubscribe error:", error);
       res.status(500).json({ message: "Failed to remove subscription" });
+    }
+  });
+
+  // One-click unsubscribe from email links (no auth required, token-verified)
+  app.get('/api/unsubscribe', async (req, res) => {
+    const { uid, type, token } = req.query as { uid?: string; type?: string; token?: string };
+    const sendPage = (title: string, message: string) => {
+      res.status(200).send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;padding:20px}
+        .card{background:#111;border-radius:12px;padding:40px;max-width:420px}
+        h1{font-size:22px;margin:0 0 12px}p{color:#ccc;font-size:15px}</style></head>
+        <body><div class="card"><h1>${title}</h1><p>${message}</p></div></body></html>`);
+    };
+
+    if (!uid || !type || !token || (type !== "newsletter" && type !== "declaration")) {
+      return sendPage("Invalid link", "This unsubscribe link is invalid or incomplete.");
+    }
+    if (!verifyUnsubscribeToken(uid, type as "newsletter" | "declaration", token)) {
+      return sendPage("Invalid link", "This unsubscribe link could not be verified.");
+    }
+    try {
+      const user = await storage.getUser(uid);
+      if (!user) {
+        return sendPage("Not found", "We couldn't find your account.");
+      }
+      if (type === "newsletter") {
+        await storage.updateUserSettings(uid, { notifyNewsletter: false });
+        return sendPage("Unsubscribed", "You won't receive any more newsletter emails from Testifaith. You can re-enable this anytime in Settings.");
+      } else {
+        await storage.updateUserSettings(uid, { notifyDailyDeclaration: false });
+        return sendPage("Unsubscribed", "You won't receive any more daily declaration emails from Testifaith. You can re-enable this anytime in Settings.");
+      }
+    } catch (error) {
+      console.error("Error processing unsubscribe:", error);
+      return sendPage("Something went wrong", "Please try again later or update your preferences in Settings.");
     }
   });
 
@@ -1158,12 +1195,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Preview how many members would receive today's declaration, before sending
+  app.get('/api/admin/faith-declarations/recipient-count', isAdminAuthenticated, async (req, res) => {
+    try {
+      const optedIn = await storage.getUsersOptedInto("notifyDailyDeclaration");
+      res.json({ recipientCount: optedIn.length });
+    } catch (error) {
+      console.error("Error fetching declaration recipient count:", error);
+      res.status(500).json({ message: "Failed to fetch recipient count" });
+    }
+  });
+
   // Manually send today's active faith declaration (push + email) to all opted-in users
   app.post('/api/admin/faith-declarations/send-now', isAdminAuthenticated, async (req, res) => {
     try {
       const today = new Date().toISOString().slice(0, 10);
       const { recipientCount } = await sendDailyDeclarationNow();
       await storage.markDailyDeclarationSent(today);
+      const adminId = (req.session as any).adminId;
+      if (adminId) {
+        await storage.createAuditLog({
+          adminId,
+          action: 'send_daily_declaration',
+          targetType: 'faith_declaration',
+          targetId: today,
+          details: JSON.stringify({ recipientCount }),
+          ipAddress: req.ip,
+        });
+      }
       res.json({ message: "Daily declaration sent", recipientCount });
     } catch (error: any) {
       console.error("Error sending daily declaration:", error);
@@ -1186,6 +1245,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const data = updateAppSettingsSchema.parse(req.body);
       const settings = await storage.updateAppSettings(data);
+      const adminId = (req.session as any).adminId;
+      if (adminId) {
+        await storage.createAuditLog({
+          adminId,
+          action: 'update_scheduler_settings',
+          targetType: 'app_settings',
+          targetId: 'default',
+          details: JSON.stringify(data),
+          ipAddress: req.ip,
+        });
+      }
       res.json(settings);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1208,6 +1278,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Preview how many members would receive a newsletter, before sending
+  app.get('/api/admin/newsletters/recipient-count', isAdminAuthenticated, async (req, res) => {
+    try {
+      const optedIn = await storage.getUsersOptedInto("notifyNewsletter");
+      res.json({ recipientCount: optedIn.length });
+    } catch (error) {
+      console.error("Error fetching newsletter recipient count:", error);
+      res.status(500).json({ message: "Failed to fetch recipient count" });
+    }
+  });
+
   app.post('/api/admin/newsletters', isAdminAuthenticated, async (req, res) => {
     try {
       const adminId = (req.session as any).adminId;
@@ -1217,6 +1298,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (sendNow) {
         const { recipientCount } = await sendNewsletterNow(newsletter.id);
+        if (adminId) {
+          await storage.createAuditLog({
+            adminId,
+            action: 'send_newsletter',
+            targetType: 'newsletter',
+            targetId: newsletter.id,
+            details: JSON.stringify({ subject: newsletter.subject, recipientCount }),
+            ipAddress: req.ip,
+          });
+        }
         return res.json({ ...newsletter, status: "sent", recipientCount });
       }
 
@@ -1231,10 +1322,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Edit a draft newsletter before it's sent
+  app.patch('/api/admin/newsletters/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const existing = await storage.getNewsletter(id);
+      if (!existing) {
+        return res.status(404).json({ message: "Newsletter not found" });
+      }
+      if (existing.status === "sent" && !existing.isRecurring) {
+        return res.status(400).json({ message: "Cannot edit a newsletter that has already been sent" });
+      }
+      const editSchema = z.object({
+        subject: z.string().min(1).optional(),
+        body: z.string().min(1).optional(),
+        isRecurring: z.boolean().optional(),
+      });
+      const data = editSchema.parse(req.body);
+      const updated = await storage.updateNewsletter(id, data);
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        console.error("Error updating newsletter:", error);
+        res.status(500).json({ message: "Failed to update newsletter" });
+      }
+    }
+  });
+
   app.post('/api/admin/newsletters/:id/send', isAdminAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
+      const newsletter = await storage.getNewsletter(id);
       const { recipientCount } = await sendNewsletterNow(id);
+      const adminId = (req.session as any).adminId;
+      if (adminId) {
+        await storage.createAuditLog({
+          adminId,
+          action: 'send_newsletter',
+          targetType: 'newsletter',
+          targetId: id,
+          details: JSON.stringify({ subject: newsletter?.subject, recipientCount }),
+          ipAddress: req.ip,
+        });
+      }
       res.json({ message: "Newsletter sent", recipientCount });
     } catch (error: any) {
       console.error("Error sending newsletter:", error);

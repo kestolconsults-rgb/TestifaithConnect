@@ -1,6 +1,7 @@
 import { storage } from "./storage";
 import { sendPushNotification } from "./pushService";
 import { sendDailyDeclarationEmail, sendNewsletterEmail } from "./emailService";
+import { buildUnsubscribeUrl } from "./unsubscribeToken";
 
 export async function sendDailyDeclarationNow(): Promise<{ recipientCount: number }> {
   const today = new Date().toISOString().slice(0, 10);
@@ -21,7 +22,14 @@ export async function sendDailyDeclarationNow(): Promise<{ recipientCount: numbe
         tag: "daily-declaration",
       });
       if (u.email) {
-        await sendDailyDeclarationEmail(u.email, u.firstName || undefined, declaration.declaration, declaration.bibleVerse, declaration.bibleReference);
+        await sendDailyDeclarationEmail(
+          u.email,
+          u.firstName || undefined,
+          declaration.declaration,
+          declaration.bibleVerse,
+          declaration.bibleReference,
+          buildUnsubscribeUrl(u.id, "declaration")
+        );
       }
       recipientCount++;
     })
@@ -41,7 +49,7 @@ export async function sendNewsletterNow(newsletterId: string): Promise<{ recipie
 
   await Promise.allSettled(
     optedInUsers.map(async (u) => {
-      const sent = await sendNewsletterEmail(u.email!, newsletter.subject, newsletter.body, u.firstName || undefined);
+      const sent = await sendNewsletterEmail(u.email!, newsletter.subject, newsletter.body, u.firstName || undefined, buildUnsubscribeUrl(u.id, "newsletter"));
       if (sent) recipientCount++;
     })
   );

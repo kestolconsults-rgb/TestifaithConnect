@@ -169,6 +169,7 @@ export interface IStorage {
   getNewsletters(): Promise<Newsletter[]>;
   getNewsletter(id: string): Promise<Newsletter | undefined>;
   markNewsletterSent(id: string, recipientCount: number): Promise<Newsletter>;
+  updateNewsletter(id: string, data: Partial<Pick<Newsletter, "subject" | "body" | "isRecurring">>): Promise<Newsletter | undefined>;
   deleteNewsletter(id: string): Promise<boolean>;
   getActiveRecurringNewsletters(): Promise<Newsletter[]>;
 
@@ -1028,6 +1029,8 @@ export class DatabaseStorage implements IStorage {
     if (settings.notifyOnEncourage !== undefined) updateData.notifyOnEncourage = settings.notifyOnEncourage;
     if (settings.notifyOnComment !== undefined) updateData.notifyOnComment = settings.notifyOnComment;
     if (settings.notifyDailyVerse !== undefined) updateData.notifyDailyVerse = settings.notifyDailyVerse;
+    if (settings.notifyNewsletter !== undefined) updateData.notifyNewsletter = settings.notifyNewsletter;
+    if (settings.notifyDailyDeclaration !== undefined) updateData.notifyDailyDeclaration = settings.notifyDailyDeclaration;
     if (settings.profileVisibility !== undefined) updateData.profileVisibility = settings.profileVisibility;
 
     const [updated] = await db
@@ -1432,6 +1435,15 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db
       .update(newsletters)
       .set({ status: "sent", sentAt: new Date(), recipientCount })
+      .where(eq(newsletters.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateNewsletter(id: string, data: Partial<Pick<Newsletter, "subject" | "body" | "isRecurring">>): Promise<Newsletter | undefined> {
+    const [updated] = await db
+      .update(newsletters)
+      .set(data)
       .where(eq(newsletters.id, id))
       .returning();
     return updated;

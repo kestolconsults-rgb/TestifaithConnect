@@ -269,7 +269,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string | 
   }
 }
 
-function getDailyDeclarationEmailHtml(firstName: string, declaration: string, bibleVerse: string, bibleReference: string): string {
+function getDailyDeclarationEmailHtml(firstName: string, declaration: string, bibleVerse: string, bibleReference: string, unsubscribeUrl?: string): string {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -305,7 +305,8 @@ function getDailyDeclarationEmailHtml(firstName: string, declaration: string, bi
           </tr>
           <tr>
             <td style="padding: 24px 40px; text-align: center; border-top: 1px solid #333333;">
-              <p style="margin: 0; font-size: 12px; color: #555555;">© ${new Date().getFullYear()} Testifaith. All rights reserved.</p>
+              <p style="margin: 0 0 10px; font-size: 12px; color: #555555;">© ${new Date().getFullYear()} Testifaith. All rights reserved.</p>
+              ${unsubscribeUrl ? `<p style="margin: 0; font-size: 11px;"><a href="${unsubscribeUrl}" style="color: #777777; text-decoration: underline;">Unsubscribe from daily declarations</a></p>` : ''}
             </td>
           </tr>
         </table>
@@ -316,7 +317,7 @@ function getDailyDeclarationEmailHtml(firstName: string, declaration: string, bi
 </html>`;
 }
 
-export async function sendDailyDeclarationEmail(email: string, firstName: string | undefined, declaration: string, bibleVerse: string, bibleReference: string): Promise<boolean> {
+export async function sendDailyDeclarationEmail(email: string, firstName: string | undefined, declaration: string, bibleVerse: string, bibleReference: string, unsubscribeUrl?: string): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) {
     console.warn('RESEND_API_KEY not configured, skipping daily declaration email');
     return false;
@@ -330,8 +331,8 @@ export async function sendDailyDeclarationEmail(email: string, firstName: string
       reply_to: REPLY_TO,
       to: email,
       subject: `Today's Faith Declaration: ${bibleReference}`,
-      html: getDailyDeclarationEmailHtml(displayName, declaration, bibleVerse, bibleReference),
-      text: `Hi ${displayName},\n\n"${declaration}"\n\n${bibleVerse}\n— ${bibleReference}\n\n© ${new Date().getFullYear()} Testifaith`,
+      html: getDailyDeclarationEmailHtml(displayName, declaration, bibleVerse, bibleReference, unsubscribeUrl),
+      text: `Hi ${displayName},\n\n"${declaration}"\n\n${bibleVerse}\n— ${bibleReference}\n\n© ${new Date().getFullYear()} Testifaith${unsubscribeUrl ? `\n\nUnsubscribe: ${unsubscribeUrl}` : ''}`,
     });
 
     if (error) {
@@ -347,7 +348,7 @@ export async function sendDailyDeclarationEmail(email: string, firstName: string
   }
 }
 
-function getNewsletterEmailHtml(firstName: string, subject: string, body: string): string {
+function getNewsletterEmailHtml(firstName: string, subject: string, body: string, unsubscribeUrl?: string): string {
   const bodyHtml = body
     .split(/\n{2,}/)
     .map((para) => `<p style="margin: 0 0 18px; font-size: 16px; line-height: 1.6; color: #CCCCCC;">${para.replace(/\n/g, '<br>')}</p>`)
@@ -382,7 +383,8 @@ function getNewsletterEmailHtml(firstName: string, subject: string, body: string
           <tr>
             <td style="padding: 24px 40px; text-align: center; border-top: 1px solid #333333;">
               <p style="margin: 0 0 10px; font-size: 14px; color: #666666;">With love and blessings,<br><span style="color: #CCCCCC;">The Testifaith Team</span></p>
-              <p style="margin: 0; font-size: 12px; color: #555555;">© ${new Date().getFullYear()} Testifaith. All rights reserved.</p>
+              <p style="margin: 0 0 10px; font-size: 12px; color: #555555;">© ${new Date().getFullYear()} Testifaith. All rights reserved.</p>
+              ${unsubscribeUrl ? `<p style="margin: 0; font-size: 11px;"><a href="${unsubscribeUrl}" style="color: #777777; text-decoration: underline;">Unsubscribe from newsletters</a></p>` : ''}
             </td>
           </tr>
         </table>
@@ -393,7 +395,7 @@ function getNewsletterEmailHtml(firstName: string, subject: string, body: string
 </html>`;
 }
 
-export async function sendNewsletterEmail(email: string, subject: string, body: string, firstName?: string): Promise<boolean> {
+export async function sendNewsletterEmail(email: string, subject: string, body: string, firstName?: string, unsubscribeUrl?: string): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) {
     console.warn('RESEND_API_KEY not configured, skipping newsletter email');
     return false;
@@ -407,8 +409,8 @@ export async function sendNewsletterEmail(email: string, subject: string, body: 
       reply_to: REPLY_TO,
       to: email,
       subject,
-      html: getNewsletterEmailHtml(displayName, subject, body),
-      text: `Hi ${displayName},\n\n${body}\n\nWith love and blessings,\nThe Testifaith Team\n\n© ${new Date().getFullYear()} Testifaith`,
+      html: getNewsletterEmailHtml(displayName, subject, body, unsubscribeUrl),
+      text: `Hi ${displayName},\n\n${body}\n\nWith love and blessings,\nThe Testifaith Team\n\n© ${new Date().getFullYear()} Testifaith${unsubscribeUrl ? `\n\nUnsubscribe: ${unsubscribeUrl}` : ''}`,
     });
 
     if (error) {

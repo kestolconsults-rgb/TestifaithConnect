@@ -13,13 +13,39 @@ import {
   Loader2, LogOut, Star, StarOff, Plus, Trash2, Check, Video, X, CheckCircle,
   BarChart3, Users, MessageSquare, BookOpen, Shield, History,
   UserX, UserCheck, Eye, EyeOff, Calendar, Heart, HandHeart, Upload, Play,
-  Headphones, ChevronDown, ChevronUp, Mail, Clock
+  Headphones, ChevronDown, ChevronUp, Mail, Clock, Pencil, AlertTriangle
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { TestimonyWithUser, FaithDeclaration, EncouragementVerse, User, Comment, Newsletter, AppSettings } from "@shared/schema";
 import { format } from "date-fns";
+
+// Builds hour-select options showing each admin's LOCAL time while the value stored/sent
+// to the server stays in UTC (0-23). Sorted so the dropdown reads in local chronological order.
+function getLocalHourOptions(): { utcHour: number; label: string; sortKey: number }[] {
+  return Array.from({ length: 24 }, (_, utcHour) => {
+    const d = new Date();
+    d.setUTCHours(utcHour, 0, 0, 0);
+    return {
+      utcHour,
+      label: d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+      sortKey: d.getHours() * 60 + d.getMinutes(),
+    };
+  }).sort((a, b) => a.sortKey - b.sortKey);
+}
+
+function getTimezoneLabel(): string {
+  try {
+    return (
+      new Intl.DateTimeFormat(undefined, { timeZoneName: "short" })
+        .formatToParts(new Date())
+        .find((p) => p.type === "timeZoneName")?.value || ""
+    );
+  } catch {
+    return "";
+  }
+}
 
 interface AdminSession {
   authenticated: boolean;
@@ -744,8 +770,11 @@ function FaithDeclarationManagement() {
   const [newBibleVerse, setNewBibleVerse] = useState("");
   const [newBibleReference, setNewBibleReference] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
+  const [confirmSendOpen, setConfirmSendOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const localHourOptions = getLocalHourOptions();
+  const tzLabel = getTimezoneLabel();
 
   const { data: declarations, isLoading } = useQuery<FaithDeclaration[]>({
     queryKey: ["/api/admin/faith-declarations"],
@@ -809,14 +838,21 @@ function FaithDeclarationManagement() {
     queryKey: ["/api/admin/settings/scheduler"],
   });
 
+  const { data: recipientData } = useQuery<{ recipientCount: number }>({
+    queryKey: ["/api/admin/faith-declarations/recipient-count"],
+    enabled: confirmSendOpen,
+  });
+
   const sendNowMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/admin/faith-declarations/send-now"),
     onSuccess: (data: any) => {
       toast({ title: "Declaration sent", description: `Sent to ${data.recipientCount ?? 0} member(s)` });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/scheduler"] });
+      setConfirmSendOpen(false);
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+      setConfirmSendOpen(false);
     },
   });
 
@@ -841,21 +877,50 @@ function FaithDeclarationManagement() {
             <p className="text-white text-sm font-medium">Send today's declaration now</p>
             <p className="text-zinc-400 text-xs">Push + email to every member who has daily declarations enabled</p>
           </div>
-          <Button
-            onClick={() => sendNowMutation.mutate()}
-            disabled={sendNowMutation.isPending}
-            className="bg-red-500 hover:bg-red-600 shrink-0"
-            data-testid="button-send-declaration-now"
-          >
-            {sendNowMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-            Send Now
-          </Button>
+          <Dialog open={confirmSendOpen} onOpenChange={setConfirmSendOpen}>
+            <DialogTrigger asChild>
+              <Button
+                className="bg-red-500 hover:bg-red-600 shrink-0"
+                data-testid="button-send-declaration-now"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Send Now
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-zinc-900 border-zinc-800">
+              <DialogHeader>
+                <DialogTitle className="text-white flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                  Send today's declaration?
+                </DialogTitle>
+                <DialogDescription className="text-zinc-400">
+                  {recipientData
+                    ? `This will immediately email and push-notify ${recipientData.recipientCount} member${recipientData.recipientCount === 1 ? "" : "s"} who have daily declarations enabled. This cannot be undone.`
+                    : "Loading recipient count..."}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setConfirmSendOpen(false)} className="border-zinc-700 text-zinc-300" data-testid="button-cancel-send-declaration">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => sendNowMutation.mutate()}
+                  disabled={sendNowMutation.isPending || !recipientData}
+                  className="bg-red-500 hover:bg-red-600"
+                  data-testid="button-confirm-send-declaration"
+                >
+                  {sendNowMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                  Yes, Send Now
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="border-t border-zinc-700 pt-4 flex items-center justify-between gap-3 flex-wrap">
           <div>
             <p className="text-white text-sm font-medium">Automatic daily sending</p>
-            <p className="text-zinc-400 text-xs">Automatically send the day's declaration every day at the chosen hour</p>
+            <p className="text-zinc-400 text-xs">Automatically send the day's declaration every day at the chosen hour, your local time{tzLabel ? ` (${tzLabel})` : ""}</p>
           </div>
           <div className="flex items-center gap-3">
             <Select
@@ -866,8 +931,8 @@ function FaithDeclarationManagement() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 24 }).map((_, h) => (
-                  <SelectItem key={h} value={String(h)}>{`${h.toString().padStart(2, "0")}:00 UTC`}</SelectItem>
+                {localHourOptions.map(({ utcHour, label }) => (
+                  <SelectItem key={utcHour} value={String(utcHour)}>{label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1491,8 +1556,13 @@ function NewsletterManagement() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [isRecurring, setIsRecurring] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [pendingSendId, setPendingSendId] = useState<string | null>(null);
+  const [confirmSendNewOpen, setConfirmSendNewOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const localHourOptions = getLocalHourOptions();
+  const tzLabel = getTimezoneLabel();
 
   const { data: newsletters, isLoading } = useQuery<Newsletter[]>({
     queryKey: ["/api/admin/newsletters"],
@@ -1502,18 +1572,43 @@ function NewsletterManagement() {
     queryKey: ["/api/admin/settings/scheduler"],
   });
 
+  const { data: recipientData } = useQuery<{ recipientCount: number }>({
+    queryKey: ["/api/admin/newsletters/recipient-count"],
+    enabled: confirmSendNewOpen || !!pendingSendId,
+  });
+
+  const resetForm = () => {
+    setSubject("");
+    setBody("");
+    setIsRecurring(false);
+    setEditingId(null);
+  };
+
   const createMutation = useMutation({
     mutationFn: (data: { subject: string; body: string; sendNow: boolean; isRecurring: boolean }) =>
       apiRequest("POST", "/api/admin/newsletters", data),
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/newsletters"] });
-      setSubject("");
-      setBody("");
-      setIsRecurring(false);
+      resetForm();
+      setConfirmSendNewOpen(false);
       toast({
         title: data.status === "sent" ? "Newsletter sent" : "Draft saved",
         description: data.status === "sent" ? `Sent to ${data.recipientCount ?? 0} member(s)` : undefined,
       });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      setConfirmSendNewOpen(false);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: { id: string; subject: string; body: string; isRecurring: boolean }) =>
+      apiRequest("PATCH", `/api/admin/newsletters/${data.id}`, { subject: data.subject, body: data.body, isRecurring: data.isRecurring }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/newsletters"] });
+      resetForm();
+      toast({ title: "Draft updated" });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -1525,9 +1620,11 @@ function NewsletterManagement() {
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/newsletters"] });
       toast({ title: "Newsletter sent", description: `Sent to ${data.recipientCount ?? 0} member(s)` });
+      setPendingSendId(null);
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+      setPendingSendId(null);
     },
   });
 
@@ -1555,12 +1652,22 @@ function NewsletterManagement() {
     },
   });
 
+  const startEditing = (n: Newsletter) => {
+    setEditingId(n.id);
+    setSubject(n.subject);
+    setBody(n.body);
+    setIsRecurring(n.isRecurring ?? false);
+  };
+
   const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const pendingSendNewsletter = newsletters?.find((n) => n.id === pendingSendId);
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3">Compose Newsletter</h3>
+        <h3 className="text-lg font-semibold text-white mb-3">
+          {editingId ? "Edit Draft" : "Compose Newsletter"}
+        </h3>
         <div className="space-y-3 p-4 bg-zinc-800 rounded-lg">
           <Input
             placeholder="Subject"
@@ -1588,24 +1695,79 @@ function NewsletterManagement() {
             </Label>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => createMutation.mutate({ subject, body, sendNow: true, isRecurring })}
-              disabled={createMutation.isPending || !subject.trim() || !body.trim()}
-              className="bg-red-500 hover:bg-red-600"
-              data-testid="button-send-newsletter"
-            >
-              {createMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-              Send Now
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => createMutation.mutate({ subject, body, sendNow: false, isRecurring })}
-              disabled={createMutation.isPending || !subject.trim() || !body.trim()}
-              className="border-zinc-700 text-zinc-300"
-              data-testid="button-save-newsletter-draft"
-            >
-              Save as Draft
-            </Button>
+            {editingId ? (
+              <>
+                <Button
+                  onClick={() => updateMutation.mutate({ id: editingId, subject, body, isRecurring })}
+                  disabled={updateMutation.isPending || !subject.trim() || !body.trim()}
+                  className="bg-red-500 hover:bg-red-600"
+                  data-testid="button-save-newsletter-edit"
+                >
+                  {updateMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                  Save Changes
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={resetForm}
+                  disabled={updateMutation.isPending}
+                  className="border-zinc-700 text-zinc-300"
+                  data-testid="button-cancel-newsletter-edit"
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <>
+                <Dialog open={confirmSendNewOpen} onOpenChange={setConfirmSendNewOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      disabled={!subject.trim() || !body.trim()}
+                      className="bg-red-500 hover:bg-red-600"
+                      data-testid="button-send-newsletter"
+                    >
+                      <Mail className="w-4 h-4 mr-2" />
+                      Send Now
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-zinc-900 border-zinc-800">
+                    <DialogHeader>
+                      <DialogTitle className="text-white flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                        Send this newsletter?
+                      </DialogTitle>
+                      <DialogDescription className="text-zinc-400">
+                        {recipientData
+                          ? `This will immediately email "${subject}" to ${recipientData.recipientCount} member${recipientData.recipientCount === 1 ? "" : "s"} who have newsletters enabled. This cannot be undone.`
+                          : "Loading recipient count..."}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setConfirmSendNewOpen(false)} className="border-zinc-700 text-zinc-300" data-testid="button-cancel-send-newsletter">
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => createMutation.mutate({ subject, body, sendNow: true, isRecurring })}
+                        disabled={createMutation.isPending || !recipientData}
+                        className="bg-red-500 hover:bg-red-600"
+                        data-testid="button-confirm-send-newsletter"
+                      >
+                        {createMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                        Yes, Send Now
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <Button
+                  variant="outline"
+                  onClick={() => createMutation.mutate({ subject, body, sendNow: false, isRecurring })}
+                  disabled={createMutation.isPending || !subject.trim() || !body.trim()}
+                  className="border-zinc-700 text-zinc-300"
+                  data-testid="button-save-newsletter-draft"
+                >
+                  Save as Draft
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -1677,11 +1839,12 @@ function NewsletterManagement() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 24 }).map((_, h) => (
-                  <SelectItem key={h} value={String(h)}>{`${h.toString().padStart(2, "0")}:00 UTC`}</SelectItem>
+                {localHourOptions.map(({ utcHour, label }) => (
+                  <SelectItem key={utcHour} value={String(utcHour)}>{label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {tzLabel && <span className="text-zinc-500 text-xs">{tzLabel} (your time)</span>}
           </div>
           <p className="text-zinc-500 text-xs">
             When automatic sending fires, every newsletter marked as a recurring digest template (toggle above when composing) is re-sent to opted-in members.
@@ -1713,20 +1876,33 @@ function NewsletterManagement() {
                       <Badge className={`text-[10px] ${n.status === "sent" ? "bg-green-500" : "bg-zinc-600"} text-white`}>
                         {n.status === "sent" ? `Sent to ${n.recipientCount}` : "Draft"}
                       </Badge>
+                      {n.isRecurring && (
+                        <Badge className="text-[10px] bg-blue-500 text-white">Recurring template</Badge>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
                     {n.status !== "sent" && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => sendMutation.mutate(n.id)}
-                        disabled={sendMutation.isPending}
-                        className="text-green-400 hover:text-green-300"
-                        data-testid={`button-send-${n.id}`}
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => startEditing(n)}
+                          className="text-zinc-300 hover:text-white"
+                          data-testid={`button-edit-newsletter-${n.id}`}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setPendingSendId(n.id)}
+                          className="text-green-400 hover:text-green-300"
+                          data-testid={`button-send-${n.id}`}
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                        </Button>
+                      </>
                     )}
                     <Button
                       size="sm"
@@ -1745,6 +1921,36 @@ function NewsletterManagement() {
           </div>
         )}
       </div>
+
+      <Dialog open={!!pendingSendId} onOpenChange={(open) => !open && setPendingSendId(null)}>
+        <DialogContent className="bg-zinc-900 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              Send this newsletter?
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              {recipientData && pendingSendNewsletter
+                ? `This will immediately email "${pendingSendNewsletter.subject}" to ${recipientData.recipientCount} member${recipientData.recipientCount === 1 ? "" : "s"} who have newsletters enabled. This cannot be undone.`
+                : "Loading recipient count..."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingSendId(null)} className="border-zinc-700 text-zinc-300" data-testid="button-cancel-send-existing-newsletter">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => pendingSendId && sendMutation.mutate(pendingSendId)}
+              disabled={sendMutation.isPending || !recipientData}
+              className="bg-red-500 hover:bg-red-600"
+              data-testid="button-confirm-send-existing-newsletter"
+            >
+              {sendMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              Yes, Send Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
