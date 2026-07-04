@@ -1,0 +1,1 @@
+- [Notification scheduling architecture](notification-scheduling.md) — DB-persisted appSettings + 15min cron poll pattern used for daily declarations & recurring newsletters; reuse this pattern for any future "automatic recurring send" feature.

@@ -235,6 +235,38 @@ export default function Settings() {
                 data-testid="switch-notify-verse"
               />
             </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="notify-declaration">Daily Declaration</Label>
+                <p className="text-sm text-muted-foreground">Get a push notification and email with today's faith declaration</p>
+              </div>
+              <Switch
+                id="notify-declaration"
+                checked={profile?.notifyDailyDeclaration ?? true}
+                onCheckedChange={(checked) => handleSettingToggle("notifyDailyDeclaration", checked)}
+                disabled={updateSettingsMutation.isPending}
+                data-testid="switch-notify-declaration"
+              />
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="notify-newsletter">Newsletter</Label>
+                <p className="text-sm text-muted-foreground">Receive occasional email updates and digests from Testifaith</p>
+              </div>
+              <Switch
+                id="notify-newsletter"
+                checked={profile?.notifyNewsletter ?? true}
+                onCheckedChange={(checked) => handleSettingToggle("notifyNewsletter", checked)}
+                disabled={updateSettingsMutation.isPending}
+                data-testid="switch-notify-newsletter"
+              />
+            </div>
           </CardContent>
         </Card>
 

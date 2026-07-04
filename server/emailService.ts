@@ -269,6 +269,161 @@ export async function sendPasswordResetEmail(email: string, firstName: string | 
   }
 }
 
+function getDailyDeclarationEmailHtml(firstName: string, declaration: string, bibleVerse: string, bibleReference: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Today's Faith Declaration — Testifaith</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #000000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #000000;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #111111; border-radius: 12px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); padding: 36px 40px; text-align: center;">
+              <h1 style="margin: 0; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 32px; font-weight: 700; color: #FFFFFF; letter-spacing: 1px;">TESTIFAITH</h1>
+              <p style="margin: 8px 0 0; font-size: 13px; color: rgba(255,255,255,0.85); letter-spacing: 2px; text-transform: uppercase;">Today's Faith Declaration</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 24px; color: #FFFFFF;">Hi ${firstName},</h2>
+              <p style="margin: 0 0 24px; font-size: 20px; line-height: 1.6; color: #FFFFFF; font-style: italic;">
+                "${declaration}"
+              </p>
+              <p style="margin: 0 0 8px; font-size: 16px; line-height: 1.6; color: #CCCCCC;">
+                ${bibleVerse}
+              </p>
+              <p style="margin: 0; font-size: 14px; color: #EF4444; font-weight: 600;">
+                — ${bibleReference}
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 40px; text-align: center; border-top: 1px solid #333333;">
+              <p style="margin: 0; font-size: 12px; color: #555555;">© ${new Date().getFullYear()} Testifaith. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendDailyDeclarationEmail(email: string, firstName: string | undefined, declaration: string, bibleVerse: string, bibleReference: string): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not configured, skipping daily declaration email');
+    return false;
+  }
+
+  const displayName = firstName || 'Friend';
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      reply_to: REPLY_TO,
+      to: email,
+      subject: `Today's Faith Declaration: ${bibleReference}`,
+      html: getDailyDeclarationEmailHtml(displayName, declaration, bibleVerse, bibleReference),
+      text: `Hi ${displayName},\n\n"${declaration}"\n\n${bibleVerse}\n— ${bibleReference}\n\n© ${new Date().getFullYear()} Testifaith`,
+    });
+
+    if (error) {
+      console.error('Daily declaration email error from Resend:', JSON.stringify(error));
+      return false;
+    }
+
+    console.log('Daily declaration email sent:', data?.id, '→', email);
+    return true;
+  } catch (error: any) {
+    console.error('Daily declaration email exception:', error?.message || error);
+    return false;
+  }
+}
+
+function getNewsletterEmailHtml(firstName: string, subject: string, body: string): string {
+  const bodyHtml = body
+    .split(/\n{2,}/)
+    .map((para) => `<p style="margin: 0 0 18px; font-size: 16px; line-height: 1.6; color: #CCCCCC;">${para.replace(/\n/g, '<br>')}</p>`)
+    .join('');
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject} — Testifaith</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #000000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #000000;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #111111; border-radius: 12px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); padding: 36px 40px; text-align: center;">
+              <h1 style="margin: 0; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 32px; font-weight: 700; color: #FFFFFF; letter-spacing: 1px;">TESTIFAITH</h1>
+              <p style="margin: 8px 0 0; font-size: 13px; color: rgba(255,255,255,0.85); letter-spacing: 2px; text-transform: uppercase;">Newsletter</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 24px; color: #FFFFFF;">${subject}</h2>
+              <p style="margin: 0 0 20px; font-size: 15px; color: #999999;">Hi ${firstName},</p>
+              ${bodyHtml}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 40px; text-align: center; border-top: 1px solid #333333;">
+              <p style="margin: 0 0 10px; font-size: 14px; color: #666666;">With love and blessings,<br><span style="color: #CCCCCC;">The Testifaith Team</span></p>
+              <p style="margin: 0; font-size: 12px; color: #555555;">© ${new Date().getFullYear()} Testifaith. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendNewsletterEmail(email: string, subject: string, body: string, firstName?: string): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not configured, skipping newsletter email');
+    return false;
+  }
+
+  const displayName = firstName || 'Friend';
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      reply_to: REPLY_TO,
+      to: email,
+      subject,
+      html: getNewsletterEmailHtml(displayName, subject, body),
+      text: `Hi ${displayName},\n\n${body}\n\nWith love and blessings,\nThe Testifaith Team\n\n© ${new Date().getFullYear()} Testifaith`,
+    });
+
+    if (error) {
+      console.error('Newsletter email error from Resend:', JSON.stringify(error));
+      return false;
+    }
+
+    console.log('Newsletter email sent:', data?.id, '→', email);
+    return true;
+  } catch (error: any) {
+    console.error('Newsletter email exception:', error?.message || error);
+    return false;
+  }
+}
+
 export async function sendWelcomeEmail(email: string, firstName?: string): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) {
     console.warn('RESEND_API_KEY not configured, skipping welcome email');

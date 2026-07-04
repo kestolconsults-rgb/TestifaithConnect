@@ -15,11 +15,17 @@ import {
   pushSubscriptions,
   passwordResetTokens,
   supportMessages,
+  newsletters,
+  appSettings,
   type SupportMessage,
   type InsertSupportMessage,
   type PasswordResetToken,
   type PushSubscription,
   type InsertPushSubscription,
+  type Newsletter,
+  type InsertNewsletter,
+  type AppSettings,
+  type UpdateAppSettings,
   type User,
   type UpsertUser,
   type Testimony,
@@ -157,6 +163,23 @@ export interface IStorage {
   savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
   deletePushSubscription(endpoint: string): Promise<void>;
   getPushSubscriptionsForUser(userId: string): Promise<PushSubscription[]>;
+
+  // Newsletters
+  createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter>;
+  getNewsletters(): Promise<Newsletter[]>;
+  getNewsletter(id: string): Promise<Newsletter | undefined>;
+  markNewsletterSent(id: string, recipientCount: number): Promise<Newsletter>;
+  deleteNewsletter(id: string): Promise<boolean>;
+  getActiveRecurringNewsletters(): Promise<Newsletter[]>;
+
+  // App settings (scheduler config)
+  getAppSettings(): Promise<AppSettings>;
+  updateAppSettings(data: UpdateAppSettings): Promise<AppSettings>;
+  markDailyDeclarationSent(dateStr: string): Promise<void>;
+  markNewsletterDigestSent(dateStr: string): Promise<void>;
+
+  // Users opted into notification types (with email/push targets)
+  getUsersOptedInto(field: "notifyNewsletter" | "notifyDailyDeclaration"): Promise<User[]>;
 
   // =====================================================
   // ADMIN DASHBOARD OPERATIONS
@@ -1388,6 +1411,84 @@ export class DatabaseStorage implements IStorage {
 
   async getPushSubscriptionsForUser(userId: string): Promise<PushSubscription[]> {
     return db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+  }
+
+  // Newsletters
+  async createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter> {
+    const [created] = await db.insert(newsletters).values(newsletter).returning();
+    return created;
+  }
+
+  async getNewsletters(): Promise<Newsletter[]> {
+    return await db.select().from(newsletters).orderBy(desc(newsletters.createdAt));
+  }
+
+  async getNewsletter(id: string): Promise<Newsletter | undefined> {
+    const [result] = await db.select().from(newsletters).where(eq(newsletters.id, id));
+    return result;
+  }
+
+  async markNewsletterSent(id: string, recipientCount: number): Promise<Newsletter> {
+    const [updated] = await db
+      .update(newsletters)
+      .set({ status: "sent", sentAt: new Date(), recipientCount })
+      .where(eq(newsletters.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteNewsletter(id: string): Promise<boolean> {
+    const result = await db.delete(newsletters).where(eq(newsletters.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getActiveRecurringNewsletters(): Promise<Newsletter[]> {
+    return await db
+      .select()
+      .from(newsletters)
+      .where(eq(newsletters.isRecurring, true))
+      .orderBy(desc(newsletters.createdAt));
+  }
+
+  // App settings (scheduler config) - singleton row keyed "default"
+  async getAppSettings(): Promise<AppSettings> {
+    const [existing] = await db.select().from(appSettings).where(eq(appSettings.id, "default"));
+    if (existing) return existing;
+    const [created] = await db.insert(appSettings).values({ id: "default" }).returning();
+    return created;
+  }
+
+  async updateAppSettings(data: UpdateAppSettings): Promise<AppSettings> {
+    await this.getAppSettings(); // ensure row exists
+    const [updated] = await db
+      .update(appSettings)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(appSettings.id, "default"))
+      .returning();
+    return updated;
+  }
+
+  async markDailyDeclarationSent(dateStr: string): Promise<void> {
+    await this.getAppSettings();
+    await db
+      .update(appSettings)
+      .set({ lastDailyDeclarationSentDate: dateStr, updatedAt: new Date() })
+      .where(eq(appSettings.id, "default"));
+  }
+
+  async markNewsletterDigestSent(dateStr: string): Promise<void> {
+    await this.getAppSettings();
+    await db
+      .update(appSettings)
+      .set({ lastNewsletterDigestSentDate: dateStr, updatedAt: new Date() })
+      .where(eq(appSettings.id, "default"));
+  }
+
+  async getUsersOptedInto(field: "notifyNewsletter" | "notifyDailyDeclaration"): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(and(eq(users[field], true), eq(users.isSuspended, false)));
   }
 
   // =====================================================

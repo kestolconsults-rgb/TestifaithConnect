@@ -9,37 +9,10 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { ObjectStorageService } from "./replit_integrations/object_storage";
 import { s3StorageService } from "./s3Storage";
-import webpush from "web-push";
-
-// Configure web-push
-if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT || "mailto:admin@testifaith.app",
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-  );
-}
-
-async function sendPushNotification(userId: string, payload: { title: string; body: string; url?: string; tag?: string }) {
-  try {
-    const subs = await storage.getPushSubscriptionsForUser(userId);
-    const payloadStr = JSON.stringify(payload);
-    await Promise.allSettled(
-      subs.map((sub) =>
-        webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          payloadStr
-        ).catch(async (err: any) => {
-          if (err.statusCode === 410 || err.statusCode === 404) {
-            await storage.deletePushSubscription(sub.endpoint);
-          }
-        })
-      )
-    );
-  } catch {
-    // Non-critical — don't let push errors affect the main request
-  }
-}
+import { sendPushNotification } from "./pushService";
+import { sendNewsletterEmail, sendDailyDeclarationEmail } from "./emailService";
+import { insertNewsletterSchema, updateAppSettingsSchema } from "@shared/schema";
+import { sendDailyDeclarationNow, sendNewsletterNow } from "./notificationJobs";
 
 interface AuthUser {
   id: string;
@@ -1182,6 +1155,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting faith declaration:", error);
       res.status(500).json({ message: "Failed to delete faith declaration" });
+    }
+  });
+
+  // Manually send today's active faith declaration (push + email) to all opted-in users
+  app.post('/api/admin/faith-declarations/send-now', isAdminAuthenticated, async (req, res) => {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const { recipientCount } = await sendDailyDeclarationNow();
+      await storage.markDailyDeclarationSent(today);
+      res.json({ message: "Daily declaration sent", recipientCount });
+    } catch (error: any) {
+      console.error("Error sending daily declaration:", error);
+      res.status(400).json({ message: error.message || "Failed to send daily declaration" });
+    }
+  });
+
+  // Scheduler / automation settings
+  app.get('/api/admin/settings/scheduler', isAdminAuthenticated, async (req, res) => {
+    try {
+      const settings = await storage.getAppSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching scheduler settings:", error);
+      res.status(500).json({ message: "Failed to fetch scheduler settings" });
+    }
+  });
+
+  app.patch('/api/admin/settings/scheduler', isAdminAuthenticated, async (req, res) => {
+    try {
+      const data = updateAppSettingsSchema.parse(req.body);
+      const settings = await storage.updateAppSettings(data);
+      res.json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        console.error("Error updating scheduler settings:", error);
+        res.status(500).json({ message: "Failed to update scheduler settings" });
+      }
+    }
+  });
+
+  // Newsletter routes
+  app.get('/api/admin/newsletters', isAdminAuthenticated, async (req, res) => {
+    try {
+      const newsletters = await storage.getNewsletters();
+      res.json(newsletters);
+    } catch (error) {
+      console.error("Error fetching newsletters:", error);
+      res.status(500).json({ message: "Failed to fetch newsletters" });
+    }
+  });
+
+  app.post('/api/admin/newsletters', isAdminAuthenticated, async (req, res) => {
+    try {
+      const adminId = (req.session as any).adminId;
+      const { sendNow, ...body } = req.body;
+      const data = insertNewsletterSchema.parse({ ...body, createdBy: adminId });
+      const newsletter = await storage.createNewsletter(data);
+
+      if (sendNow) {
+        const { recipientCount } = await sendNewsletterNow(newsletter.id);
+        return res.json({ ...newsletter, status: "sent", recipientCount });
+      }
+
+      res.json(newsletter);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        console.error("Error creating newsletter:", error);
+        res.status(500).json({ message: "Failed to create newsletter" });
+      }
+    }
+  });
+
+  app.post('/api/admin/newsletters/:id/send', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { recipientCount } = await sendNewsletterNow(id);
+      res.json({ message: "Newsletter sent", recipientCount });
+    } catch (error: any) {
+      console.error("Error sending newsletter:", error);
+      res.status(400).json({ message: error.message || "Failed to send newsletter" });
+    }
+  });
+
+  app.delete('/api/admin/newsletters/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteNewsletter(id);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ message: "Newsletter not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting newsletter:", error);
+      res.status(500).json({ message: "Failed to delete newsletter" });
     }
   });
 

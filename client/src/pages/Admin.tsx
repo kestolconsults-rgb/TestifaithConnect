@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import type { TestimonyWithUser, FaithDeclaration, EncouragementVerse, User, Comment } from "@shared/schema";
+import { Switch } from "@/components/ui/switch";
+import type { TestimonyWithUser, FaithDeclaration, EncouragementVerse, User, Comment, Newsletter, AppSettings } from "@shared/schema";
 import { format } from "date-fns";
 
 interface AdminSession {
@@ -804,9 +805,80 @@ function FaithDeclarationManagement() {
   // Today in local time for min-date on picker
   const todayStr = new Date().toLocaleDateString("en-CA"); // gives YYYY-MM-DD
 
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ["/api/admin/settings/scheduler"],
+  });
+
+  const sendNowMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/admin/faith-declarations/send-now"),
+    onSuccess: (data: any) => {
+      toast({ title: "Declaration sent", description: `Sent to ${data.recipientCount ?? 0} member(s)` });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/scheduler"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateSchedulerMutation = useMutation({
+    mutationFn: (data: { dailyDeclarationSchedulerEnabled?: boolean; dailyDeclarationSendHour?: number }) =>
+      apiRequest("PATCH", "/api/admin/settings/scheduler", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/scheduler"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white">Faith Declarations</h3>
+
+      <div className="p-4 bg-zinc-800 rounded-lg space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-white text-sm font-medium">Send today's declaration now</p>
+            <p className="text-zinc-400 text-xs">Push + email to every member who has daily declarations enabled</p>
+          </div>
+          <Button
+            onClick={() => sendNowMutation.mutate()}
+            disabled={sendNowMutation.isPending}
+            className="bg-red-500 hover:bg-red-600 shrink-0"
+            data-testid="button-send-declaration-now"
+          >
+            {sendNowMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+            Send Now
+          </Button>
+        </div>
+
+        <div className="border-t border-zinc-700 pt-4 flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-white text-sm font-medium">Automatic daily sending</p>
+            <p className="text-zinc-400 text-xs">Automatically send the day's declaration every day at the chosen hour</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Select
+              value={String(appSettings?.dailyDeclarationSendHour ?? 8)}
+              onValueChange={(v) => updateSchedulerMutation.mutate({ dailyDeclarationSendHour: Number(v) })}
+            >
+              <SelectTrigger className="w-32 bg-zinc-900 border-zinc-700 text-white" data-testid="select-declaration-hour">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 24 }).map((_, h) => (
+                  <SelectItem key={h} value={String(h)}>{`${h.toString().padStart(2, "0")}:00 UTC`}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Switch
+              checked={appSettings?.dailyDeclarationSchedulerEnabled ?? false}
+              onCheckedChange={(checked) => updateSchedulerMutation.mutate({ dailyDeclarationSchedulerEnabled: checked })}
+              data-testid="switch-declaration-scheduler"
+            />
+          </div>
+        </div>
+      </div>
 
       <form onSubmit={handleCreate} className="space-y-3 p-4 bg-zinc-800 rounded-lg">
         <Textarea
@@ -1411,6 +1483,268 @@ function FeaturedTestimonyManagement() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function NewsletterManagement() {
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const { data: newsletters, isLoading } = useQuery<Newsletter[]>({
+    queryKey: ["/api/admin/newsletters"],
+  });
+
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ["/api/admin/settings/scheduler"],
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: { subject: string; body: string; sendNow: boolean; isRecurring: boolean }) =>
+      apiRequest("POST", "/api/admin/newsletters", data),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/newsletters"] });
+      setSubject("");
+      setBody("");
+      setIsRecurring(false);
+      toast({
+        title: data.status === "sent" ? "Newsletter sent" : "Draft saved",
+        description: data.status === "sent" ? `Sent to ${data.recipientCount ?? 0} member(s)` : undefined,
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const sendMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("POST", `/api/admin/newsletters/${id}/send`),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/newsletters"] });
+      toast({ title: "Newsletter sent", description: `Sent to ${data.recipientCount ?? 0} member(s)` });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/newsletters/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/newsletters"] });
+      toast({ title: "Newsletter deleted" });
+    },
+  });
+
+  const updateSchedulerMutation = useMutation({
+    mutationFn: (data: Partial<{
+      newsletterDigestEnabled: boolean;
+      newsletterDigestFrequency: string;
+      newsletterDigestDayOfWeek: number;
+      newsletterDigestDayOfMonth: number;
+      newsletterDigestSendHour: number;
+    }>) => apiRequest("PATCH", "/api/admin/settings/scheduler", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/scheduler"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-3">Compose Newsletter</h3>
+        <div className="space-y-3 p-4 bg-zinc-800 rounded-lg">
+          <Input
+            placeholder="Subject"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="bg-zinc-900 border-zinc-700 text-white"
+            data-testid="input-newsletter-subject"
+          />
+          <Textarea
+            placeholder="Write your newsletter content..."
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            className="bg-zinc-900 border-zinc-700 text-white resize-none"
+            rows={6}
+            data-testid="input-newsletter-body"
+          />
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={isRecurring}
+              onCheckedChange={setIsRecurring}
+              data-testid="switch-newsletter-is-recurring"
+            />
+            <Label className="text-zinc-300 text-sm">
+              Use as the recurring digest template (re-sent automatically on schedule below)
+            </Label>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => createMutation.mutate({ subject, body, sendNow: true, isRecurring })}
+              disabled={createMutation.isPending || !subject.trim() || !body.trim()}
+              className="bg-red-500 hover:bg-red-600"
+              data-testid="button-send-newsletter"
+            >
+              {createMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              Send Now
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => createMutation.mutate({ subject, body, sendNow: false, isRecurring })}
+              disabled={createMutation.isPending || !subject.trim() || !body.trim()}
+              className="border-zinc-700 text-zinc-300"
+              data-testid="button-save-newsletter-draft"
+            >
+              Save as Draft
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-3">Recurring Digest</h3>
+        <div className="p-4 bg-zinc-800 rounded-lg space-y-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <p className="text-white text-sm font-medium">Automatic recurring digest</p>
+              <p className="text-zinc-400 text-xs">Automatically create and send a digest newsletter on a schedule</p>
+            </div>
+            <Switch
+              checked={appSettings?.newsletterDigestEnabled ?? false}
+              onCheckedChange={(checked) => updateSchedulerMutation.mutate({ newsletterDigestEnabled: checked })}
+              data-testid="switch-newsletter-scheduler"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-3 items-center">
+            <Select
+              value={appSettings?.newsletterDigestFrequency ?? "weekly"}
+              onValueChange={(v) => updateSchedulerMutation.mutate({ newsletterDigestFrequency: v })}
+            >
+              <SelectTrigger className="w-32 bg-zinc-900 border-zinc-700 text-white" data-testid="select-digest-frequency">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {(appSettings?.newsletterDigestFrequency ?? "weekly") === "weekly" ? (
+              <Select
+                value={String(appSettings?.newsletterDigestDayOfWeek ?? 0)}
+                onValueChange={(v) => updateSchedulerMutation.mutate({ newsletterDigestDayOfWeek: Number(v) })}
+              >
+                <SelectTrigger className="w-36 bg-zinc-900 border-zinc-700 text-white" data-testid="select-digest-day-of-week">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {weekdays.map((day, i) => (
+                    <SelectItem key={i} value={String(i)}>{day}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select
+                value={String(appSettings?.newsletterDigestDayOfMonth ?? 1)}
+                onValueChange={(v) => updateSchedulerMutation.mutate({ newsletterDigestDayOfMonth: Number(v) })}
+              >
+                <SelectTrigger className="w-36 bg-zinc-900 border-zinc-700 text-white" data-testid="select-digest-day-of-month">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 28 }).map((_, i) => (
+                    <SelectItem key={i} value={String(i + 1)}>{`Day ${i + 1}`}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <Select
+              value={String(appSettings?.newsletterDigestSendHour ?? 8)}
+              onValueChange={(v) => updateSchedulerMutation.mutate({ newsletterDigestSendHour: Number(v) })}
+            >
+              <SelectTrigger className="w-32 bg-zinc-900 border-zinc-700 text-white" data-testid="select-digest-hour">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 24 }).map((_, h) => (
+                  <SelectItem key={h} value={String(h)}>{`${h.toString().padStart(2, "0")}:00 UTC`}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-zinc-500 text-xs">
+            When automatic sending fires, every newsletter marked as a recurring digest template (toggle above when composing) is re-sent to opted-in members.
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-3">Sent &amp; Draft Newsletters</h3>
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <Loader2 className="w-6 h-6 animate-spin text-red-500" />
+          </div>
+        ) : newsletters?.length === 0 ? (
+          <p className="text-zinc-400 text-sm">No newsletters yet.</p>
+        ) : (
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {newsletters?.map((n) => (
+              <div
+                key={n.id}
+                className="p-3 rounded-lg border bg-zinc-800 border-zinc-700"
+                data-testid={`newsletter-${n.id}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-medium">{n.subject}</p>
+                    <p className="text-zinc-400 text-xs mt-1 line-clamp-2">{n.body}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      <Badge className={`text-[10px] ${n.status === "sent" ? "bg-green-500" : "bg-zinc-600"} text-white`}>
+                        {n.status === "sent" ? `Sent to ${n.recipientCount}` : "Draft"}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    {n.status !== "sent" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => sendMutation.mutate(n.id)}
+                        disabled={sendMutation.isPending}
+                        className="text-green-400 hover:text-green-300"
+                        data-testid={`button-send-${n.id}`}
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteMutation.mutate(n.id)}
+                      disabled={deleteMutation.isPending}
+                      className="text-red-400 hover:text-red-300"
+                      data-testid={`button-delete-newsletter-${n.id}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -2225,6 +2559,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <Heart className="w-4 h-4 mr-2" />
                 Declarations
               </TabsTrigger>
+              <TabsTrigger value="newsletters" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-newsletters">
+                <Mail className="w-4 h-4 mr-2" />
+                Newsletters
+              </TabsTrigger>
               <TabsTrigger value="admins" className="whitespace-nowrap data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-admins">
                 <Shield className="w-4 h-4 mr-2" />
                 Admins
@@ -2347,6 +2685,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </CardHeader>
               <CardContent>
                 <EncouragementVersesManagement />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="newsletters" className="mt-6">
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardHeader>
+                <CardTitle className="text-white">Newsletters</CardTitle>
+                <CardDescription className="text-zinc-400">Send one-off newsletters or set up a recurring digest</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <NewsletterManagement />
               </CardContent>
             </Card>
           </TabsContent>

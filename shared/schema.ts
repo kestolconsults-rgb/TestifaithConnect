@@ -46,6 +46,8 @@ export const users = pgTable("users", {
   notifyOnEncourage: boolean("notify_on_encourage").default(true),
   notifyOnComment: boolean("notify_on_comment").default(true),
   notifyDailyVerse: boolean("notify_daily_verse").default(true),
+  notifyNewsletter: boolean("notify_newsletter").default(true),
+  notifyDailyDeclaration: boolean("notify_daily_declaration").default(true),
   profileVisibility: varchar("profile_visibility", { length: 20 }).default("public"),
   isSuspended: boolean("is_suspended").default(false),
   suspendedAt: timestamp("suspended_at"),
@@ -103,6 +105,8 @@ export const updateSettingsSchema = z.object({
   notifyOnEncourage: z.boolean().optional(),
   notifyOnComment: z.boolean().optional(),
   notifyDailyVerse: z.boolean().optional(),
+  notifyNewsletter: z.boolean().optional(),
+  notifyDailyDeclaration: z.boolean().optional(),
   profileVisibility: z.enum(["public", "private"]).optional(),
 });
 
@@ -632,3 +636,67 @@ export const resetPasswordSchema = z.object({
 
 export type ForgotPassword = z.infer<typeof forgotPasswordSchema>;
 export type ResetPassword = z.infer<typeof resetPasswordSchema>;
+
+// =====================================================
+// NEWSLETTERS
+// =====================================================
+
+export const newsletters = pgTable("newsletters", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  subject: varchar("subject", { length: 200 }).notNull(),
+  body: text("body").notNull(),
+  status: varchar("status", { length: 20 }).default("draft").notNull(), // draft | sent
+  sentAt: timestamp("sent_at"),
+  recipientCount: integer("recipient_count").default(0).notNull(),
+  createdBy: varchar("created_by").references(() => admins.id),
+  isRecurring: boolean("is_recurring").default(false).notNull(),
+  recurrenceFrequency: varchar("recurrence_frequency", { length: 20 }), // weekly | monthly
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertNewsletterSchema = createInsertSchema(newsletters).omit({
+  id: true,
+  status: true,
+  sentAt: true,
+  recipientCount: true,
+  createdAt: true,
+}).extend({
+  subject: z.string().min(3, "Subject is required").max(200, "Subject is too long"),
+  body: z.string().min(10, "Newsletter content is too short"),
+  isRecurring: z.boolean().default(false),
+  recurrenceFrequency: z.enum(["weekly", "monthly"]).optional().nullable(),
+});
+
+export type InsertNewsletter = z.infer<typeof insertNewsletterSchema>;
+export type Newsletter = typeof newsletters.$inferSelect;
+
+// =====================================================
+// APP SETTINGS (singleton row for automatic scheduling)
+// =====================================================
+
+export const appSettings = pgTable("app_settings", {
+  id: varchar("id").primaryKey().default("default"),
+  dailyDeclarationSchedulerEnabled: boolean("daily_declaration_scheduler_enabled").default(false).notNull(),
+  dailyDeclarationSendHour: integer("daily_declaration_send_hour").default(8).notNull(), // 0-23 UTC
+  lastDailyDeclarationSentDate: varchar("last_daily_declaration_sent_date", { length: 10 }),
+  newsletterDigestEnabled: boolean("newsletter_digest_enabled").default(false).notNull(),
+  newsletterDigestFrequency: varchar("newsletter_digest_frequency", { length: 20 }).default("weekly").notNull(), // weekly | monthly
+  newsletterDigestDayOfWeek: integer("newsletter_digest_day_of_week").default(0).notNull(), // 0=Sunday
+  newsletterDigestDayOfMonth: integer("newsletter_digest_day_of_month").default(1).notNull(),
+  newsletterDigestSendHour: integer("newsletter_digest_send_hour").default(8).notNull(),
+  lastNewsletterDigestSentDate: varchar("last_newsletter_digest_sent_date", { length: 10 }),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const updateAppSettingsSchema = z.object({
+  dailyDeclarationSchedulerEnabled: z.boolean().optional(),
+  dailyDeclarationSendHour: z.number().int().min(0).max(23).optional(),
+  newsletterDigestEnabled: z.boolean().optional(),
+  newsletterDigestFrequency: z.enum(["weekly", "monthly"]).optional(),
+  newsletterDigestDayOfWeek: z.number().int().min(0).max(6).optional(),
+  newsletterDigestDayOfMonth: z.number().int().min(1).max(28).optional(),
+  newsletterDigestSendHour: z.number().int().min(0).max(23).optional(),
+});
+
+export type UpdateAppSettings = z.infer<typeof updateAppSettingsSchema>;
+export type AppSettings = typeof appSettings.$inferSelect;
