@@ -1,3 +1,4 @@
 - [Notification scheduling architecture](notification-scheduling.md) — DB-persisted appSettings + 15min cron poll pattern used for daily declarations & recurring newsletters; reuse this pattern for any future "automatic recurring send" feature.
 - [User settings storage checklist](user-settings-storage-checklist.md) — schema/UI can support a settings field while storage.ts silently drops it on update; always verify the storage layer applies every field it claims to support.
 - [Scheduler hour UX](scheduler-hour-ux.md) — store admin-configurable "send hour" fields as UTC in the DB, but always render hour pickers in the admin's local time (converted client-side); never show raw UTC to admins.
+- [Cloudflare Turnstile dev testing](turnstile-dev-testing.md) — use Cloudflare's dummy site/secret key pair outside production so CAPTCHA works on ephemeral Replit preview domains.

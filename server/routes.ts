@@ -224,9 +224,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auth routes
-  // Turnstile site key is public by design (Cloudflare embeds it directly in page HTML)
+  // Turnstile site key is public by design (Cloudflare embeds it directly in page HTML).
+  // Outside production we serve Cloudflare's official "always passes" test site key
+  // (https://developers.cloudflare.com/turnstile/troubleshooting/testing/) because
+  // real site keys are locked to specific hostnames in the Cloudflare dashboard, and
+  // Replit's dev preview domain changes per session so it can't be permanently allow-listed.
+  const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
   app.get('/api/config/turnstile-site-key', (req: Request, res: Response) => {
-    res.json({ siteKey: process.env.TURNSTILE_SITE_KEY || "" });
+    const siteKey = process.env.NODE_ENV === "production"
+      ? (process.env.TURNSTILE_SITE_KEY || "")
+      : TURNSTILE_TEST_SITE_KEY;
+    res.json({ siteKey });
   });
 
   app.get('/api/auth/user', isAuthenticated, async (req: Request, res) => {

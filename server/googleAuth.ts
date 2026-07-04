@@ -37,8 +37,15 @@ export const forgotPasswordRateLimit = rateLimit({
   message: { message: "Too many requests. Please try again later." },
 });
 
+// Cloudflare's official "always passes" dummy secret key, paired with the dummy
+// site key (1x00000000000000000000AA) served outside production. See:
+// https://developers.cloudflare.com/turnstile/troubleshooting/testing/
+const TURNSTILE_TEST_SECRET_KEY = "1x0000000000000000000000000000000AA";
+
 async function verifyTurnstileToken(token: string, remoteIp?: string): Promise<boolean> {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
+  const secret = process.env.NODE_ENV === "production"
+    ? process.env.TURNSTILE_SECRET_KEY
+    : TURNSTILE_TEST_SECRET_KEY;
   if (!secret) {
     console.warn("TURNSTILE_SECRET_KEY not configured, skipping CAPTCHA verification");
     return true;
