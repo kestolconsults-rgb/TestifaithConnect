@@ -1,484 +1,414 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Search, Play, Heart, MessageCircle, Globe, RefreshCw, Flame, Sparkles } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Lock, Heart, Star, Plus, Feather, LogIn, ChevronDown, ChevronUp, Flame, Clock, Users, CheckCircle2, Sparkles } from "lucide-react";
-import { Link } from "wouter";
-import { formatDistanceToNow, format, subDays, parseISO } from "date-fns";
-import type { TestimonyWithUser, EncouragementVerse, FaithDeclaration } from "@shared/schema";
-import { CATEGORY_COLORS } from "@/lib/constants";
+import type { TestimonyWithUser } from "@shared/schema";
+import { CATEGORY_COLORS, CATEGORIES } from "@/lib/constants";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import EncouragementCard from "@/components/EncouragementCard";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { EmptyState } from "@/components/EmptyState";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+
+const ALL_CATEGORIES = ["All", ...CATEGORIES] as const;
 
 function getInitials(firstName?: string | null, lastName?: string | null) {
   return ((firstName?.[0] || "") + (lastName?.[0] || "")).toUpperCase() || "?";
 }
 
-function calculateStreak(testimonies: TestimonyWithUser[]): number {
-  if (!testimonies.length) return 0;
-  const dates = [...new Set(
-    testimonies.map(t => format(new Date(t.createdAt ?? Date.now()), "yyyy-MM-dd"))
-  )].sort().reverse();
-  if (!dates.length) return 0;
-  const today = format(new Date(), "yyyy-MM-dd");
-  const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
-  if (dates[0] !== today && dates[0] !== yesterday) return 0;
-  let streak = 1;
-  let current = dates[0];
-  for (let i = 1; i < dates.length; i++) {
-    const prev = format(subDays(parseISO(current), 1), "yyyy-MM-dd");
-    if (dates[i] === prev) { streak++; current = dates[i]; } else break;
-  }
-  return streak;
+// Category gradient map for video thumbnails
+const CATEGORY_GRADIENTS: Record<string, string> = {
+  Healing:       "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+  Marriage:      "linear-gradient(135deg, #f472b6 0%, #ec4899 100%)",
+  Fruitfulness:  "linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)",
+  Finance:       "linear-gradient(135deg, #fbbf24 0%, #d97706 100%)",
+  Breakthrough:  "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+  Deliverance:   "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+  General:       "linear-gradient(135deg, #6b7280 0%, #374151 100%)",
+};
+
+function VideoCard({ testimony }: { testimony: TestimonyWithUser }) {
+  const displayName = testimony.isAnonymous ? "Anonymous" : `${testimony.user?.firstName || ""} ${testimony.user?.lastName || ""}`.trim() || "Anonymous";
+  const initials = testimony.isAnonymous ? "A" : getInitials(testimony.user?.firstName, testimony.user?.lastName);
+  const gradient = CATEGORY_GRADIENTS[testimony.category] || CATEGORY_GRADIENTS.General;
+
+  return (
+    <Link href={`/testimony/${testimony.id}`}>
+      <div className="rounded-2xl overflow-hidden border bg-card hover-elevate cursor-pointer" data-testid={`video-card-${testimony.id}`}>
+        <div className="relative h-44 flex items-center justify-center overflow-hidden" style={{ background: testimony.thumbnailUrl ? undefined : gradient }}>
+          {testimony.thumbnailUrl ? (
+            <img src={testimony.thumbnailUrl} alt={testimony.title || "Video"} className="absolute inset-0 w-full h-full object-cover" />
+          ) : (
+            <div
+              className="absolute inset-0 opacity-30"
+              style={{ background: "repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0px, rgba(255,255,255,.05) 2px, transparent 2px, transparent 12px)" }}
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center z-10">
+            <Play className="w-6 h-6 text-white ml-0.5" />
+          </div>
+          <div className="absolute bottom-3 left-3 z-10">
+            <Badge className={`text-[10px] font-bold uppercase ${CATEGORY_COLORS[testimony.category as keyof typeof CATEGORY_COLORS] || ""}`}>
+              {testimony.category}
+            </Badge>
+          </div>
+          <div className="absolute top-3 right-3 z-10 text-white text-[10px] font-semibold bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm">
+            Video
+          </div>
+        </div>
+        <div className="p-3">
+          <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-2 line-clamp-1">{testimony.title || "Video Testimony"}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Avatar className="w-6 h-6">
+                <AvatarImage src={testimony.user?.profileImageUrl || undefined} />
+                <AvatarFallback className="text-[9px] bg-muted">{initials}</AvatarFallback>
+              </Avatar>
+              <span className="text-xs text-muted-foreground">{displayName}</span>
+            </div>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Heart className="w-3.5 h-3.5" />
+              <span className="text-xs">{testimony.amenCount || 0}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function TestimonyRow({ testimony, currentUser }: { testimony: TestimonyWithUser; currentUser?: { id: string } }) {
+  const displayName = testimony.isAnonymous ? "Anonymous" : `${testimony.user?.firstName || ""} ${testimony.user?.lastName || ""}`.trim() || "Anonymous";
+  const initials = testimony.isAnonymous ? "A" : getInitials(testimony.user?.firstName, testimony.user?.lastName);
+  const [amenAnimating, setAmenAnimating] = useState(false);
+  const [localAmen, setLocalAmen] = useState(testimony.userHasAmen);
+  const [localCount, setLocalCount] = useState(testimony.amenCount || 0);
+  const { toast } = useToast();
+  const [, navigate] = useLocation();
+
+  const amenMutation = useMutation({
+    mutationFn: async () => apiRequest("POST", `/api/testimonies/${testimony.id}/amen`),
+    onSuccess: (_, __, ___) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/testimonies"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/testimonies/recent"] });
+    },
+  });
+
+  const handleAmen = () => {
+    if (!currentUser) {
+      toast({
+        title: "Sign in to say Amen",
+        description: "Join the community to encourage your brothers and sisters in faith.",
+        action: (
+          <ToastAction altText="Sign in" onClick={() => navigate("/signin")}>
+            Sign in
+          </ToastAction>
+        ),
+      });
+      return;
+    }
+    const next = !localAmen;
+    setLocalAmen(next);
+    setLocalCount((c) => next ? c + 1 : Math.max(0, c - 1));
+    if (next) {
+      setAmenAnimating(false);
+      requestAnimationFrame(() => setAmenAnimating(true));
+      setTimeout(() => setAmenAnimating(false), 500);
+    }
+    amenMutation.mutate();
+  };
+
+  return (
+    <div className="rounded-2xl p-4 border bg-card" data-testid={`testimony-row-${testimony.id}`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2.5">
+          <Avatar className="w-9 h-9">
+            <AvatarImage src={testimony.user?.profileImageUrl || undefined} />
+            <AvatarFallback className="text-xs font-bold bg-muted">{initials}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-xs font-semibold text-foreground">{displayName}</p>
+            <p className="text-[10px] text-muted-foreground">
+              {format(new Date(testimony.createdAt ?? Date.now()), "MMM d, yyyy")}
+            </p>
+          </div>
+        </div>
+        <Badge variant="outline" className={`text-[10px] font-bold uppercase ${CATEGORY_COLORS[testimony.category as keyof typeof CATEGORY_COLORS] || ""}`}>
+          {testimony.category}
+        </Badge>
+      </div>
+      {testimony.title && (
+        <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1.5">{testimony.title}</p>
+      )}
+      <Link href={`/testimony/${testimony.id}`}>
+        <p className="text-xs leading-relaxed text-card-foreground mb-3 line-clamp-3 cursor-pointer">
+          {testimony.story}
+        </p>
+      </Link>
+      <div className="flex gap-4 pt-2.5 border-t border-border">
+        <button
+          onClick={handleAmen}
+          className="relative flex items-center gap-1.5 transition-colors"
+          style={{ color: localAmen ? "#ef4444" : undefined }}
+          data-testid={`button-amen-${testimony.id}`}
+        >
+          <Heart
+            className={`w-4 h-4 transition-colors ${amenAnimating ? "amen-burst" : ""}`}
+            fill={localAmen ? "#ef4444" : "none"}
+            color={localAmen ? "#ef4444" : "currentColor"}
+          />
+          <span className="text-xs text-muted-foreground">{localCount}</span>
+        </button>
+        <Link href={`/testimony/${testimony.id}`}>
+          <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors" data-testid={`button-comment-${testimony.id}`}>
+            <MessageCircle className="w-4 h-4" />
+            <span className="text-xs">Read</span>
+          </button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function CommunitySkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="rounded-2xl p-4 border bg-card">
+          <div className="flex items-center gap-2.5 mb-3">
+            <Skeleton className="w-9 h-9 rounded-full" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-2.5 w-16" />
+            </div>
+          </div>
+          <Skeleton className="h-4 w-3/4 mb-2" />
+          <Skeleton className="h-3 w-full mb-1" />
+          <Skeleton className="h-3 w-5/6 mb-1" />
+          <Skeleton className="h-3 w-4/5 mb-4" />
+          <div className="flex gap-4 pt-2.5 border-t border-border">
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-4 w-12" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const { user } = useAuth();
-  const [declarationExpanded, setDeclarationExpanded] = useState(false);
-  const TODAY_DECLARE_KEY = `testifaith_declared_${format(new Date(), "yyyy-MM-dd")}`;
-  const [declared, setDeclared] = useState(() => {
-    try { return localStorage.getItem(TODAY_DECLARE_KEY) === "1"; } catch { return false; }
+
+  const { data: allTestimonies, isLoading, refetch } = useQuery<TestimonyWithUser[]>({
+    queryKey: ["/api/testimonies"],
   });
 
-  const handleDeclare = () => {
-    setDeclared(true);
-    try { localStorage.setItem(TODAY_DECLARE_KEY, "1"); } catch { /* noop */ }
+  const { data: searchResults, isLoading: searchLoading } = useQuery<TestimonyWithUser[]>({
+    queryKey: ["/api/testimonies/search", debouncedQuery, activeCategory],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (debouncedQuery) params.set("q", debouncedQuery);
+      if (activeCategory !== "All") params.set("category", activeCategory);
+      const res = await fetch(`/api/testimonies/search?${params}`);
+      if (!res.ok) throw new Error("Search failed");
+      return res.json();
+    },
+    enabled: !!debouncedQuery || activeCategory !== "All",
+  });
+
+  const handleSearch = (val: string) => {
+    setSearchQuery(val);
+    clearTimeout((window as any)._searchTimer);
+    (window as any)._searchTimer = setTimeout(() => setDebouncedQuery(val), 400);
   };
 
-  const { data: featuredTestimony, isLoading: featuredLoading } = useQuery<TestimonyWithUser>({
-    queryKey: ["/api/testimonies/featured"],
-    queryFn: async () => {
-      const today = new Date().toLocaleDateString("en-CA");
-      const res = await fetch(`/api/testimonies/featured?date=${today}`);
-      if (!res.ok) return null;
-      return res.json();
-    },
-  });
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+    queryClient.invalidateQueries({ queryKey: ["/api/testimonies"] });
+  }, [refetch]);
 
-  const { data: faithDeclaration, isLoading: declarationLoading } = useQuery<FaithDeclaration | null>({
-    queryKey: ["/api/faith-declaration/active"],
-    queryFn: async () => {
-      const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local timezone
-      const res = await fetch(`/api/faith-declaration/active?date=${today}`);
-      if (!res.ok) return null;
-      return res.json();
-    },
-  });
+  const { containerRef, pullDistance, isRefreshing } = usePullToRefresh({ onRefresh: handleRefresh });
 
-  const { data: myTestimonies, isLoading: myLoading } = useQuery<TestimonyWithUser[]>({
-    queryKey: ["/api/testimonies/my"],
-    enabled: !!user,
-  });
+  const testimonies = (debouncedQuery || activeCategory !== "All") ? (searchResults || []) : (allTestimonies || []);
+  const loading = (debouncedQuery || activeCategory !== "All") ? searchLoading : isLoading;
 
-  const { data: encouragementVerse } = useQuery<EncouragementVerse | null>({
-    queryKey: ["/api/encouragement-verse"],
-  });
-
-  const privateTestimonies = myTestimonies?.filter((t) => t.privacy === "private") ?? [];
-  const streak = calculateStreak(myTestimonies ?? []);
-
-  const today = new Date();
-  const onThisDayEntries = (myTestimonies ?? []).filter(t => {
-    const d = new Date(t.createdAt ?? Date.now());
-    return (
-      d.getMonth() === today.getMonth() &&
-      d.getDate() === today.getDate() &&
-      d.getFullYear() < today.getFullYear()
-    );
-  });
-
-  const displayName = featuredTestimony?.isAnonymous
-    ? "Anonymous"
-    : featuredTestimony?.user
-    ? `${featuredTestimony.user.firstName || ""} ${featuredTestimony.user.lastName || ""}`.trim() || "Anonymous"
-    : "Anonymous";
-
-  const featuredInitials = featuredTestimony?.isAnonymous
-    ? "A"
-    : getInitials(featuredTestimony?.user?.firstName, featuredTestimony?.user?.lastName);
-
-  const declarationText = faithDeclaration?.declaration ?? "";
-  const declarationLong = declarationText.length > 160;
-  const declarationVisible = declarationExpanded || !declarationLong
-    ? declarationText
-    : declarationText.slice(0, 160).trimEnd() + "…";
+  const videoTestimonies = testimonies.filter((t) => t.videoUrl && t.moderationStatus === "approved");
+  const textTestimonies = testimonies.filter((t) => !t.videoUrl);
 
   return (
-    <div className="min-h-screen bg-background pb-28">
-
-      {/* Daily Declaration */}
-      <div className="px-5 pt-4 mb-5">
-        {declarationLoading ? (
-          <Skeleton className="h-36 rounded-2xl" />
-        ) : faithDeclaration ? (
-          <div
-            className="rounded-2xl p-5 relative overflow-hidden border"
-            style={{
-              background: "color-mix(in srgb, hsl(var(--primary)) 8%, hsl(var(--background)))",
-              borderColor: "color-mix(in srgb, hsl(var(--primary)) 20%, transparent)",
-            }}
-            data-testid="card-daily-declaration"
-          >
-            <div className="absolute top-0 right-0 p-5 opacity-[0.07]">
-              <BookOpen size={64} className="text-primary" />
-            </div>
-            <div className="relative z-10">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-primary mb-1">
-                Declare it today
-              </p>
-              <p className="font-['Crimson_Pro'] italic text-primary/60 text-[12px] leading-snug mb-3">
-                "The tongue has the power of life and death." — Prov. 18:21
-              </p>
-              <p
-                className="font-['Space_Grotesk'] text-base leading-snug mb-2 font-semibold text-foreground"
-                data-testid="text-faith-declaration"
-              >
-                "{declarationVisible}"
-              </p>
-              {declarationLong && (
-                <button
-                  onClick={() => setDeclarationExpanded(v => !v)}
-                  className="flex items-center gap-1 text-xs text-primary font-medium mt-1 mb-1"
-                  data-testid="button-declaration-expand"
-                >
-                  {declarationExpanded ? (
-                    <><ChevronUp className="w-3 h-3" /> Show less</>
-                  ) : (
-                    <><ChevronDown className="w-3 h-3" /> Read full declaration</>
-                  )}
-                </button>
-              )}
-              <p className="text-xs font-medium text-primary" data-testid="text-faith-verse">
-                {faithDeclaration.bibleReference && `— ${faithDeclaration.bibleReference}`}
-              </p>
-              <div className="mt-3">
-                {declared ? (
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-primary/80" data-testid="text-declared">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Declared today
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleDeclare}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-full transition-all active:scale-95"
-                    style={{ background: "color-mix(in srgb, hsl(var(--primary)) 18%, transparent)", color: "hsl(var(--primary))" }}
-                    data-testid="button-declare-it"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Declare it!
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-2xl p-5 border bg-card">
-            <div className="flex items-center gap-3">
-              <BookOpen className="w-8 h-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No declaration set for today</p>
-            </div>
-          </div>
-        )}
+    <div
+      ref={containerRef}
+      className="min-h-screen bg-background pb-28 overflow-y-auto"
+      style={{ WebkitOverflowScrolling: "touch" }}
+    >
+      {/* Pull-to-refresh indicator */}
+      <div
+        className="flex items-center justify-center overflow-hidden transition-all duration-200"
+        style={{ height: isRefreshing ? 48 : pullDistance > 0 ? Math.min(pullDistance, 48) : 0, opacity: isRefreshing || pullDistance > 20 ? 1 : 0 }}
+      >
+        <RefreshCw
+          className={`w-5 h-5 text-primary ${isRefreshing ? "ptr-spinner" : ""}`}
+          style={{ transform: isRefreshing ? undefined : `rotate(${pullDistance * 3}deg)` }}
+        />
       </div>
 
-      {/* Stone of the Day */}
-      <section className="px-5 mb-6">
-        <div className="mb-3">
-          <div className="flex items-center gap-2">
-            <Star className="w-4 h-4 text-amber-500 shrink-0" />
-            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground" data-testid="section-testimony-of-day">
-              Stone of the Day
-            </h2>
-          </div>
-          <p className="font-['Crimson_Pro'] italic text-muted-foreground text-[13px] leading-snug mt-0.5 pl-6">
-            "Then Samuel took a stone and set it up… and called it Ebenezer, saying, 'Thus far the <span className="uppercase tracking-wider text-[11px] not-italic">Lord</span> has helped us.'" — 1 Sam. 7:12
-          </p>
+      {/* Header */}
+      <div className="px-5 pt-4 pb-3">
+        <div className="flex items-center gap-2 mb-0.5">
+          <Globe className="w-5 h-5 text-primary" />
+          <h1 className="font-['Space_Grotesk'] text-2xl font-bold text-foreground">Community</h1>
         </div>
-        {featuredLoading ? (
-          <Skeleton className="h-52 rounded-2xl" />
-        ) : featuredTestimony ? (
-          <Link href={`/testimony/${featuredTestimony.id}`}>
-            <div
-              className="rounded-2xl p-5 border relative overflow-hidden cursor-pointer hover-elevate"
+        <p className="text-xs text-muted-foreground">Stories from the body of Christ</p>
+      </div>
+
+      {/* Search */}
+      <div className="px-5 mb-4">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-card">
+          <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search testimonies…"
+            className="flex-1 text-sm bg-transparent text-foreground placeholder:text-muted-foreground outline-none"
+            data-testid="input-community-search"
+          />
+          {searchQuery && (
+            <button onClick={() => { setSearchQuery(""); setDebouncedQuery(""); }} className="text-muted-foreground text-xs">
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Category chips */}
+      <div className="flex gap-2 overflow-x-auto px-5 pb-1 mb-5 hide-scrollbar">
+        {ALL_CATEGORIES.map((cat) => {
+          const active = activeCategory === cat;
+          return (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className="flex-shrink-0 text-xs font-semibold px-4 py-2 rounded-full border transition-all"
               style={{
-                background: "color-mix(in srgb, hsl(var(--card)) 92%, #f59e0b 8%)",
-                borderColor: "color-mix(in srgb, hsl(var(--border)) 60%, #f59e0b 40%)",
+                background: active ? "#ef4444" : "hsl(var(--card))",
+                borderColor: active ? "#ef4444" : "hsl(var(--border))",
+                color: active ? "#fff" : "hsl(var(--muted-foreground))",
               }}
-              data-testid="card-testimony-of-day"
+              data-testid={`category-chip-${cat.toLowerCase()}`}
             >
-              <div
-                className="absolute top-0 left-0 w-full h-0.5"
-                style={{ background: "linear-gradient(90deg, transparent, #f59e0b 30%, #ef4444 70%, transparent)" }}
-              />
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] font-bold uppercase ${CATEGORY_COLORS[featuredTestimony.category as keyof typeof CATEGORY_COLORS] || ""}`}
-                  >
-                    {featuredTestimony.category}
-                  </Badge>
-                  <span
-                    className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm text-black"
-                    style={{ background: "#f59e0b" }}
-                  >
-                    Featured
-                  </span>
-                </div>
-                <span className="text-xs text-muted-foreground" title={format(new Date(featuredTestimony.createdAt ?? Date.now()), "MMM d, yyyy")}>
-                  {formatDistanceToNow(new Date(featuredTestimony.createdAt ?? Date.now()), { addSuffix: true })}
-                </span>
-              </div>
-              {featuredTestimony.title && (
-                <p className="font-['Space_Grotesk'] text-base font-bold text-foreground mb-2">{featuredTestimony.title}</p>
-              )}
-              <p className="text-sm leading-relaxed italic text-card-foreground mb-4 line-clamp-3 font-['Crimson_Pro']">
-                "{featuredTestimony.story}"
-              </p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={featuredTestimony.user?.profileImageUrl || undefined} />
-                    <AvatarFallback className="text-[10px] bg-muted">{featuredInitials}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium text-card-foreground">{displayName}</span>
-                </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10">
-                  <Heart className="w-3.5 h-3.5 fill-primary text-primary" />
-                  <span className="text-xs font-semibold text-primary">{featuredTestimony.amenCount || 0} Amen</span>
-                </div>
-              </div>
-            </div>
-          </Link>
-        ) : (
-          <Card className="rounded-2xl border-dashed">
-            <CardContent className="p-8 text-center">
-              <Star className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No stone selected for today</p>
-            </CardContent>
-          </Card>
-        )}
-      </section>
+              {cat}
+            </button>
+          );
+        })}
+      </div>
 
-      {/* Daily Encouragement Verse */}
-      {encouragementVerse && (
-        <section className="px-5 mb-6">
-          <div className="mb-3">
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-primary shrink-0" />
-              <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">A Word Just for You</h2>
+      {/* Trending This Week */}
+      {!debouncedQuery && activeCategory === "All" && !isLoading && allTestimonies && allTestimonies.length > 0 && (() => {
+        const trending = [...allTestimonies]
+          .filter(t => !t.videoUrl)
+          .sort((a, b) => (b.encourageCount || 0) - (a.encourageCount || 0))
+          .slice(0, 5);
+        if (!trending.length || trending[0].encourageCount === 0) return null;
+        return (
+          <section className="mb-5">
+            <div className="flex items-center gap-2 px-5 mb-3">
+              <Flame className="w-4 h-4 text-amber-500" />
+              <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Trending This Week</h2>
             </div>
-            <p className="font-['Crimson_Pro'] italic text-muted-foreground text-[13px] leading-snug mt-0.5 pl-6">
-              "Your word is a lamp for my feet, a light on my path." — Ps. 119:105
-            </p>
+            <div className="flex gap-3 overflow-x-auto px-5 pb-1 hide-scrollbar">
+              {trending.map((t) => {
+                const name = t.isAnonymous ? "Anonymous" : `${t.user?.firstName || ""} ${t.user?.lastName || ""}`.trim() || "Anonymous";
+                return (
+                  <Link key={t.id} href={`/testimony/${t.id}`}>
+                    <div className="flex-shrink-0 w-56 rounded-2xl border bg-card p-4 hover-elevate cursor-pointer" data-testid={`trending-card-${t.id}`}>
+                      <Badge variant="outline" className={`text-[9px] font-bold uppercase mb-2 ${CATEGORY_COLORS[t.category as keyof typeof CATEGORY_COLORS] || ""}`}>
+                        {t.category}
+                      </Badge>
+                      <p className="font-['Space_Grotesk'] text-xs font-bold text-foreground mb-1.5 line-clamp-2">
+                        {t.title || "Untitled"}
+                      </p>
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Heart className="w-3 h-3 text-chart-3" />
+                          <span className="text-[10px]">{t.amenCount || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-chart-4" />
+                          <span className="text-[10px]">{t.encourageCount || 0}</span>
+                        </div>
+                        <span className="text-[10px] ml-auto truncate">{name}</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* Video Testimonies — only shown when there are videos */}
+      {!debouncedQuery && activeCategory === "All" && (isLoading || videoTestimonies.length > 0) && (
+        <section className="px-5 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Video Testimonies</h2>
+            <Link href="/testimonies">
+              <button className="text-xs font-medium text-primary" data-testid="link-see-all-videos">See all</button>
+            </Link>
           </div>
-          <EncouragementCard verse={encouragementVerse} />
+          {isLoading ? (
+            <Skeleton className="h-64 rounded-2xl" />
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {videoTestimonies.slice(0, 2).map((t) => <VideoCard key={t.id} testimony={t} />)}
+            </div>
+          )}
         </section>
       )}
 
-      {/* Stone of Remembrance — Private Journal */}
-      <section className="px-5 mb-6">
-        {!user ? (
-          <div className="flex items-center gap-2 mb-1">
-            <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Your Faith Journal</h2>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-              <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">
-                Stone of Remembrance
-              </h2>
-              {streak > 0 && (
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-                  <Flame className="w-3 h-3 text-amber-500" />
-                  <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                    {streak}-day streak
-                  </span>
-                </div>
-              )}
-            </div>
-            <Link href="/my-testimonies">
-              <button className="text-xs font-medium text-blue-500 dark:text-blue-400" data-testid="link-see-all-private">
-                See all
-              </button>
+      {/* Text Testimonies */}
+      <section className="px-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">
+            {debouncedQuery || activeCategory !== "All" ? "Results" : "From the Community"}
+          </h2>
+          {!debouncedQuery && activeCategory === "All" && (
+            <Link href="/testimonies">
+              <button className="text-xs font-medium text-primary" data-testid="link-see-all-text">See all</button>
             </Link>
-          </div>
-        )}
-        <p className="text-xs text-muted-foreground mb-1">
-          {user ? "Your private faith journal — only visible to you" : "A private place to record what God has done — only you can see it"}
-        </p>
-        <p className="font-['Crimson_Pro'] italic text-muted-foreground text-[13px] leading-snug mb-3">
-          "Write the vision; make it plain on tablets, so he may run who reads it." — Hab. 2:2
-        </p>
+          )}
+        </div>
 
-        {!user ? (
-          <div
-            className="rounded-2xl p-6 border"
-            style={{
-              background: "color-mix(in srgb, hsl(var(--primary)) 5%, hsl(var(--background)))",
-              borderColor: "color-mix(in srgb, hsl(var(--primary)) 18%, transparent)",
-            }}
-            data-testid="guest-signin-cta"
-          >
-            <div className="flex items-start gap-4">
-              <div
-                className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: "color-mix(in srgb, hsl(var(--primary)) 12%, transparent)" }}
-              >
-                <Feather className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1">
-                  Keep a private faith journal
-                </p>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                  Write down what God has done — healings, answered prayers, breakthroughs — a record only you can see.
-                </p>
-                <div className="flex gap-2 flex-wrap mb-3">
-                  <Link href="/signin">
-                    <button
-                      className="flex items-center gap-1.5 text-xs font-semibold text-white px-4 py-2 rounded-full"
-                      style={{ background: "#ef4444" }}
-                      data-testid="button-signin-cta-home"
-                    >
-                      <LogIn className="w-3.5 h-3.5" />
-                      Sign In
-                    </button>
-                  </Link>
-                  <Link href="/create-account">
-                    <button
-                      className="text-xs font-semibold px-4 py-2 rounded-full border"
-                      style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}
-                      data-testid="button-create-account-cta-home"
-                    >
-                      Create account
-                    </button>
-                  </Link>
-                </div>
-                <Link href="/community">
-                  <button
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    data-testid="link-browse-community-home"
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    Browse community stones first
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        ) : myLoading ? (
+        {loading ? (
+          <CommunitySkeleton />
+        ) : textTestimonies.length > 0 ? (
           <div className="space-y-3">
-            <Skeleton className="h-28 rounded-2xl" />
-            <Skeleton className="h-28 rounded-2xl" />
-          </div>
-        ) : privateTestimonies.length > 0 ? (
-          <div className="space-y-3">
-            {privateTestimonies.slice(0, 3).map((t) => (
-              <Link key={t.id} href={`/testimony/${t.id}`}>
-                <div
-                  className="rounded-2xl p-4 border cursor-pointer hover-elevate"
-                  style={{
-                    background: "color-mix(in srgb, #3b82f6 5%, hsl(var(--background)))",
-                    borderColor: "color-mix(in srgb, #3b82f6 20%, transparent)",
-                  }}
-                  data-testid={`private-entry-${t.id}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] font-bold uppercase border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30"
-                    >
-                      {t.category}
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground">
-                      {format(new Date(t.createdAt ?? Date.now()), "MMM d, yyyy")}
-                    </span>
-                  </div>
-                  {t.title && (
-                    <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1">{t.title}</p>
-                  )}
-                  <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">{t.story}</p>
-                </div>
-              </Link>
-            ))}
+            {textTestimonies.slice(0, 10).map((t) => <TestimonyRow key={t.id} testimony={t} currentUser={user} />)}
           </div>
         ) : (
-          <div
-            className="rounded-2xl p-6 border text-center"
-            style={{
-              background: "color-mix(in srgb, #3b82f6 4%, hsl(var(--background)))",
-              borderColor: "color-mix(in srgb, #3b82f6 15%, transparent)",
-            }}
-            data-testid="empty-private-journal"
-          >
-            <Lock className="w-8 h-8 text-blue-400 mx-auto mb-2 opacity-60" />
-            <p className="text-sm font-medium text-foreground mb-1">Your faith journal is empty</p>
-            <p className="text-xs text-muted-foreground mb-4">
-              Tap the + button below and choose "Journal Your Faith" to start recording God's faithfulness privately.
-            </p>
-            <Link href="/post">
-              <button
-                className="inline-flex items-center gap-2 text-xs font-semibold text-blue-500 dark:text-blue-400 border border-blue-200 dark:border-blue-800 px-4 py-2 rounded-full"
-                data-testid="button-start-journal"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Start journaling
-              </button>
-            </Link>
-          </div>
+          <EmptyState
+            type={debouncedQuery ? "search" : "community"}
+            title={debouncedQuery ? `No results for "${debouncedQuery}"` : "No testimonies yet"}
+            description={
+              debouncedQuery
+                ? "Try a different keyword or browse all testimonies"
+                : "Be the first to record what God has done in this community"
+            }
+            actionLabel={debouncedQuery ? undefined : "Write a new entry"}
+            actionHref={debouncedQuery ? undefined : "/post"}
+          />
         )}
       </section>
-
-      {/* On This Day */}
-      {user && onThisDayEntries.length > 0 && (
-        <section className="px-5 mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Clock className="w-4 h-4 text-violet-500" />
-            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">
-              On This Day
-            </h2>
-            <span className="text-xs text-muted-foreground">
-              — {format(today, "MMMM d")} in a previous year
-            </span>
-          </div>
-          <div className="space-y-3">
-            {onThisDayEntries.map(t => (
-              <Link key={t.id} href={`/testimony/${t.id}`}>
-                <div
-                  className="rounded-2xl p-4 border cursor-pointer hover-elevate"
-                  style={{
-                    background: "color-mix(in srgb, #8b5cf6 5%, hsl(var(--background)))",
-                    borderColor: "color-mix(in srgb, #8b5cf6 18%, transparent)",
-                  }}
-                  data-testid={`on-this-day-${t.id}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] font-bold uppercase border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30"
-                    >
-                      {t.category}
-                    </Badge>
-                    <span className="text-[10px] font-semibold text-violet-500 dark:text-violet-400">
-                      {format(new Date(t.createdAt ?? Date.now()), "yyyy")}
-                    </span>
-                  </div>
-                  {t.title && (
-                    <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1">{t.title}</p>
-                  )}
-                  <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">{t.story}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
     </div>
   );
 }

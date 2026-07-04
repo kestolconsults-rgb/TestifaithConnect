@@ -221,7 +221,7 @@ export default function Testimonies() {
         {/* Title row */}
         <div className="flex items-center gap-3 mb-3">
           <button
-            onClick={() => (window.history.length > 1 ? window.history.back() : (window.location.href = "/community"))}
+            onClick={() => (window.history.length > 1 ? window.history.back() : (window.location.href = "/home"))}
             className="w-9 h-9 rounded-full flex items-center justify-center border bg-card hover-elevate flex-shrink-0"
             data-testid="button-back"
             aria-label="Go back"
@@ -354,13 +354,13 @@ export default function Testimonies() {
         )}
       </div>
 
-      {/* Footer link to Community */}
+      {/* Footer link to Home */}
       {sorted.length > 0 && (
         <div className="flex justify-center mt-8 mb-4">
-          <Link href="/community">
+          <Link href="/home">
             <button className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-back-to-community">
               <BookOpen className="w-3.5 h-3.5" />
-              Back to Community
+              Back to Home
             </button>
           </Link>
         </div>

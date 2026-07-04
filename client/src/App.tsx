@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
-import Community from "@/pages/Community";
+import MyFaith from "@/pages/MyFaith";
 import Bible from "@/pages/Bible";
 import Testimonies from "@/pages/Testimonies";
 import PostTestimony from "@/pages/PostTestimony";
@@ -124,7 +124,8 @@ function Router() {
           {/* ── Public routes — accessible to everyone ── */}
           <Route path="/" component={Home} />
           <Route path="/home" component={Home} />
-          <Route path="/community" component={Community} />
+          <Route path="/my-faith" component={MyFaith} />
+          <Route path="/community"><Redirect to="/home" /></Route>
           <Route path="/bible" component={Bible} />
           <Route path="/testimonies" component={Testimonies} />
           <Route path="/categories" component={Categories} />

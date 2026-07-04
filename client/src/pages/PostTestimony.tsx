@@ -259,12 +259,12 @@ export default function PostTestimony() {
           </p>
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => setLocation("/community")}
+              onClick={() => setLocation("/home")}
               className="w-full py-3 rounded-xl font-semibold text-white text-sm"
               style={{ background: "#ef4444" }}
               data-testid="button-success-community"
             >
-              Back to Community
+              Back to Home
             </button>
             <button
               onClick={() => setLocation("/my-testimonies")}

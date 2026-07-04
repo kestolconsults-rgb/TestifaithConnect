@@ -145,12 +145,12 @@ export default function TestimonyDetail() {
         <p className="font-['Space_Grotesk'] text-lg font-bold text-foreground">Testimony not found</p>
         <p className="text-sm text-muted-foreground">It may have been removed or is no longer available.</p>
         <button
-          onClick={() => navigate("/community")}
+          onClick={() => navigate("/home")}
           className="mt-2 flex items-center gap-2 text-sm font-semibold text-primary"
           data-testid="button-back-not-found"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Community
+          Back to Home
         </button>
       </div>
     );
@@ -188,7 +188,7 @@ export default function TestimonyDetail() {
         style={{ background: "hsl(var(--background) / 0.94)", backdropFilter: "blur(12px)" }}
       >
         <button
-          onClick={() => window.history.length > 1 ? window.history.back() : navigate("/community")}
+          onClick={() => window.history.length > 1 ? window.history.back() : navigate("/home")}
           className="w-9 h-9 rounded-full flex items-center justify-center border bg-card hover-elevate"
           style={{ borderColor: "hsl(var(--border))" }}
           data-testid="button-back"

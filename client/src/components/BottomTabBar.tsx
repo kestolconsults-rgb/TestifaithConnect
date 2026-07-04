@@ -1,11 +1,11 @@
 import { Link, useLocation } from "wouter";
-import { Home, Users, Plus, BookOpen, User, Feather, Sparkles, HelpCircle, LogIn } from "lucide-react";
+import { Home, Plus, BookOpen, User, Feather, Sparkles, HelpCircle, LogIn } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 const TABS = [
   { label: "Home", icon: Home, href: "/home" },
-  { label: "Community", icon: Users, href: "/community" },
+  { label: "My Faith", icon: Feather, href: "/my-faith" },
   { label: "fab", icon: Plus, href: "" },
   { label: "Bible", icon: BookOpen, href: "/bible" },
   { label: "Profile", icon: User, href: "/profile" },
@@ -31,7 +31,7 @@ const AUTH_FAB_ACTIONS = [
     label: "Ask a Question",
     sublabel: "Search the community for answers",
     color: "#8b5cf6",
-    href: "/community",
+    href: "/home",
   },
 ] as const;
 
