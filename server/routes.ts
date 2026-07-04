@@ -29,6 +29,29 @@ declare global {
   }
 }
 
+// Requires the authenticated user to have a verified email before they can create content.
+// This is a defense against bot/spam accounts. Fetches a fresh copy of the user since
+// the session's req.user object may be stale/partial.
+async function requireVerifiedEmail(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.id;
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        message: "Please verify your email address before posting. Check your inbox for the verification link.",
+        code: "EMAIL_NOT_VERIFIED",
+      });
+    }
+    next();
+  } catch (error) {
+    console.error("Error checking email verification:", error);
+    res.status(500).json({ message: "An error occurred. Please try again." });
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
@@ -201,6 +224,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auth routes
+  // Turnstile site key is public by design (Cloudflare embeds it directly in page HTML)
+  app.get('/api/config/turnstile-site-key', (req: Request, res: Response) => {
+    res.json({ siteKey: process.env.TURNSTILE_SITE_KEY || "" });
+  });
+
   app.get('/api/auth/user', isAuthenticated, async (req: Request, res) => {
     try {
       const userId = req.user!.id;
@@ -213,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Testimony routes
-  app.post('/api/testimonies', isAuthenticated, async (req: Request, res) => {
+  app.post('/api/testimonies', isAuthenticated, requireVerifiedEmail, async (req: Request, res) => {
     try {
       const userId = req.user!.id;
       const data = insertTestimonySchema.parse({ ...req.body, userId });
@@ -353,7 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Testimony interaction routes
-  app.post('/api/testimonies/:id/amen', isAuthenticated, async (req: Request, res) => {
+  app.post('/api/testimonies/:id/amen', isAuthenticated, requireVerifiedEmail, async (req: Request, res) => {
     try {
       const { id } = req.params;
       const userId = req.user!.id;
@@ -387,7 +415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/testimonies/:id/encourage', isAuthenticated, async (req: Request, res) => {
+  app.post('/api/testimonies/:id/encourage', isAuthenticated, requireVerifiedEmail, async (req: Request, res) => {
     try {
       const { id } = req.params;
       const userId = req.user!.id;
@@ -528,7 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/testimonies/:id/comments', isAuthenticated, async (req: Request, res) => {
+  app.post('/api/testimonies/:id/comments', isAuthenticated, requireVerifiedEmail, async (req: Request, res) => {
     try {
       const { id } = req.params;
       const userId = req.user!.id;

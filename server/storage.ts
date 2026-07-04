@@ -14,12 +14,14 @@ import {
   adminAuditLogs,
   pushSubscriptions,
   passwordResetTokens,
+  emailVerificationTokens,
   supportMessages,
   newsletters,
   appSettings,
   type SupportMessage,
   type InsertSupportMessage,
   type PasswordResetToken,
+  type EmailVerificationToken,
   type PushSubscription,
   type InsertPushSubscription,
   type Newsletter,
@@ -74,6 +76,10 @@ export interface IStorage {
   createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<void>;
   getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
   markPasswordResetTokenUsed(id: string): Promise<void>;
+  createEmailVerificationToken(userId: string, token: string, expiresAt: Date): Promise<void>;
+  getEmailVerificationToken(token: string): Promise<EmailVerificationToken | undefined>;
+  markEmailVerificationTokenUsed(id: string): Promise<void>;
+  markUserEmailVerified(userId: string): Promise<void>;
 
   // Testimony operations
   createTestimony(testimony: InsertTestimony): Promise<Testimony>;
@@ -369,6 +375,33 @@ export class DatabaseStorage implements IStorage {
       .update(passwordResetTokens)
       .set({ usedAt: new Date() })
       .where(eq(passwordResetTokens.id, id));
+  }
+
+  async createEmailVerificationToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+    await db.insert(emailVerificationTokens).values({ userId, token, expiresAt });
+  }
+
+  async getEmailVerificationToken(token: string): Promise<EmailVerificationToken | undefined> {
+    const [row] = await db
+      .select()
+      .from(emailVerificationTokens)
+      .where(eq(emailVerificationTokens.token, token))
+      .limit(1);
+    return row;
+  }
+
+  async markEmailVerificationTokenUsed(id: string): Promise<void> {
+    await db
+      .update(emailVerificationTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(emailVerificationTokens.id, id));
+  }
+
+  async markUserEmailVerified(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ emailVerified: true, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 
   // Testimony operations

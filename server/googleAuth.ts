@@ -4,12 +4,61 @@ import { Strategy as LocalStrategy } from "passport-local";
 import session from "express-session";
 import type { Express, RequestHandler, Request, Response } from "express";
 import connectPg from "connect-pg-simple";
+import rateLimit from "express-rate-limit";
 import { storage } from "./storage";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { signUpSchema, signInSchema, forgotPasswordSchema, resetPasswordSchema } from "@shared/schema";
+import { signUpSchema, signInSchema, forgotPasswordSchema, resetPasswordSchema, resendVerificationSchema } from "@shared/schema";
 import { z } from "zod";
-import { sendWelcomeEmail, sendPasswordResetEmail } from "./emailService";
+import { sendWelcomeEmail, sendPasswordResetEmail, sendVerificationEmail } from "./emailService";
+
+// Rate limiters for anti-bot / brute-force protection on auth endpoints
+export const signupRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many accounts created from this location. Please try again later." },
+});
+
+export const signinRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many sign-in attempts. Please try again in a few minutes." },
+});
+
+export const forgotPasswordRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests. Please try again later." },
+});
+
+async function verifyTurnstileToken(token: string, remoteIp?: string): Promise<boolean> {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret) {
+    console.warn("TURNSTILE_SECRET_KEY not configured, skipping CAPTCHA verification");
+    return true;
+  }
+  try {
+    const body = new URLSearchParams({ secret, response: token });
+    if (remoteIp) body.set("remoteip", remoteIp);
+
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+    const data = await response.json();
+    return data.success === true;
+  } catch (error) {
+    console.error("Turnstile verification error:", error);
+    return false;
+  }
+}
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -70,6 +119,7 @@ async function handleGoogleUser(profile: Profile): Promise<{ id: string; email?:
   }
 
   // No existing user found, create a new one
+  // Google accounts are already email-verified by Google, so mark verified immediately
   const newUser = await storage.upsertUser({
     email: email || null,
     googleId,
@@ -77,6 +127,7 @@ async function handleGoogleUser(profile: Profile): Promise<{ id: string; email?:
     lastName: lastName || null,
     profileImageUrl: profileImageUrl || null,
     authProvider: "google",
+    emailVerified: true,
   });
 
   // Send welcome email to new Google users (non-blocking)
@@ -176,7 +227,7 @@ export async function setupAuth(app: Express) {
     }
   );
 
-  app.post("/api/auth/signin", (req: Request, res: Response, next) => {
+  app.post("/api/auth/signin", signinRateLimit, (req: Request, res: Response, next) => {
     try {
       signInSchema.parse(req.body);
     } catch (error) {
@@ -213,10 +264,15 @@ export async function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  app.post("/api/auth/signup", async (req: Request, res: Response) => {
+  app.post("/api/auth/signup", signupRateLimit, async (req: Request, res: Response) => {
     try {
       const data = signUpSchema.parse(req.body);
-      
+
+      const captchaOk = await verifyTurnstileToken(data.turnstileToken, req.ip);
+      if (!captchaOk) {
+        return res.status(400).json({ message: "Verification check failed. Please try again." });
+      }
+
       const existingUser = await storage.getUserByEmail(data.email);
       if (existingUser) {
         return res.status(400).json({ message: "An account with this email already exists" });
@@ -236,6 +292,13 @@ export async function setupAuth(app: Express) {
       sendWelcomeEmail(data.email, data.firstName).catch(err => 
         console.error('Failed to send welcome email:', err)
       );
+
+      // Create and send email verification link (non-blocking)
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      storage.createEmailVerificationToken(user.id, verificationToken, verificationExpiresAt)
+        .then(() => sendVerificationEmail(data.email, data.firstName, verificationToken))
+        .catch(err => console.error('Failed to send verification email:', err));
 
       // Regenerate session to prevent session fixation
       req.session.regenerate((regenerateErr) => {
@@ -277,7 +340,60 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/auth/forgot-password", async (req: Request, res: Response) => {
+  app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
+    try {
+      const token = typeof req.query.token === "string" ? req.query.token : "";
+      if (!token) {
+        return res.status(400).json({ message: "Missing verification token" });
+      }
+
+      const verificationToken = await storage.getEmailVerificationToken(token);
+      if (!verificationToken) {
+        return res.status(400).json({ message: "This verification link is invalid." });
+      }
+      if (verificationToken.usedAt) {
+        return res.json({ success: true, message: "Your email is already verified." });
+      }
+      if (new Date() > verificationToken.expiresAt) {
+        return res.status(400).json({ message: "This verification link has expired. Please request a new one." });
+      }
+
+      await storage.markUserEmailVerified(verificationToken.userId);
+      await storage.markEmailVerificationTokenUsed(verificationToken.id);
+
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Email verification error:", error);
+      return res.status(500).json({ message: "An error occurred. Please try again." });
+    }
+  });
+
+  app.post("/api/auth/resend-verification", forgotPasswordRateLimit, async (req: Request, res: Response) => {
+    try {
+      const { email } = resendVerificationSchema.parse(req.body);
+      const user = await storage.getUserByEmail(email);
+
+      // Always return success to prevent email enumeration
+      if (!user || !user.email || user.emailVerified) {
+        return res.json({ success: true });
+      }
+
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await storage.createEmailVerificationToken(user.id, token, expiresAt);
+      await sendVerificationEmail(user.email, user.firstName ?? undefined, token);
+
+      return res.json({ success: true });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Resend verification error:", error);
+      return res.status(500).json({ message: "An error occurred. Please try again." });
+    }
+  });
+
+  app.post("/api/auth/forgot-password", forgotPasswordRateLimit, async (req: Request, res: Response) => {
     try {
       const { email } = forgotPasswordSchema.parse(req.body);
       const user = await storage.getUserByEmail(email);

@@ -49,6 +49,7 @@ export const users = pgTable("users", {
   notifyNewsletter: boolean("notify_newsletter").default(true),
   notifyDailyDeclaration: boolean("notify_daily_declaration").default(true),
   profileVisibility: varchar("profile_visibility", { length: 20 }).default("public"),
+  emailVerified: boolean("email_verified").default(false).notNull(),
   isSuspended: boolean("is_suspended").default(false),
   suspendedAt: timestamp("suspended_at"),
   suspensionReason: text("suspension_reason"),
@@ -66,6 +67,7 @@ export const signUpSchema = z.object({
   confirmPassword: z.string(),
   firstName: z.string().min(1, "First name is required").max(50, "First name is too long"),
   lastName: z.string().max(50, "Last name is too long").optional(),
+  turnstileToken: z.string().min(1, "Please complete the verification check"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -619,6 +621,22 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
 });
 
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+// Email verification tokens (anti-bot: users must confirm they own the email)
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type EmailVerificationToken = typeof emailVerificationTokens.$inferSelect;
+
+export const resendVerificationSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
 
 // Forgot/reset password schemas
 export const forgotPasswordSchema = z.object({

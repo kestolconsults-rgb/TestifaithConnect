@@ -12,6 +12,7 @@ import { signUpSchema, type SignUp } from "@shared/schema";
 import { Eye, EyeOff, Loader2, ArrowLeft, Check } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import Logo from "@/components/Logo";
+import TurnstileWidget from "@/components/TurnstileWidget";
 
 export default function CreateAccount() {
   const [, setLocation] = useLocation();
@@ -21,7 +22,7 @@ export default function CreateAccount() {
 
   const form = useForm<SignUp>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { firstName: "", lastName: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { firstName: "", lastName: "", email: "", password: "", confirmPassword: "", turnstileToken: "" },
   });
 
   const password = form.watch("password");
@@ -243,6 +244,19 @@ export default function CreateAccount() {
                           {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="turnstileToken"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <TurnstileWidget onVerify={(token) => field.onChange(token)} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
