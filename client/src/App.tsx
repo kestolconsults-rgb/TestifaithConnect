@@ -38,6 +38,19 @@ function AuthFlow({ children }: { children: React.ReactNode }) {
   return <div className="min-h-screen bg-background">{children}</div>;
 }
 
+// Renders the given component only when the user is signed in; otherwise
+// redirects to sign-in. Centralizes the auth-gating logic that used to be
+// repeated inline for every protected <Route>.
+function ProtectedRoute({
+  isAuthenticated,
+  component: Component,
+}: {
+  isAuthenticated: boolean;
+  component: React.ComponentType<any>;
+}) {
+  return isAuthenticated ? <Component /> : <Redirect to="/signin" />;
+}
+
 function AppSkeleton() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -136,25 +149,25 @@ function Router() {
 
           {/* ── Auth-only routes — redirect guests to sign-in ── */}
           <Route path="/post">
-            {isAuthenticated ? <PostTestimony /> : <Redirect to="/signin" />}
+            <ProtectedRoute isAuthenticated={isAuthenticated} component={PostTestimony} />
           </Route>
           <Route path="/my-testimonies">
-            {isAuthenticated ? <MyTestimonies /> : <Redirect to="/signin" />}
+            <ProtectedRoute isAuthenticated={isAuthenticated} component={MyTestimonies} />
           </Route>
           <Route path="/profile">
-            {isAuthenticated ? <Profile /> : <Redirect to="/signin" />}
+            <ProtectedRoute isAuthenticated={isAuthenticated} component={Profile} />
           </Route>
           <Route path="/settings">
-            {isAuthenticated ? <Settings /> : <Redirect to="/signin" />}
+            <ProtectedRoute isAuthenticated={isAuthenticated} component={Settings} />
           </Route>
           <Route path="/edit-profile">
-            {isAuthenticated ? <EditProfile /> : <Redirect to="/signin" />}
+            <ProtectedRoute isAuthenticated={isAuthenticated} component={EditProfile} />
           </Route>
           <Route path="/expectations">
-            {isAuthenticated ? <Expectations /> : <Redirect to="/signin" />}
+            <ProtectedRoute isAuthenticated={isAuthenticated} component={Expectations} />
           </Route>
           <Route path="/expectations/:id">
-            {isAuthenticated ? <ExpectationDetail /> : <Redirect to="/signin" />}
+            <ProtectedRoute isAuthenticated={isAuthenticated} component={ExpectationDetail} />
           </Route>
 
           <Route component={NotFound} />

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -34,16 +35,21 @@ export default function CategoryPage() {
     c => c.toLowerCase() === category.toLowerCase()
   ) || 'General';
 
-  const { data: testimonies, isLoading } = useQuery<TestimonyWithUser[]>({
-    queryKey: [`/api/testimonies/category/${category}`],
+  const PAGE_SIZE = 10;
+  const [visibleLimit, setVisibleLimit] = useState(PAGE_SIZE);
+
+  const { data: testimonies, isLoading, isFetching } = useQuery<TestimonyWithUser[]>({
+    queryKey: [`/api/testimonies/category/${category}?limit=${visibleLimit}`],
   });
+
+  const hasMore = (testimonies?.length || 0) >= visibleLimit;
 
   const amenMutation = useMutation({
     mutationFn: async (testimonyId: string) => {
       return await apiRequest("POST", `/api/testimonies/${testimonyId}/amen`, {});
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/testimonies/category/${category}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/testimonies/category/${category}?limit=${visibleLimit}`] });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -70,7 +76,7 @@ export default function CategoryPage() {
       return await apiRequest("POST", `/api/testimonies/${testimonyId}/encourage`, {});
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/testimonies/category/${category}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/testimonies/category/${category}?limit=${visibleLimit}`] });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -166,6 +172,18 @@ export default function CategoryPage() {
                   isLoading={amenMutation.isPending || encourageMutation.isPending}
                 />
               ))}
+              {hasMore && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setVisibleLimit((prev) => prev + PAGE_SIZE)}
+                    disabled={isFetching}
+                    data-testid="button-load-more-testimonies"
+                  >
+                    {isFetching ? "Loading..." : "Load more"}
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="max-w-2xl mx-auto">

@@ -258,7 +258,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/testimonies', async (req: Request, res) => {
     try {
       const userId = req.user?.id;
-      const testimonies = await storage.getAllTestimonies(userId);
+      const limit = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10) || 20, 50) : undefined;
+      const offset = req.query.offset ? Math.max(parseInt(req.query.offset as string, 10) || 0, 0) : undefined;
+      const testimonies = await storage.getAllTestimonies(userId, limit, offset);
       res.json(testimonies);
     } catch (error) {
       console.error("Error fetching testimonies:", error);
@@ -334,7 +336,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { category } = req.params;
       const userId = req.user?.id;
       const capitalizedCategory = category.charAt(0).toUpperCase() + category.slice(1);
-      const testimonies = await storage.getTestimoniesByCategory(capitalizedCategory, userId);
+      const limit = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10) || 20, 50) : undefined;
+      const offset = req.query.offset ? Math.max(parseInt(req.query.offset as string, 10) || 0, 0) : undefined;
+      const testimonies = await storage.getTestimoniesByCategory(capitalizedCategory, userId, limit, offset);
       res.json(testimonies);
     } catch (error) {
       console.error("Error fetching category testimonies:", error);

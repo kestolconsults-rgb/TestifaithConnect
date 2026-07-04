@@ -150,7 +150,12 @@ export const testimonies = pgTable("testimonies", {
   moderationStatus: varchar("moderation_status", { length: 20 }).default("approved"),
   privacy: varchar("privacy", { length: 20 }).default("public").notNull(), // public, private
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("IDX_testimonies_user_id").on(table.userId),
+  index("IDX_testimonies_category").on(table.category),
+  index("IDX_testimonies_created_at").on(table.createdAt),
+  index("IDX_testimonies_privacy_created_at").on(table.privacy, table.createdAt),
+]);
 
 export const insertTestimonySchema = createInsertSchema(testimonies).omit({
   id: true,
@@ -180,7 +185,11 @@ export const testimonyInteractions = pgTable("testimony_interactions", {
   userId: varchar("user_id").references(() => users.id).notNull(),
   interactionType: varchar("interaction_type", { length: 20 }).notNull(), // 'amen' or 'encourage'
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("IDX_interactions_testimony_id").on(table.testimonyId),
+  index("IDX_interactions_user_id").on(table.userId),
+  index("IDX_interactions_testimony_user_type").on(table.testimonyId, table.userId, table.interactionType),
+]);
 
 export const insertTestimonyInteractionSchema = createInsertSchema(testimonyInteractions).omit({
   id: true,
@@ -198,7 +207,10 @@ export const comments = pgTable("comments", {
   parentId: varchar("parent_id").references((): any => comments.id, { onDelete: 'cascade' }),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("IDX_comments_testimony_id").on(table.testimonyId),
+  index("IDX_comments_parent_id").on(table.parentId),
+]);
 
 export const insertCommentSchema = createInsertSchema(comments).omit({
   id: true,
@@ -390,7 +402,10 @@ export const faithExpectations = pgTable("faith_expectations", {
   celebrationNote: text("celebration_note"), // optional note when marking as answered
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("IDX_expectations_user_id").on(table.userId),
+  index("IDX_expectations_privacy").on(table.privacy),
+]);
 
 export const insertFaithExpectationSchema = createInsertSchema(faithExpectations).omit({
   id: true,
@@ -420,7 +435,9 @@ export const expectationMilestones = pgTable("expectation_milestones", {
   completedAt: timestamp("completed_at"),
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("IDX_milestones_expectation_id").on(table.expectationId),
+]);
 
 export const insertExpectationMilestoneSchema = createInsertSchema(expectationMilestones).omit({
   id: true,
@@ -445,7 +462,9 @@ export const expectationScriptures = pgTable("expectation_scriptures", {
   translation: varchar("translation", { length: 20 }).default("NIV"), // NIV, KJV, ESV, etc.
   isPrimary: boolean("is_primary").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("IDX_scriptures_expectation_id").on(table.expectationId),
+]);
 
 export const insertExpectationScriptureSchema = createInsertSchema(expectationScriptures).omit({
   id: true,
@@ -519,7 +538,9 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   p256dh: text("p256dh").notNull(),
   auth: text("auth").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("IDX_push_subscriptions_user_id").on(table.userId),
+]);
 
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;

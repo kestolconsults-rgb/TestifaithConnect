@@ -72,9 +72,9 @@ export interface IStorage {
   // Testimony operations
   createTestimony(testimony: InsertTestimony): Promise<Testimony>;
   getTestimony(id: string, userId?: string): Promise<TestimonyWithUser | undefined>;
-  getAllTestimonies(userId?: string): Promise<TestimonyWithUser[]>;
+  getAllTestimonies(userId?: string, limit?: number, offset?: number): Promise<TestimonyWithUser[]>;
   getRecentTestimonies(limit: number, userId?: string): Promise<TestimonyWithUser[]>;
-  getTestimoniesByCategory(category: string, userId?: string): Promise<TestimonyWithUser[]>;
+  getTestimoniesByCategory(category: string, userId?: string, limit?: number, offset?: number): Promise<TestimonyWithUser[]>;
   getUserTestimonies(userId: string): Promise<TestimonyWithUser[]>;
   getFeaturedTestimony(userId?: string, localDateStr?: string): Promise<TestimonyWithUser | undefined>;
   searchTestimonies(query: string, categories?: string[], startDate?: Date, endDate?: Date, userId?: string): Promise<TestimonyWithUser[]>;
@@ -210,6 +210,39 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Batches the "did this user Amen/Encourage these testimonies" lookup into a
+  // single query instead of firing two queries per testimony (N+1).
+  private async attachInteractionFlags<T extends { id: string }>(
+    rows: T[],
+    userId?: string
+  ): Promise<(T & { userHasAmen: boolean; userHasEncourage: boolean })[]> {
+    if (!userId || rows.length === 0) {
+      return rows.map((r) => ({ ...r, userHasAmen: false, userHasEncourage: false }));
+    }
+
+    const ids = rows.map((r) => r.id);
+    const interactions = await db
+      .select()
+      .from(testimonyInteractions)
+      .where(and(
+        eq(testimonyInteractions.userId, userId),
+        inArray(testimonyInteractions.testimonyId, ids)
+      ));
+
+    const amenSet = new Set<string>();
+    const encourageSet = new Set<string>();
+    for (const interaction of interactions) {
+      if (interaction.interactionType === 'amen') amenSet.add(interaction.testimonyId);
+      else if (interaction.interactionType === 'encourage') encourageSet.add(interaction.testimonyId);
+    }
+
+    return rows.map((r) => ({
+      ...r,
+      userHasAmen: amenSet.has(r.id),
+      userHasEncourage: encourageSet.has(r.id),
+    }));
+  }
+
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -350,8 +383,8 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getAllTestimonies(userId?: string): Promise<TestimonyWithUser[]> {
-    const results = await db
+  async getAllTestimonies(userId?: string, limit?: number, offset?: number): Promise<TestimonyWithUser[]> {
+    let queryBuilder = db
       .select()
       .from(testimonies)
       .leftJoin(users, eq(testimonies.userId, users.id))
@@ -362,26 +395,20 @@ export class DatabaseStorage implements IStorage {
           eq(testimonies.moderationStatus, 'approved')
         )
       ))
-      .orderBy(desc(testimonies.createdAt));
+      .orderBy(desc(testimonies.createdAt))
+      .$dynamic();
 
-    return Promise.all(results.map(async (result) => {
-      let userHasAmen = false;
-      let userHasEncourage = false;
+    if (limit !== undefined) queryBuilder = queryBuilder.limit(limit);
+    if (offset !== undefined) queryBuilder = queryBuilder.offset(offset);
 
-      if (userId) {
-        const amenInteraction = await this.getUserInteraction(result.testimonies.id, userId, 'amen');
-        const encourageInteraction = await this.getUserInteraction(result.testimonies.id, userId, 'encourage');
-        userHasAmen = !!amenInteraction;
-        userHasEncourage = !!encourageInteraction;
-      }
+    const results = await queryBuilder;
 
-      return {
-        ...result.testimonies,
-        user: result.users || undefined,
-        userHasAmen,
-        userHasEncourage,
-      };
+    const mapped = results.map((result) => ({
+      ...result.testimonies,
+      user: result.users || undefined,
     }));
+
+    return this.attachInteractionFlags(mapped, userId);
   }
 
   async getRecentTestimonies(limit: number, userId?: string): Promise<TestimonyWithUser[]> {
@@ -399,28 +426,16 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(testimonies.createdAt))
       .limit(limit);
 
-    return Promise.all(results.map(async (result) => {
-      let userHasAmen = false;
-      let userHasEncourage = false;
-
-      if (userId) {
-        const amenInteraction = await this.getUserInteraction(result.testimonies.id, userId, 'amen');
-        const encourageInteraction = await this.getUserInteraction(result.testimonies.id, userId, 'encourage');
-        userHasAmen = !!amenInteraction;
-        userHasEncourage = !!encourageInteraction;
-      }
-
-      return {
-        ...result.testimonies,
-        user: result.users || undefined,
-        userHasAmen,
-        userHasEncourage,
-      };
+    const mapped = results.map((result) => ({
+      ...result.testimonies,
+      user: result.users || undefined,
     }));
+
+    return this.attachInteractionFlags(mapped, userId);
   }
 
-  async getTestimoniesByCategory(category: string, userId?: string): Promise<TestimonyWithUser[]> {
-    const results = await db
+  async getTestimoniesByCategory(category: string, userId?: string, limit?: number, offset?: number): Promise<TestimonyWithUser[]> {
+    let queryBuilder = db
       .select()
       .from(testimonies)
       .leftJoin(users, eq(testimonies.userId, users.id))
@@ -432,26 +447,20 @@ export class DatabaseStorage implements IStorage {
           eq(testimonies.moderationStatus, 'approved')
         )
       ))
-      .orderBy(desc(testimonies.createdAt));
+      .orderBy(desc(testimonies.createdAt))
+      .$dynamic();
 
-    return Promise.all(results.map(async (result) => {
-      let userHasAmen = false;
-      let userHasEncourage = false;
+    if (limit !== undefined) queryBuilder = queryBuilder.limit(limit);
+    if (offset !== undefined) queryBuilder = queryBuilder.offset(offset);
 
-      if (userId) {
-        const amenInteraction = await this.getUserInteraction(result.testimonies.id, userId, 'amen');
-        const encourageInteraction = await this.getUserInteraction(result.testimonies.id, userId, 'encourage');
-        userHasAmen = !!amenInteraction;
-        userHasEncourage = !!encourageInteraction;
-      }
+    const results = await queryBuilder;
 
-      return {
-        ...result.testimonies,
-        user: result.users || undefined,
-        userHasAmen,
-        userHasEncourage,
-      };
+    const mapped = results.map((result) => ({
+      ...result.testimonies,
+      user: result.users || undefined,
     }));
+
+    return this.attachInteractionFlags(mapped, userId);
   }
 
   async getUserTestimonies(userId: string): Promise<TestimonyWithUser[]> {
@@ -511,24 +520,12 @@ export class DatabaseStorage implements IStorage {
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(testimonies.createdAt));
 
-    return Promise.all(results.map(async (result) => {
-      let userHasAmen = false;
-      let userHasEncourage = false;
-
-      if (userId) {
-        const amenInteraction = await this.getUserInteraction(result.testimonies.id, userId, 'amen');
-        const encourageInteraction = await this.getUserInteraction(result.testimonies.id, userId, 'encourage');
-        userHasAmen = !!amenInteraction;
-        userHasEncourage = !!encourageInteraction;
-      }
-
-      return {
-        ...result.testimonies,
-        user: result.users || undefined,
-        userHasAmen,
-        userHasEncourage,
-      };
+    const mapped = results.map((result) => ({
+      ...result.testimonies,
+      user: result.users || undefined,
     }));
+
+    return this.attachInteractionFlags(mapped, userId);
   }
 
   async getFeaturedTestimony(userId?: string, localDateStr?: string): Promise<TestimonyWithUser | undefined> {
@@ -614,22 +611,12 @@ export class DatabaseStorage implements IStorage {
       )
       .limit(limit);
 
-    return Promise.all(results.map(async (result) => {
-      let userHasAmen = false;
-      let userHasEncourage = false;
-
-      const amenInteraction = await this.getUserInteraction(result.testimonies.id, userId, 'amen');
-      const encourageInteraction = await this.getUserInteraction(result.testimonies.id, userId, 'encourage');
-      userHasAmen = !!amenInteraction;
-      userHasEncourage = !!encourageInteraction;
-
-      return {
-        ...result.testimonies,
-        user: result.users || undefined,
-        userHasAmen,
-        userHasEncourage,
-      };
+    const mapped = results.map((result) => ({
+      ...result.testimonies,
+      user: result.users || undefined,
     }));
+
+    return this.attachInteractionFlags(mapped, userId);
   }
 
   async deleteTestimony(id: string, userId: string): Promise<boolean> {
@@ -1113,8 +1100,60 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  // Batches milestone/scripture lookups for a list of expectations into a
+  // single query each instead of two queries per expectation (N+1).
+  private async attachExpectationDetails(
+    expectations: FaithExpectation[],
+    options: { includeScriptures?: boolean; userById?: Map<string, User> } = {}
+  ): Promise<FaithExpectationWithDetails[]> {
+    if (expectations.length === 0) return [];
+
+    const ids = expectations.map((e) => e.id);
+
+    const [allMilestones, allScriptures] = await Promise.all([
+      db
+        .select()
+        .from(expectationMilestones)
+        .where(inArray(expectationMilestones.expectationId, ids))
+        .orderBy(asc(expectationMilestones.sortOrder)),
+      options.includeScriptures !== false
+        ? db
+            .select()
+            .from(expectationScriptures)
+            .where(inArray(expectationScriptures.expectationId, ids))
+        : Promise.resolve([]),
+    ]);
+
+    const milestonesByExpectation = new Map<string, ExpectationMilestone[]>();
+    for (const m of allMilestones) {
+      const list = milestonesByExpectation.get(m.expectationId) || [];
+      list.push(m);
+      milestonesByExpectation.set(m.expectationId, list);
+    }
+
+    const scripturesByExpectation = new Map<string, ExpectationScripture[]>();
+    for (const s of allScriptures) {
+      const list = scripturesByExpectation.get(s.expectationId) || [];
+      list.push(s);
+      scripturesByExpectation.set(s.expectationId, list);
+    }
+
+    return expectations.map((exp) => {
+      const milestones = milestonesByExpectation.get(exp.id) || [];
+      const scriptures = scripturesByExpectation.get(exp.id) || [];
+      return {
+        ...exp,
+        user: options.userById?.get(exp.userId),
+        milestones,
+        scriptures,
+        completedMilestones: milestones.filter((m) => m.status === 'completed').length,
+        totalMilestones: milestones.length,
+      };
+    });
+  }
+
   async getUserExpectations(userId: string, status?: string): Promise<FaithExpectationWithDetails[]> {
-    let query = db
+    const expectations = await db
       .select()
       .from(faithExpectations)
       .where(
@@ -1124,34 +1163,7 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(faithExpectations.createdAt));
 
-    const expectations = await query;
-
-    const results: FaithExpectationWithDetails[] = [];
-    
-    for (const exp of expectations) {
-      const milestones = await db
-        .select()
-        .from(expectationMilestones)
-        .where(eq(expectationMilestones.expectationId, exp.id))
-        .orderBy(asc(expectationMilestones.sortOrder));
-
-      const scriptures = await db
-        .select()
-        .from(expectationScriptures)
-        .where(eq(expectationScriptures.expectationId, exp.id));
-
-      const completedMilestones = milestones.filter(m => m.status === 'completed').length;
-
-      results.push({
-        ...exp,
-        milestones,
-        scriptures,
-        completedMilestones,
-        totalMilestones: milestones.length,
-      });
-    }
-
-    return results;
+    return this.attachExpectationDetails(expectations);
   }
 
   async getCommunityExpectations(currentUserId?: string): Promise<FaithExpectationWithDetails[]> {
@@ -1168,32 +1180,13 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(faithExpectations.createdAt))
       .limit(50);
 
-    const results: FaithExpectationWithDetails[] = [];
-    
-    for (const exp of expectations) {
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, exp.userId));
+    if (expectations.length === 0) return [];
 
-      const milestones = await db
-        .select()
-        .from(expectationMilestones)
-        .where(eq(expectationMilestones.expectationId, exp.id))
-        .orderBy(asc(expectationMilestones.sortOrder));
+    const userIds = Array.from(new Set(expectations.map((e) => e.userId)));
+    const userRows = await db.select().from(users).where(inArray(users.id, userIds));
+    const userById = new Map(userRows.map((u) => [u.id, u]));
 
-      const completedMilestones = milestones.filter(m => m.status === 'completed').length;
-
-      results.push({
-        ...exp,
-        user,
-        milestones,
-        completedMilestones,
-        totalMilestones: milestones.length,
-      });
-    }
-
-    return results;
+    return this.attachExpectationDetails(expectations, { includeScriptures: false, userById });
   }
 
   async updateExpectation(id: string, userId: string, data: Partial<InsertFaithExpectation>): Promise<FaithExpectation> {
