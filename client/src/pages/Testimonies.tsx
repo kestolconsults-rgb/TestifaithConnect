@@ -261,6 +261,8 @@ export default function Testimonies() {
               className="w-9 h-9 rounded-full flex items-center justify-center border bg-card hover-elevate flex-shrink-0"
               data-testid="button-sort"
               aria-label="Sort options"
+               aria-haspopup="menu"
+               aria-expanded={showSortMenu}
             >
               <SlidersHorizontal className="w-4 h-4 text-foreground" />
             </button>
@@ -298,10 +300,11 @@ export default function Testimonies() {
         )}
 
         {/* Search bar */}
-        <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl border bg-card mb-3">
+        <div className="mb-3 flex items-center gap-3 rounded-xl border bg-card px-4 py-2.5 transition-shadow focus-within:ring-2 focus-within:ring-primary/40">
           <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           <input
             type="text"
+            aria-label="Search testimonies"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search testimonies…"
@@ -310,6 +313,8 @@ export default function Testimonies() {
           />
           {searchQuery && (
             <button
+              type="button"
+              aria-label="Clear testimony search"
               onClick={() => { setSearchQuery(""); setDebouncedQuery(""); }}
               className="text-muted-foreground text-xs hover:text-foreground transition-colors"
               data-testid="button-clear-search"
@@ -320,19 +325,15 @@ export default function Testimonies() {
         </div>
 
         {/* Category chips */}
-        <div className="flex gap-2 overflow-x-auto pb-0.5 hide-scrollbar">
+        <div className="flex gap-2 overflow-x-auto pb-0.5 hide-scrollbar" role="group" aria-label="Filter testimonies by category">
           {ALL_CATEGORIES.map((cat) => {
             const active = activeCategory === cat;
             return (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className="flex-shrink-0 text-xs font-semibold px-4 py-1.5 rounded-full border transition-all"
-                style={{
-                  background: active ? "#ef4444" : "hsl(var(--card))",
-                  borderColor: active ? "#ef4444" : "hsl(var(--border))",
-                  color: active ? "#fff" : "hsl(var(--muted-foreground))",
-                }}
+                className={`flex-shrink-0 rounded-full border px-4 py-1.5 text-xs font-semibold transition-all ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}
+                aria-pressed={active}
                 data-testid={`category-chip-${cat.toLowerCase()}`}
               >
                 {cat}
