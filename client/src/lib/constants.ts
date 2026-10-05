@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 export const CATEGORIES = [
   'Healing',
@@ -41,7 +42,7 @@ export const CATEGORY_ACCENT_COLORS: Record<Category, string> = {
 };
 
 export const CATEGORY_META: Record<Category, {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   description: string;
   bgLight: string;
   bgDark: string;
