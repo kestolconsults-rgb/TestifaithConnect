@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Lock, Heart, Star, Plus, Feather, LogIn, ChevronDown, ChevronUp, Flame, Clock, Users, CheckCircle2, Sparkles } from "lucide-react";
+import { BookOpen, Lock, Heart, Star, Plus, Feather, LogIn, ChevronDown, ChevronUp, Flame, Clock, Users, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow, format, subDays, parseISO } from "date-fns";
 import type { TestimonyWithUser, EncouragementVerse, FaithDeclaration } from "@shared/schema";
@@ -108,6 +108,64 @@ export default function MyFaith() {
   return (
     <div className="min-h-screen bg-background pb-28">
 
+      <section className="px-4 pb-5 pt-4 sm:px-6 sm:pt-6">
+        <div className="community-welcome relative isolate overflow-hidden rounded-[1.75rem] border border-rose-200/60 bg-gradient-to-br from-rose-50 via-white to-amber-50 p-5 shadow-sm dark:border-white/10 dark:from-zinc-900 dark:via-zinc-900 dark:to-rose-950/50 sm:p-7">
+          <div className="community-welcome-glow pointer-events-none absolute -right-12 -top-16 h-64 w-64 rounded-full bg-rose-300/30 blur-3xl dark:bg-primary/15" />
+          <div className="relative grid items-center gap-5 sm:grid-cols-[1fr_auto]">
+            <div className="max-w-xl">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Your record of faithfulness</p>
+              <h1 className="font-['Space_Grotesk'] text-2xl font-bold leading-tight text-zinc-950 dark:text-white sm:text-3xl">
+                {user?.firstName ? `${user.firstName}, keep the moments that matter.` : "Keep the moments that matter."}
+              </h1>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300 sm:text-base">
+                Write down the prayers, answered hopes, and small mercies. Revisit them when you need a reminder—and share a story only when you’re ready.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                {user ? (
+                  <>
+                    <Link href="/post" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground shadow-md shadow-primary/15 transition-all hover:-translate-y-0.5">
+                      <Feather className="h-4 w-4" /> Record a moment
+                    </Link>
+                    <Link href="/my-testimonies" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-zinc-300 bg-white/70 px-5 text-sm font-semibold text-zinc-800 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                      My entries <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/create-account" className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground">
+                      Start my journal
+                    </Link>
+                    <Link href="/testimonies" className="inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 bg-white/70 px-5 text-sm font-semibold text-zinc-800 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                      Read testimonies
+                    </Link>
+                  </>
+                )}
+              </div>
+              {user && (
+                <div className="mt-5 flex flex-wrap gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+                  <span className="rounded-full bg-white/70 px-3 py-1.5 dark:bg-white/5">
+                    {myLoading ? "…" : privateTestimonies.length} private {privateTestimonies.length === 1 ? "entry" : "entries"}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-3 py-1.5 dark:bg-white/5">
+                    <Lock className="h-3 w-3" /> Your journal is only visible to you
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="community-journal-float relative mx-auto hidden h-32 w-32 items-center justify-center sm:flex sm:h-36 sm:w-36" aria-hidden="true">
+              <div className="absolute inset-0 rounded-full border border-primary/15" />
+              <div className="absolute inset-3 rounded-full border border-dashed border-amber-500/30" />
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-[1.7rem] border border-white bg-white/90 text-primary shadow-xl shadow-rose-950/10 dark:border-white/10 dark:bg-zinc-800">
+                <BookOpen className="h-11 w-11" strokeWidth={1.4} />
+                <span className="absolute -bottom-2 -right-4 flex h-9 w-9 items-center justify-center rounded-full bg-amber-300 text-amber-950 shadow-md">
+                  <Heart className="h-4 w-4 fill-current" />
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Daily Declaration */}
       <div className="px-5 pt-4 mb-5">
         {declarationLoading ? (
@@ -189,7 +247,7 @@ export default function MyFaith() {
           <div className="flex items-center gap-2">
             <Star className="w-4 h-4 text-amber-500 shrink-0" />
             <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground" data-testid="section-testimony-of-day">
-              Stone of the Day
+              Testimony of the Day
             </h2>
           </div>
           <p className="font-['Crimson_Pro'] italic text-muted-foreground text-[13px] leading-snug mt-0.5 pl-6">
@@ -278,7 +336,7 @@ export default function MyFaith() {
         </section>
       )}
 
-      {/* Stone of Remembrance — Private Journal */}
+      {/* Your Faith Journal — Private Journal */}
       <section className="px-5 mb-6">
         {!user ? (
           <div className="flex items-center gap-2 mb-1">
@@ -365,7 +423,7 @@ export default function MyFaith() {
                     data-testid="link-browse-community-home"
                   >
                     <Users className="w-3.5 h-3.5" />
-                    Browse community stones first
+                    Browse community testimonies first
                   </button>
                 </Link>
               </div>

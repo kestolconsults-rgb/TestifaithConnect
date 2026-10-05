@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -108,8 +108,25 @@ export default function Settings() {
 
   const supportForm = useForm<InsertSupportMessage>({
     resolver: zodResolver(insertSupportMessageSchema),
-    defaultValues: { name: "", email: "", subject: "", message: "", userId: undefined },
+    defaultValues: {
+      name: [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(" "),
+      email: currentUser?.email ?? "",
+      subject: "",
+      message: "",
+      userId: currentUser?.id,
+    },
   });
+
+  useEffect(() => {
+    if (!currentUser || supportForm.formState.isDirty) return;
+    supportForm.reset({
+      name: [currentUser.firstName, currentUser.lastName].filter(Boolean).join(" "),
+      email: currentUser.email ?? "",
+      subject: "",
+      message: "",
+      userId: currentUser.id,
+    });
+  }, [currentUser?.id, currentUser?.firstName, currentUser?.lastName, currentUser?.email]);
 
   const supportMutation = useMutation({
     mutationFn: async (data: InsertSupportMessage) => apiRequest("POST", "/api/support", data),
@@ -169,11 +186,12 @@ export default function Settings() {
               </div>
               <div>
                 <CardTitle>Notifications</CardTitle>
-                <CardDescription>Choose what updates you receive</CardDescription>
+                <CardDescription>Activity alerts, daily encouragement, and email updates</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Community activity</p>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="notify-amen">Amen Notifications</Label>
@@ -222,6 +240,7 @@ export default function Settings() {
             
             <Separator />
             
+            <p className="pt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Daily encouragement</p>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="notify-verse">Daily Verse</Label>
@@ -254,6 +273,7 @@ export default function Settings() {
 
             <Separator />
 
+            <p className="pt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Email updates</p>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="notify-newsletter">Newsletter</Label>
@@ -279,7 +299,7 @@ export default function Settings() {
               </div>
               <div>
                 <CardTitle>Privacy</CardTitle>
-                <CardDescription>Control who can see your profile</CardDescription>
+                <CardDescription>Choose who can view your profile. Story visibility is managed per testimony.</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -288,9 +308,9 @@ export default function Settings() {
               <div className="space-y-0.5">
                 <Label>Profile Visibility</Label>
                 <p className="text-sm text-muted-foreground">
-                  {profile?.profileVisibility === 'public' 
-                    ? "Anyone can view your profile and testimonies" 
-                    : "Only you can see your profile details"}
+                  {profile?.profileVisibility === "public"
+                    ? "Other people can visit your profile. Each testimony still follows its own sharing setting."
+                    : "Your profile page is hidden from other people. Public testimonies you shared can still appear in the community."}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -489,6 +509,18 @@ export default function Settings() {
               </>
             )}
 
+            {passwordStatus?.hasPassword && (
+              <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium">Need to change or reset your password?</p>
+                  <p className="mt-1 text-xs text-muted-foreground">We’ll send a secure reset link to your email address.</p>
+                </div>
+                <Link href="/forgot-password">
+                  <Button type="button" variant="outline" size="sm">Reset password</Button>
+                </Link>
+              </div>
+            )}
+
             {/* Show success message if both methods are active */}
             {passwordStatus?.hasPassword && passwordStatus?.hasGoogleLinked && (
               <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
@@ -540,7 +572,7 @@ export default function Settings() {
                           <FormLabel>Your name</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder={profile ? `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() || "Your name" : "Your name"}
+                              placeholder="Your name"
                               data-testid="input-support-name"
                               {...field}
                             />
@@ -558,7 +590,7 @@ export default function Settings() {
                           <FormControl>
                             <Input
                               type="email"
-                              placeholder={profile?.email ?? "you@example.com"}
+                              placeholder="you@example.com"
                               data-testid="input-support-email"
                               {...field}
                             />

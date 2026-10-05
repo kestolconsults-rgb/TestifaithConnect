@@ -466,3 +466,40 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Signed-in community and journal surfaces. */
+@keyframes community-card-arrive {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes community-orbit-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+.community-welcome-glow {
+  animation: faith-note-float 8s ease-in-out infinite;
+}
+
+.community-journal-float {
+  animation: community-orbit-float 6.5s ease-in-out infinite;
+}
+
+.community-card-enter {
+  animation: community-card-arrive 380ms ease-out both;
+}
+
+.community-card-enter:nth-child(2) { animation-delay: 40ms; }
+.community-card-enter:nth-child(3) { animation-delay: 80ms; }
+.community-card-enter:nth-child(4) { animation-delay: 120ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .community-welcome-glow,
+  .community-journal-float,
+  .community-card-enter {
+    animation: none !important;
+    transition: none !important;
+  }
+}

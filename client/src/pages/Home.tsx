@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Search, Play, Heart, MessageCircle, Globe, RefreshCw, Flame, Sparkles } from "lucide-react";
+import { Search, Play, Heart, MessageCircle, RefreshCw, Flame, Sparkles, BookOpen, ArrowRight, Feather, LockKeyhole } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -125,15 +125,15 @@ function TestimonyRow({ testimony, currentUser }: { testimony: TestimonyWithUser
   };
 
   return (
-    <div className="rounded-2xl p-4 border bg-card" data-testid={`testimony-row-${testimony.id}`}>
+    <div className="community-card-enter rounded-2xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6" data-testid={`testimony-row-${testimony.id}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
-          <Avatar className="w-9 h-9">
+          <Avatar className="w-10 h-10">
             <AvatarImage src={testimony.user?.profileImageUrl || undefined} />
             <AvatarFallback className="text-xs font-bold bg-muted">{initials}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-xs font-semibold text-foreground">{displayName}</p>
+            <p className="text-sm font-semibold text-foreground">{displayName}</p>
             <p className="text-[10px] text-muted-foreground">
               {format(new Date(testimony.createdAt ?? Date.now()), "MMM d, yyyy")}
             </p>
@@ -144,10 +144,10 @@ function TestimonyRow({ testimony, currentUser }: { testimony: TestimonyWithUser
         </Badge>
       </div>
       {testimony.title && (
-        <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1.5">{testimony.title}</p>
+        <p className="font-['Space_Grotesk'] text-base font-bold text-foreground mb-2">{testimony.title}</p>
       )}
       <Link href={`/testimony/${testimony.id}`}>
-        <p className="text-xs leading-relaxed text-card-foreground mb-3 line-clamp-3 cursor-pointer">
+        <p className="text-sm leading-relaxed text-card-foreground mb-4 line-clamp-4 cursor-pointer">
           {testimony.story}
         </p>
       </Link>
@@ -261,14 +261,53 @@ export default function Home() {
         />
       </div>
 
-      {/* Header */}
-      <div className="px-5 pt-4 pb-3">
-        <div className="flex items-center gap-2 mb-0.5">
-          <Globe className="w-5 h-5 text-primary" />
-          <h1 className="font-['Space_Grotesk'] text-2xl font-bold text-foreground">Community</h1>
+      {/* A personal welcome that connects the community feed to the user's own faith story. */}
+      <section className="px-4 pt-4 pb-5 sm:px-6 sm:pt-6">
+        <div className="community-welcome relative isolate overflow-hidden rounded-[1.75rem] border border-rose-200/60 bg-gradient-to-br from-rose-50 via-white to-amber-50 p-5 shadow-sm dark:border-white/10 dark:from-zinc-900 dark:via-zinc-900 dark:to-rose-950/50 sm:p-7 lg:p-8">
+          <div className="community-welcome-glow pointer-events-none absolute -right-12 -top-16 h-64 w-64 rounded-full bg-rose-300/30 blur-3xl dark:bg-primary/15" />
+          <div className="relative grid items-center gap-5 sm:grid-cols-[1fr_auto] sm:gap-2">
+            <div className="max-w-2xl">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Your faith community</p>
+              <h1 className="font-['Space_Grotesk'] text-2xl font-bold leading-tight text-zinc-950 dark:text-white sm:text-3xl lg:text-4xl">
+                Welcome back{user?.firstName ? `, ${user.firstName}` : ""}.
+              </h1>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300 sm:text-base">
+                Keep a record of what God has done in your life—and find encouragement in the stories others have lived.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  href="/post"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground shadow-md shadow-primary/15 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                  data-testid="button-home-write-journal"
+                >
+                  <Feather className="h-4 w-4" /> Write in my journal
+                </Link>
+                <Link
+                  href="/my-faith"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-zinc-300 bg-white/70 px-5 text-sm font-semibold text-zinc-800 transition-colors hover:bg-white dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                >
+                  My faith journal <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+              <p className="mt-4 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                <LockKeyhole className="h-3.5 w-3.5" /> Your entries can stay private or be shared when you choose.
+              </p>
+            </div>
+            <div className="community-journal-float relative mx-auto hidden h-36 w-36 items-center justify-center sm:flex lg:mr-4 lg:h-44 lg:w-44" aria-hidden="true">
+              <div className="absolute inset-0 rounded-full border border-primary/15" />
+              <div className="absolute inset-3 rounded-full border border-dashed border-amber-500/30" />
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-[1.7rem] border border-white bg-white/90 text-primary shadow-xl shadow-rose-950/10 dark:border-white/10 dark:bg-zinc-800 lg:h-28 lg:w-28">
+                <BookOpen className="h-11 w-11 lg:h-12 lg:w-12" strokeWidth={1.4} />
+                <span className="absolute -bottom-2 -right-4 flex h-9 w-9 items-center justify-center rounded-full bg-amber-300 text-amber-950 shadow-md">
+                  <Heart className="h-4 w-4 fill-current" />
+                </span>
+              </div>
+              <span className="absolute -left-2 top-5 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold text-primary shadow-sm dark:bg-zinc-800">Remember</span>
+              <span className="absolute -bottom-1 right-0 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold text-amber-700 shadow-sm dark:bg-zinc-800 dark:text-amber-300">Encourage</span>
+            </div>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">Stories from the body of Christ</p>
-      </div>
+      </section>
 
       {/* Search */}
       <div className="px-5 mb-4">
