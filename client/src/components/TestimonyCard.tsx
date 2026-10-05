@@ -95,29 +95,28 @@ export default function TestimonyCard({
       }}
       data-testid={`card-testimony-${testimony.id}`}
     >
-      {featured && (
-        <div className="absolute top-4 right-4">
-          <Badge className="bg-secondary text-secondary-foreground border-secondary-border" data-testid="badge-featured">
-            <Sparkles className="h-3 w-3 mr-1" />
-            Featured
-          </Badge>
-        </div>
-      )}
-      
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
-          <Badge 
-            className={`${CATEGORY_COLORS[testimony.category as keyof typeof CATEGORY_COLORS]} text-xs uppercase tracking-wide border`}
-            data-testid={`badge-category-${testimony.category}`}
-          >
-            {testimony.category}
-          </Badge>
-          <span className="text-xs text-muted-foreground" data-testid={`date-${testimony.id}`} title={testimony.createdAt ? formatDistanceToNow(new Date(testimony.createdAt), { addSuffix: true }) : ""}>
+          <div className="flex min-w-0 items-center gap-2">
+            <Badge
+              className={`${CATEGORY_COLORS[testimony.category as keyof typeof CATEGORY_COLORS]} text-xs uppercase tracking-wide border`}
+              data-testid={`badge-category-${testimony.category}`}
+            >
+              {testimony.category}
+            </Badge>
+            {featured && (
+              <Badge className="shrink-0 bg-secondary text-secondary-foreground border-secondary-border" data-testid="badge-featured">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Featured
+              </Badge>
+            )}
+          </div>
+          <span className="shrink-0 text-xs text-muted-foreground" data-testid={`date-${testimony.id}`} title={testimony.createdAt ? formatDistanceToNow(new Date(testimony.createdAt), { addSuffix: true }) : ""}>
             {testimony.createdAt && format(new Date(testimony.createdAt), "MMM d, yyyy")}
           </span>
         </div>
         
-        <Link href={`/testimony/${testimony.id}`} className="block">
+        <Link href={`/testimony/${testimony.id}`} className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           <h3 className="text-2xl font-bold mt-4 mb-3 hover:text-primary transition-colors leading-tight" data-testid={`title-testimony-${testimony.id}`}>
             {testimony.title}
           </h3>
@@ -137,6 +136,8 @@ export default function TestimonyCard({
             size="sm"
             onClick={() => onAmen?.(testimony.id)}
             disabled={isLoading}
+            aria-label={testimony.userHasAmen ? "You have said Amen" : "Say Amen"}
+            aria-pressed={Boolean(testimony.userHasAmen)}
             className={testimony.userHasAmen ? 'text-chart-3 ring-2 ring-chart-3/20' : ''}
             data-testid={`button-amen-${testimony.id}`}
           >
@@ -154,6 +155,8 @@ export default function TestimonyCard({
             size="sm"
             onClick={() => onEncourage?.(testimony.id)}
             disabled={isLoading}
+            aria-label={testimony.userHasEncourage ? "You have encouraged this story" : "Encourage this story"}
+            aria-pressed={Boolean(testimony.userHasEncourage)}
             className={testimony.userHasEncourage ? 'text-chart-4 ring-2 ring-chart-4/20' : ''}
             data-testid={`button-encourage-${testimony.id}`}
           >
@@ -167,7 +170,7 @@ export default function TestimonyCard({
           </Button>
 
           <Link href={`/testimony/${testimony.id}`}>
-            <Button variant="ghost" size="sm" className="text-muted-foreground" data-testid={`button-comments-${testimony.id}`}>
+            <Button variant="ghost" size="sm" className="text-muted-foreground" aria-label={`Comments on ${testimony.title}`} data-testid={`button-comments-${testimony.id}`}>
               <MessageCircle className="h-4 w-4 mr-1" />
               {testimony.commentCount != null && testimony.commentCount > 0 ? testimony.commentCount : ""}
             </Button>
@@ -175,7 +178,7 @@ export default function TestimonyCard({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" data-testid={`button-share-${testimony.id}`}>
+              <Button variant="ghost" size="sm" aria-label={`Share ${testimony.title}`} data-testid={`button-share-${testimony.id}`}>
                 <Share2 className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
