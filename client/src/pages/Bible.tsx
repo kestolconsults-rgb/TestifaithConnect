@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Search, ChevronRight, ChevronLeft, ArrowLeft, X, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -508,6 +508,7 @@ function SearchView({
 
 type View = "home" | "chapters" | "reading" | "search";
 type Testament = "OT" | "NT";
+type LastRead = { book: string; chapter: number };
 
 export default function Bible() {
   // Version state: track by id (for free) and abbrev + optional premiumBibleId
@@ -520,6 +521,32 @@ export default function Bible() {
   const [selectedBook, setSelectedBook] = useState<BibleBook | null>(null);
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [lastRead, setLastRead] = useState<LastRead | null>(() => {
+    try {
+      const saved = localStorage.getItem("testifaith:bible:last-read");
+      if (!saved) return null;
+      const parsed = JSON.parse(saved) as LastRead;
+      const book = ALL_BOOKS.find((candidate) => candidate.name === parsed.book);
+      return book && Number.isInteger(parsed.chapter) && parsed.chapter >= 1 && parsed.chapter <= book.chapters
+        ? parsed
+        : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (view !== "reading" || !selectedBook) return;
+    const progress = { book: selectedBook.name, chapter: selectedChapter };
+    setLastRead(progress);
+    try {
+      localStorage.setItem("testifaith:bible:last-read", JSON.stringify(progress));
+    } catch {
+      // Reading remains available when browser storage is disabled.
+    }
+  }, [view, selectedBook, selectedChapter]);
+
+  const lastReadBook = lastRead ? ALL_BOOKS.find((book) => book.name === lastRead.book) : undefined;
 
   // Check if API.Bible key is configured
   const { data: premiumStatus } = useQuery<{ configured: boolean }>({
@@ -671,6 +698,22 @@ export default function Bible() {
           <span className="text-sm text-muted-foreground">Search scripture — e.g. John 3:16</span>
         </button>
       </div>
+
+      {lastReadBook && lastRead && (
+        <section className="px-5 mb-5">
+          <button
+            onClick={() => openPassage(lastReadBook, lastRead.chapter)}
+            className="flex w-full items-center justify-between gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 text-left hover:bg-primary/10 transition-colors"
+            data-testid="button-continue-reading"
+          >
+            <span>
+              <span className="block text-xs font-semibold uppercase tracking-wide text-primary">Continue reading</span>
+              <span className="mt-1 block text-base font-semibold text-foreground">{lastRead.book} {lastRead.chapter}</span>
+            </span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-primary" />
+          </button>
+        </section>
+      )}
 
       {/* Quick access */}
       <section className="mb-5">

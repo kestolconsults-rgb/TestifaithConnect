@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Plus, BookOpen, User, Feather, Sparkles, HelpCircle, LogIn } from "lucide-react";
+import { Home, Plus, BookOpen, User, Feather, Sparkles, Search, LogIn } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -27,9 +27,9 @@ const AUTH_FAB_ACTIONS = [
     href: "/bible",
   },
   {
-    icon: HelpCircle,
-    label: "Ask a Question",
-    sublabel: "Search the community for answers",
+    icon: Search,
+    label: "Search testimonies",
+    sublabel: "Find stories by topic or keyword",
     color: "#8b5cf6",
     href: "/home",
   },
@@ -93,7 +93,7 @@ export default function BottomTabBar() {
 
       {/* FAB Action Cards */}
       {fabOpen && (
-        <div className="fixed bottom-28 left-0 right-0 z-50 flex flex-col gap-3 px-5 max-w-lg mx-auto">
+        <div className="fixed bottom-28 left-0 right-0 z-50 flex flex-col gap-3 px-5 max-w-lg mx-auto lg:hidden">
           {FAB_ACTIONS.map((action) => {
             const Icon = action.icon;
             return (
@@ -125,10 +125,10 @@ export default function BottomTabBar() {
 
       {/* Bottom Bar */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-xl"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-xl lg:hidden"
         style={{ background: "hsl(var(--background) / 0.92)", borderColor: "hsl(var(--border))" }}
       >
-        <div className="flex items-center justify-around max-w-lg mx-auto px-2" style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+        <nav aria-label="Primary navigation" className="flex items-center justify-around max-w-lg mx-auto px-2" style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
           {TABS.map((tab) => {
             if (tab.label === "fab") {
               return (
@@ -168,7 +168,7 @@ export default function BottomTabBar() {
                 data-testid={`tab-${tab.label.toLowerCase()}`}
               >
                 <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
-                <span className="text-[10px] font-medium leading-none">
+                <span className="text-xs font-medium leading-none">
                   {isProfileGuest ? "Sign In" : tab.label}
                 </span>
                 {/* Dot indicator for guest profile tab */}
@@ -180,7 +180,7 @@ export default function BottomTabBar() {
               </button>
             );
           })}
-        </div>
+        </nav>
       </div>
     </>
   );

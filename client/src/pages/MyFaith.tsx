@@ -183,7 +183,7 @@ export default function MyFaith() {
         )}
       </div>
 
-      {/* Stone of the Day */}
+      {/* Testimony of the Day */}
       <section className="px-5 mb-6">
         <div className="mb-3">
           <div className="flex items-center gap-2">
@@ -256,7 +256,7 @@ export default function MyFaith() {
           <Card className="rounded-2xl border-dashed">
             <CardContent className="p-8 text-center">
               <Star className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No stone selected for today</p>
+              <p className="text-sm text-muted-foreground">No testimony selected for today</p>
             </CardContent>
           </Card>
         )}
