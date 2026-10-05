@@ -205,7 +205,7 @@ export default function Expectations() {
 
   return (
     <div className="min-h-screen bg-background">
-      <section className="px-4 py-12 bg-gradient-to-b from-primary/5 to-background">
+      <section className="px-4 py-8 md:py-12 bg-gradient-to-b from-primary/5 to-background">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
@@ -231,11 +231,11 @@ export default function Expectations() {
             </Button>
           </div>
 
-          <div className="flex gap-6 mt-8">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-6 md:mt-8">
             <Card className="flex-1 border-primary/20 bg-primary/5">
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Target className="h-6 w-6 text-primary" />
+              <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Target className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold" data-testid="text-active-count">{activeCount}</p>
@@ -244,9 +244,9 @@ export default function Expectations() {
               </CardContent>
             </Card>
             <Card className="flex-1 border-green-500/20 bg-green-500/5">
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <Sparkles className="h-6 w-6 text-green-500" />
+              <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                  <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold" data-testid="text-answered-count">{answeredCount}</p>
@@ -260,16 +260,16 @@ export default function Expectations() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="active" className="gap-2" data-testid="tab-active">
+          <TabsList className="mb-6 grid w-full max-w-xl grid-cols-3">
+            <TabsTrigger value="active" className="gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm" data-testid="tab-active">
               <Target className="h-4 w-4" />
               Active ({activeCount})
             </TabsTrigger>
-            <TabsTrigger value="answered" className="gap-2" data-testid="tab-answered">
+            <TabsTrigger value="answered" className="gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm" data-testid="tab-answered">
               <CheckCircle2 className="h-4 w-4" />
               Answered ({answeredCount})
             </TabsTrigger>
-            <TabsTrigger value="all" className="gap-2" data-testid="tab-all">
+            <TabsTrigger value="all" className="gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm" data-testid="tab-all">
               All
             </TabsTrigger>
           </TabsList>
