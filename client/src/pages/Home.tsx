@@ -338,10 +338,11 @@ export default function Home() {
 
       {/* Search */}
       <div className="px-5 mb-4">
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-card">
+        <div className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3 transition-shadow focus-within:ring-2 focus-within:ring-primary/40">
           <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           <input
             type="text"
+            aria-label="Search community testimonies"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search testimonies…"
@@ -349,7 +350,7 @@ export default function Home() {
             data-testid="input-community-search"
           />
           {searchQuery && (
-            <button onClick={() => { setSearchQuery(""); setDebouncedQuery(""); }} className="text-muted-foreground text-xs">
+            <button type="button" aria-label="Clear community search" onClick={() => { setSearchQuery(""); setDebouncedQuery(""); }} className="text-muted-foreground text-xs">
               Clear
             </button>
           )}
@@ -357,19 +358,15 @@ export default function Home() {
       </div>
 
       {/* Category chips */}
-      <div className="flex gap-2 overflow-x-auto px-5 pb-1 mb-5 hide-scrollbar">
+      <div className="flex gap-2 overflow-x-auto px-5 pb-1 mb-5 hide-scrollbar" role="group" aria-label="Filter community testimonies">
         {ALL_CATEGORIES.map((cat) => {
           const active = activeCategory === cat;
           return (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className="flex-shrink-0 text-xs font-semibold px-4 py-2 rounded-full border transition-all"
-              style={{
-                background: active ? "#ef4444" : "hsl(var(--card))",
-                borderColor: active ? "#ef4444" : "hsl(var(--border))",
-                color: active ? "#fff" : "hsl(var(--muted-foreground))",
-              }}
+              className={`flex-shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition-all ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}
+              aria-pressed={active}
               data-testid={`category-chip-${cat.toLowerCase()}`}
             >
               {cat}
@@ -458,7 +455,7 @@ export default function Home() {
           </h2>
           {!debouncedQuery && activeCategory === "All" && (
             <Link href="/testimonies">
-              <button className="text-xs font-medium text-primary" data-testid="link-see-all-text">See all</button>
+              <Link href="/testimonies" className="text-xs font-medium text-primary hover:text-primary/80" data-testid="link-see-all-text">See all</Link>
             </Link>
           )}
         </div>
