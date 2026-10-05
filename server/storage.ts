@@ -32,6 +32,7 @@ import {
   type UpsertUser,
   type Testimony,
   type InsertTestimony,
+  type UpdateTestimony,
   type TestimonyWithUser,
   type TestimonyInteraction,
   type InsertTestimonyInteraction,
@@ -84,6 +85,7 @@ export interface IStorage {
 
   // Testimony operations
   createTestimony(testimony: InsertTestimony): Promise<Testimony>;
+  updateTestimony(id: string, userId: string, updates: UpdateTestimony): Promise<Testimony | undefined>;
   getTestimony(id: string, userId?: string): Promise<TestimonyWithUser | undefined>;
   getAllTestimonies(userId?: string, limit?: number, offset?: number): Promise<TestimonyWithUser[]>;
   getRecentTestimonies(limit: number, userId?: string): Promise<TestimonyWithUser[]>;
@@ -412,6 +414,15 @@ export class DatabaseStorage implements IStorage {
       .values(testimony)
       .returning();
     return created;
+  }
+
+  async updateTestimony(id: string, userId: string, updates: UpdateTestimony): Promise<Testimony | undefined> {
+    const [updated] = await db
+      .update(testimonies)
+      .set(updates)
+      .where(and(eq(testimonies.id, id), eq(testimonies.userId, userId)))
+      .returning();
+    return updated;
   }
 
   async getTestimony(id: string, userId?: string): Promise<TestimonyWithUser | undefined> {
