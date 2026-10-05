@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { TestimonyWithUser } from "@shared/schema";
-import { PlusCircle, Search, X, LockKeyhole, Users, Video, Clock3, Trash2, ArrowRight } from "lucide-react";
+import { PlusCircle, Search, X, LockKeyhole, Users, Video, Clock3, Trash2, ArrowRight, Pencil } from "lucide-react";
 import { format, subDays, parseISO } from "date-fns";
 
 function calculateStreak(testimonies: TestimonyWithUser[]): number {
@@ -272,7 +272,14 @@ export default function MyTestimonies() {
                         </span>
                       </Link>
 
-                      <div className="mt-4 flex justify-end border-t border-border pt-3">
+                      <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                        <Link
+                          href={`/journal/${testimony.id}/edit`}
+                          className="inline-flex items-center rounded-md px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          data-testid={`link-edit-${testimony.id}`}
+                        >
+                          <Pencil className="mr-1.5 h-4 w-4" /> Edit entry
+                        </Link>
                         <Button
                           type="button"
                           variant="ghost"
