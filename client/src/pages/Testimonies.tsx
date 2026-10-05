@@ -233,7 +233,7 @@ export default function Testimonies() {
               className="font-['Space_Grotesk'] text-lg font-bold text-foreground leading-tight"
               data-testid="text-page-title"
             >
-              Community Stones
+              Testimonies
             </h1>
             {!loading && (
               <p className="text-[11px] text-muted-foreground">
