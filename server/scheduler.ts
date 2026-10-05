@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { storage } from "./storage";
 import { pool } from "./db";
+import type { PoolClient } from "pg";
 import { sendDailyDeclarationNow, sendNewsletterNow } from "./notificationJobs";
 
 function todayStr(): string {
@@ -16,15 +17,16 @@ function isDigestDueToday(settings: { newsletterDigestFrequency: string; newslet
 }
 
 async function runSchedulerTick() {
-  let lockClient: Awaited<ReturnType<typeof pool.connect>> | undefined;
+  let lockClient: PoolClient | undefined;
   let lockAcquired = false;
   const schedulerLockId = 947315601;
 
   try {
     // A session-level PostgreSQL lock prevents multiple Koyeb replicas from
     // running the same scheduled delivery concurrently.
-    lockClient = await pool.connect();
-    const lockResult = await lockClient.query(
+    const client = await pool.connect();
+    lockClient = client;
+    const lockResult = await client.query(
       "SELECT pg_try_advisory_lock($1) AS acquired",
       [schedulerLockId],
     );
