@@ -157,6 +157,8 @@ export function GuidedTestimonyEditor({ value, onChange, isVideoMode = false }: 
                   ? "bg-green-500/20 text-green-600 border border-green-500/30"
                   : "bg-muted text-muted-foreground"
               }`}
+              aria-label={`Go to step ${index + 1}: ${section.title}${sectionContents[section.id]?.trim() ? ", completed" : ""}`}
+              aria-current={index === currentStep ? "step" : undefined}
               data-testid={`button-step-${index + 1}`}
             >
               {sectionContents[section.id]?.trim() ? <Check className="w-4 h-4" /> : index + 1}
@@ -164,11 +166,11 @@ export function GuidedTestimonyEditor({ value, onChange, isVideoMode = false }: 
           ))}
         </div>
         <span className="text-sm text-muted-foreground">
-          {completedSections}/{STORY_SECTIONS.length} sections
+          Step {currentStep + 1} of {STORY_SECTIONS.length} · {completedSections} written
         </span>
       </div>
 
-      <Progress value={progress} className="h-1" />
+      <Progress value={progress} className="h-1" aria-label={`Prompt ${currentStep + 1} of ${STORY_SECTIONS.length}`} />
 
       <Card className="rounded-xl border-primary/20 bg-gradient-to-br from-background to-muted/20">
         <CardHeader className="pb-4">
@@ -227,10 +229,9 @@ export function GuidedTestimonyEditor({ value, onChange, isVideoMode = false }: 
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             ) : (
-              <div className="flex items-center gap-2 text-green-600">
-                <Check className="w-5 h-5" />
-                <span className="font-medium">Entry complete</span>
-              </div>
+              <p className="max-w-[13rem] text-right text-xs leading-relaxed text-muted-foreground">
+                Last prompt. You can save with any parts you’ve written.
+              </p>
             )}
           </div>
         </CardContent>
