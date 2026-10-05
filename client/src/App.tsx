@@ -33,6 +33,8 @@ import Expectations from "@/pages/Expectations";
 import ExpectationDetail from "@/pages/ExpectationDetail";
 import MobileHeader from "@/components/MobileHeader";
 import BottomTabBar from "@/components/BottomTabBar";
+import Header from "@/components/Header";
+import Landing from "@/pages/Landing";
 
 // Full-screen wrapper for auth flow pages (no nav chrome)
 function AuthFlow({ children }: { children: React.ReactNode }) {
@@ -129,15 +131,16 @@ function Router() {
     );
   }
 
-  // Main app — same mobile layout for everyone
+  // Responsive app shell: desktop navigation for wide screens, compact navigation on mobile.
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <MobileHeader />
+      <div className="hidden lg:block"><Header /></div>
+      <div className="lg:hidden"><MobileHeader /></div>
       <InstallBanner />
       <main className="flex-1">
         <Switch>
           {/* ── Public routes — accessible to everyone ── */}
-          <Route path="/" component={Home} />
+          <Route path="/" component={() => isAuthenticated ? <Home /> : <Landing />} />
           <Route path="/home" component={Home} />
           <Route path="/my-faith" component={MyFaith} />
           <Route path="/community"><Redirect to="/home" /></Route>
