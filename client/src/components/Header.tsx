@@ -53,14 +53,19 @@ export default function Header() {
             </Link>
             {isAuthenticated && (
               <>
-                <Link href="/my-testimonies" data-testid="link-nav-my-testimonies">
+                <Link href="/my-faith" data-testid="link-nav-my-faith">
                   <Button variant="ghost" className="font-medium rounded-xl">
-                    My Testimonies
+                    My Faith
                   </Button>
                 </Link>
-                <Link href="/expectations" data-testid="link-nav-expectations">
+                <Link href="/my-testimonies" data-testid="link-nav-my-testimonies">
                   <Button variant="ghost" className="font-medium rounded-xl">
-                    Faith Expectations
+                    My Journal
+                  </Button>
+                </Link>
+                <Link href="/bible" data-testid="link-nav-bible">
+                  <Button variant="ghost" className="font-medium rounded-xl">
+                    Bible
                   </Button>
                 </Link>
               </>
@@ -134,7 +139,7 @@ export default function Header() {
                         </Link>
                         <Link href="/my-testimonies">
                           <DropdownMenuItem className="rounded-lg cursor-pointer" data-testid="menu-my-testimonies">
-                            <span className="font-medium">My Testimonies</span>
+                            <span className="font-medium">My Journal</span>
                           </DropdownMenuItem>
                         </Link>
                         <Link href="/expectations">
@@ -221,9 +226,14 @@ export default function Header() {
                       My Profile
                     </Button>
                   </Link>
+                  <Link href="/my-faith" onClick={() => setMobileMenuOpen(false)} data-testid="mobile-link-my-faith">
+                    <Button variant="ghost" className="w-full justify-start rounded-xl font-medium text-base">
+                      My Faith
+                    </Button>
+                  </Link>
                   <Link href="/my-testimonies" onClick={() => setMobileMenuOpen(false)} data-testid="mobile-link-my-testimonies">
                     <Button variant="ghost" className="w-full justify-start rounded-xl font-medium text-base">
-                      My Testimonies
+                      My Journal
                     </Button>
                   </Link>
                   <Link href="/expectations" onClick={() => setMobileMenuOpen(false)} data-testid="mobile-link-expectations">
