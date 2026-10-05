@@ -31,7 +31,7 @@ const AUTH_FAB_ACTIONS = [
     label: "Search testimonies",
     sublabel: "Find stories by topic or keyword",
     color: "#8b5cf6",
-    href: "/home",
+    href: "/search",
   },
 ] as const;
 
@@ -68,6 +68,9 @@ export default function BottomTabBar() {
 
   const isActive = (href: string) => {
     if (href === "/home") return location === "/" || location === "/home";
+    if (href === "/my-faith") {
+      return location === href || location === "/my-testimonies" || location.startsWith("/journal/");
+    }
     return location.startsWith(href);
   };
 
@@ -137,9 +140,9 @@ export default function BottomTabBar() {
                     onClick={() => setFabOpen(!fabOpen)}
                     className="w-14 h-14 rounded-full flex items-center justify-center text-white border-4 transition-transform duration-200"
                     style={{
-                      background: fabOpen ? "#dc2626" : "#ef4444",
+                      background: "hsl(var(--primary))",
                       borderColor: "hsl(var(--background))",
-                      boxShadow: "0 8px 24px -4px rgba(239,68,68,0.5)",
+                      boxShadow: "0 8px 24px -4px hsl(var(--primary) / 0.35)",
                       transform: fabOpen ? "rotate(45deg)" : "rotate(0deg)",
                     }}
                     data-testid="button-fab"
@@ -163,7 +166,7 @@ export default function BottomTabBar() {
               <button
                 key={tab.label}
                 className="flex flex-col items-center gap-1 py-3 px-3 min-w-[56px] transition-colors relative"
-                style={{ color: active ? "#ef4444" : "hsl(var(--muted-foreground))" }}
+                style={{ color: active ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))" }}
                 onClick={() => handleTabClick(tab.href)}
                 data-testid={`tab-${tab.label.toLowerCase()}`}
               >
