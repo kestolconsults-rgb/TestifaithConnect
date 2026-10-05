@@ -348,7 +348,7 @@ export default function MyFaith() {
             <div className="flex items-center gap-2">
               <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
               <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">
-                Stone of Remembrance
+                Your Faith Journal
               </h2>
               {streak > 0 && (
                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
@@ -477,7 +477,7 @@ export default function MyFaith() {
             <Lock className="w-8 h-8 text-blue-400 mx-auto mb-2 opacity-60" />
             <p className="text-sm font-medium text-foreground mb-1">Your faith journal is empty</p>
             <p className="text-xs text-muted-foreground mb-4">
-              Tap the + button below and choose "Journal Your Faith" to start recording God's faithfulness privately.
+              Start with a prayer, an answered hope, or an everyday mercy. This entry stays private unless you choose to share it.
             </p>
             <Link href="/post">
               <button
@@ -485,7 +485,7 @@ export default function MyFaith() {
                 data-testid="button-start-journal"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Start journaling
+                Write your first entry
               </button>
             </Link>
           </div>
