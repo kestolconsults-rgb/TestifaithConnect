@@ -60,6 +60,7 @@ import {
   type AuditLogWithAdmin,
 } from "@shared/schema";
 import { db } from "./db";
+import { toSafeTestimonyUser, toSafeTestimony, canViewTestimony } from "./privacy";
 import { eq, desc, asc, and, sql, or, like, gte, lte, inArray, isNotNull } from "drizzle-orm";
 
 export interface IStorage {
@@ -420,7 +421,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(testimonies.userId, users.id))
       .where(eq(testimonies.id, id));
 
-    if (!testimony) return undefined;
+    if (!testimony || !canViewTestimony(testimony.testimonies, userId)) return undefined;
 
     let userHasAmen = false;
     let userHasEncourage = false;
@@ -433,8 +434,8 @@ export class DatabaseStorage implements IStorage {
     }
 
     return {
-      ...testimony.testimonies,
-      user: testimony.users || undefined,
+      ...toSafeTestimony(testimony.testimonies, userId),
+      user: toSafeTestimonyUser(testimony.users, testimony.testimonies.isAnonymous),
       userHasAmen,
       userHasEncourage,
     };
@@ -461,8 +462,8 @@ export class DatabaseStorage implements IStorage {
     const results = await queryBuilder;
 
     const mapped = results.map((result) => ({
-      ...result.testimonies,
-      user: result.users || undefined,
+      ...toSafeTestimony(result.testimonies, userId),
+      user: toSafeTestimonyUser(result.users, result.testimonies.isAnonymous),
     }));
 
     return this.attachInteractionFlags(mapped, userId);
@@ -484,8 +485,8 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
 
     const mapped = results.map((result) => ({
-      ...result.testimonies,
-      user: result.users || undefined,
+      ...toSafeTestimony(result.testimonies, userId),
+      user: toSafeTestimonyUser(result.users, result.testimonies.isAnonymous),
     }));
 
     return this.attachInteractionFlags(mapped, userId);
@@ -513,24 +514,30 @@ export class DatabaseStorage implements IStorage {
     const results = await queryBuilder;
 
     const mapped = results.map((result) => ({
-      ...result.testimonies,
-      user: result.users || undefined,
+      ...toSafeTestimony(result.testimonies, userId),
+      user: toSafeTestimonyUser(result.users, result.testimonies.isAnonymous),
     }));
 
     return this.attachInteractionFlags(mapped, userId);
   }
 
-  async getUserTestimonies(userId: string): Promise<TestimonyWithUser[]> {
+  async getUserTestimonies(userId: string, includePrivate = false): Promise<TestimonyWithUser[]> {
     const results = await db
       .select()
       .from(testimonies)
       .leftJoin(users, eq(testimonies.userId, users.id))
-      .where(eq(testimonies.userId, userId))
+      .where(includePrivate
+        ? eq(testimonies.userId, userId)
+        : and(
+            eq(testimonies.userId, userId),
+            eq(testimonies.privacy, "public"),
+            or(sql`${testimonies.videoUrl} IS NULL`, eq(testimonies.moderationStatus, "approved"))
+          ))
       .orderBy(desc(testimonies.createdAt));
 
     return results.map((result) => ({
-      ...result.testimonies,
-      user: result.users || undefined,
+      ...toSafeTestimony(result.testimonies, includePrivate ? userId : undefined),
+      user: toSafeTestimonyUser(result.users, result.testimonies.isAnonymous),
       userHasAmen: false,
       userHasEncourage: false,
     }));
@@ -543,7 +550,10 @@ export class DatabaseStorage implements IStorage {
     endDate?: Date,
     userId?: string
   ): Promise<TestimonyWithUser[]> {
-    const conditions: any[] = [eq(testimonies.privacy, 'public')];
+    const conditions: any[] = [
+      eq(testimonies.privacy, "public"),
+      or(sql`${testimonies.videoUrl} IS NULL`, eq(testimonies.moderationStatus, "approved")),
+    ];
 
     // Keyword search across title and story
     if (query) {
@@ -578,8 +588,8 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(testimonies.createdAt));
 
     const mapped = results.map((result) => ({
-      ...result.testimonies,
-      user: result.users || undefined,
+      ...toSafeTestimony(result.testimonies, userId),
+      user: toSafeTestimonyUser(result.users, result.testimonies.isAnonymous),
     }));
 
     return this.attachInteractionFlags(mapped, userId);
@@ -595,7 +605,11 @@ export class DatabaseStorage implements IStorage {
         .from(featuredSchedule)
         .leftJoin(testimonies, eq(featuredSchedule.testimonyId, testimonies.id))
         .leftJoin(users, eq(testimonies.userId, users.id))
-        .where(eq(featuredSchedule.scheduledDate, localDateStr))
+        .where(and(
+          eq(featuredSchedule.scheduledDate, localDateStr),
+          eq(testimonies.privacy, "public"),
+          or(sql`${testimonies.videoUrl} IS NULL`, eq(testimonies.moderationStatus, "approved"))
+        ))
         .limit(1);
       if (scheduled?.testimonies) {
         result = { testimonies: scheduled.testimonies, users: scheduled.users };
@@ -608,7 +622,11 @@ export class DatabaseStorage implements IStorage {
         .select()
         .from(testimonies)
         .leftJoin(users, eq(testimonies.userId, users.id))
-        .where(eq(testimonies.isFeatured, true))
+        .where(and(
+          eq(testimonies.isFeatured, true),
+          eq(testimonies.privacy, "public"),
+          or(sql`${testimonies.videoUrl} IS NULL`, eq(testimonies.moderationStatus, "approved"))
+        ))
         .orderBy(desc(testimonies.featuredDate))
         .limit(1);
     }
@@ -619,6 +637,10 @@ export class DatabaseStorage implements IStorage {
         .select()
         .from(testimonies)
         .leftJoin(users, eq(testimonies.userId, users.id))
+        .where(and(
+          eq(testimonies.privacy, "public"),
+          or(sql`${testimonies.videoUrl} IS NULL`, eq(testimonies.moderationStatus, "approved"))
+        ))
         .orderBy(
           desc(sql`${testimonies.amenCount} + ${testimonies.encourageCount}`),
           desc(testimonies.createdAt)
@@ -639,8 +661,8 @@ export class DatabaseStorage implements IStorage {
     }
 
     return {
-      ...result.testimonies,
-      user: result.users || undefined,
+      ...toSafeTestimony(result.testimonies, userId),
+      user: toSafeTestimonyUser(result.users, result.testimonies.isAnonymous),
       userHasAmen,
       userHasEncourage,
     };
@@ -661,7 +683,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(testimonies)
       .leftJoin(users, eq(testimonies.userId, users.id))
-      .where(inArray(testimonies.category, interests))
+      .where(and(
+        inArray(testimonies.category, interests),
+        eq(testimonies.privacy, "public"),
+        or(sql`${testimonies.videoUrl} IS NULL`, eq(testimonies.moderationStatus, "approved"))
+      ))
       .orderBy(
         desc(sql`${testimonies.amenCount} + ${testimonies.encourageCount}`),
         desc(testimonies.createdAt)
@@ -669,8 +695,8 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
 
     const mapped = results.map((result) => ({
-      ...result.testimonies,
-      user: result.users || undefined,
+      ...toSafeTestimony(result.testimonies, userId),
+      user: toSafeTestimonyUser(result.users, result.testimonies.isAnonymous),
     }));
 
     return this.attachInteractionFlags(mapped, userId);
@@ -993,7 +1019,7 @@ export class DatabaseStorage implements IStorage {
 
     return results.map((result) => ({
       ...result.testimonies,
-      user: result.users || undefined,
+      user: toSafeTestimonyUser(result.users, result.testimonies.isAnonymous),
       userHasAmen: false,
       userHasEncourage: false,
     }));
@@ -1013,7 +1039,7 @@ export class DatabaseStorage implements IStorage {
 
     return results.map((result) => ({
       ...result.testimonies,
-      user: result.users || undefined,
+      user: toSafeTestimonyUser(result.users, result.testimonies.isAnonymous),
       userHasAmen: false,
       userHasEncourage: false,
     }));
