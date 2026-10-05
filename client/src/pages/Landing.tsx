@@ -6,7 +6,6 @@ import { CATEGORIES } from "@/lib/constants";
 import CategoryPill from "@/components/CategoryPill";
 import VideoHero from "@/components/VideoHero";
 import TestimonyCard from "@/components/TestimonyCard";
-import videoSrc from "@assets/246856_tiny_1763479354943.mp4";
 import { useQuery } from "@tanstack/react-query";
 import type { TestimonyWithUser, FaithDeclaration } from "@shared/schema";
 
@@ -35,7 +34,6 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       {/* Video Hero Section */}
       <VideoHero
-        videoSrc={videoSrc}
         headline="Remember what God has done. Encourage someone today."
         subheadline="Keep your story private or share it with a community of faith."
         height="min(560px, 78vh)"
