@@ -141,7 +141,7 @@ function Router() {
         <Switch>
           {/* ── Public routes — accessible to everyone ── */}
           <Route path="/" component={() => isAuthenticated ? <Home /> : <Landing />} />
-          <Route path="/home" component={Home} />
+          <Route path="/home" component={() => isAuthenticated ? <Home /> : <Landing />} />
           <Route path="/my-faith" component={MyFaith} />
           <Route path="/community"><Redirect to="/home" /></Route>
           <Route path="/bible" component={Bible} />
