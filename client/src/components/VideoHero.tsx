@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 
 interface VideoHeroProps {
-  videoSrc: string;
+  videoSrc?: string;
   headline?: string;
   subheadline?: string;
   scripture?: string;
@@ -19,18 +19,26 @@ export default function VideoHero({
 }: VideoHeroProps) {
   return (
     <div className="relative w-full overflow-hidden" style={{ height }}>
-      {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-        aria-hidden="true"
-        data-testid="hero-video"
-      >
-        <source src={videoSrc} type="video/mp4" />
-      </video>
+      {/* Use the supplied background video when available; the gradient keeps the hero complete without it. */}
+      {videoSrc ? (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          aria-hidden="true"
+          data-testid="hero-video"
+        >
+          <source src={videoSrc} type="video/mp4" />
+        </video>
+      ) : (
+        <div
+          className="absolute inset-0"
+          aria-hidden="true"
+          style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.55), #171717 58%, #6b342a)" }}
+        />
+      )
 
       {/* Dark Overlay for Text Readability */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/70 to-black/80" />
