@@ -33,7 +33,7 @@ import { insertTestimonySchema, type InsertTestimony } from "@shared/schema";
 import { CATEGORIES } from "@/lib/constants";
 import { VideoRecorder } from "@/components/VideoRecorder";
 import { VideoPlayer } from "@/components/VideoPlayer";
-import { Video, FileText, Upload, X, AlertCircle, Sparkles, PenLine, ChevronDown, BookOpen } from "lucide-react";
+import { Video, FileText, Upload, X, AlertCircle, Sparkles, PenLine, ChevronDown, BookOpen, LockKeyhole, Users } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { GuidedTestimonyEditor, GuidedVideoPrompts } from "@/components/GuidedTestimonyEditor";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -60,6 +60,7 @@ export default function PostTestimony() {
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
   const [postedTitle, setPostedTitle] = useState<string | null>(null);
   const [postedType, setPostedType] = useState<"text" | "video">("text");
+  const [postedPrivacy, setPostedPrivacy] = useState<"public" | "private">("private");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -82,12 +83,13 @@ export default function PostTestimony() {
       category: "General",
       story: "",
       isAnonymous: false,
-      privacy: "public",
+      privacy: "private",
       videoUrl: null,
       thumbnailUrl: null,
       videoDuration: null,
     },
   });
+  const entryPrivacy = form.watch("privacy");
 
   const handleVideoRecorded = (blob: Blob, duration: number) => {
     setVideoBlob(blob);
@@ -195,6 +197,7 @@ export default function PostTestimony() {
       queryClient.invalidateQueries({ queryKey: ["/api/testimonies"] });
       setPostedTitle(form.getValues("title") || "Your Testimony");
       setPostedType(testimonyType);
+      setPostedPrivacy(form.getValues("privacy"));
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -243,15 +246,19 @@ export default function PostTestimony() {
             <Sparkles className="w-10 h-10 text-primary" />
           </div>
           <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            {postedType === "video" ? "Testimony Submitted!" : "Testimony Shared!"}
+            {postedPrivacy === "private" ? "Saved to your journal" : postedType === "video" ? "Video submitted for review" : "Testimony shared!"}
           </h1>
-          {postedType === "video" ? (
+          {postedPrivacy === "private" ? (
             <p className="text-muted-foreground mb-2 leading-relaxed">
-              Your video testimony is under review. We'll publish it once it's approved.
+              This entry is saved in your private journal. Only you can see it unless you choose to share it.
+            </p>
+          ) : postedType === "video" ? (
+            <p className="text-muted-foreground mb-2 leading-relaxed">
+              Your video testimony is under review. We’ll publish it once it’s approved.
             </p>
           ) : (
             <p className="text-muted-foreground mb-2 leading-relaxed">
-              Your testimony is now live. May it encourage someone's faith today.
+              Your testimony is now live. May it encourage someone’s faith today.
             </p>
           )}
           <p className="font-['Crimson_Pro'] italic text-muted-foreground text-sm mb-8">
@@ -259,19 +266,19 @@ export default function PostTestimony() {
           </p>
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => setLocation("/home")}
+              onClick={() => setLocation(postedPrivacy === "private" ? "/my-testimonies" : "/home")}
               className="w-full py-3 rounded-xl font-semibold text-white text-sm"
               style={{ background: "#ef4444" }}
               data-testid="button-success-community"
             >
-              Back to Home
+              {postedPrivacy === "private" ? "View My Journal" : "Back to Home"}
             </button>
             <button
-              onClick={() => setLocation("/my-testimonies")}
+              onClick={() => setLocation(postedPrivacy === "private" ? "/my-faith" : "/my-testimonies")}
               className="w-full py-3 rounded-xl font-semibold text-sm border bg-card text-foreground"
               data-testid="button-success-my-testimonies"
             >
-              View My Testimonies
+              {postedPrivacy === "private" ? "Back to My Faith" : "View My Testimonies"}
             </button>
           </div>
         </div>
@@ -376,6 +383,38 @@ export default function PostTestimony() {
 
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="mb-6 rounded-2xl border border-primary/15 bg-primary/5 p-4 sm:p-5">
+                      <div className="mb-3">
+                        <p className="font-semibold text-foreground">Where should this entry live?</p>
+                        <p className="mt-1 text-sm text-muted-foreground">Your journal starts private. Share with the community only when you’re ready.</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          aria-pressed={entryPrivacy === "private"}
+                          onClick={() => form.setValue("privacy", "private", { shouldDirty: true })}
+                          className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors ${entryPrivacy === "private" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background text-foreground hover:bg-muted"}`}
+                          data-testid="button-privacy-private"
+                        >
+                          <LockKeyhole className="h-4 w-4" /> Private journal
+                        </button>
+                        <button
+                          type="button"
+                          aria-pressed={entryPrivacy === "public"}
+                          onClick={() => form.setValue("privacy", "public", { shouldDirty: true })}
+                          className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors ${entryPrivacy === "public" ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background text-foreground hover:bg-muted"}`}
+                          data-testid="button-privacy-community"
+                        >
+                          <Users className="h-4 w-4" /> Share with community
+                        </button>
+                      </div>
+                      <p className="mt-3 text-xs leading-relaxed text-muted-foreground" aria-live="polite">
+                        {entryPrivacy === "private"
+                          ? "Only you can see a private entry. It won’t appear in community stories."
+                          : "Community stories are visible to others. You can choose to hide your name below."}
+                      </p>
+                    </div>
+
                     <FormField
                       control={form.control}
                       name="title"
@@ -589,134 +628,114 @@ export default function PostTestimony() {
                       />
                     )}
 
-                    <FormField
-                      control={form.control}
-                      name="privacy"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Keep this entry in my private journal</FormLabel>
-                            <FormDescription>
-                              {field.value === "private"
-                                ? "Only you can see this. It will not appear in the community."
-                                : "This entry will be visible to the community. Turn on anonymity below if you prefer not to show your name."}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value === "private"}
-                              onCheckedChange={(checked) => field.onChange(checked ? "private" : "public")}
-                              data-testid="switch-privacy"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="isAnonymous"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Keep my name out of it</FormLabel>
-                            <FormDescription>
-                              The testimony still matters, even without the name
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              data-testid="switch-anonymous"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="space-y-4 rounded-lg border border-red-500/30 bg-red-500/5 p-4">
-                      <Accordion type="single" collapsible className="w-full">
-                        <AccordionItem value="guidelines" className="border-0">
-                          <AccordionTrigger className="hover:no-underline py-0" data-testid="accordion-guidelines">
-                            <div className="flex items-center gap-2 text-left">
-                              <BookOpen className="w-5 h-5 text-red-400 shrink-0" />
-                              <span className="font-semibold text-foreground">Testimony Submission Guidelines</span>
+                    {entryPrivacy === "public" && (
+                      <FormField
+                        control={form.control}
+                        name="isAnonymous"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Keep my name out of it</FormLabel>
+                              <FormDescription>
+                                The testimony still matters, even without the name
+                              </FormDescription>
                             </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="pt-4 pb-0">
-                            <div className="space-y-4 text-sm text-muted-foreground">
-                              <p className="text-foreground font-medium">
-                                TestiFaith exists to glorify Jesus Christ and bear witness to God's faithfulness. Every testimony shared on this platform should reflect that purpose.
-                              </p>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                data-testid="switch-anonymous"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
-                              <div>
-                                <h4 className="font-semibold text-foreground mb-1">1. Christ Must Be the Focus</h4>
-                                <p>All testimonies must clearly point to Jesus, not to an individual, ministry, brand, product, or personal achievement. Share what God did, not how impressive you are. Give glory to God alone, not to human effort. Avoid language that centers on self elevation.</p>
-                                <p className="italic mt-1">"Let the redeemed of the Lord tell their story" - Psalm 107:2</p>
+                    {entryPrivacy === "public" && (
+                      <div className="space-y-4 rounded-lg border border-red-500/30 bg-red-500/5 p-4">
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="guidelines" className="border-0">
+                            <AccordionTrigger className="hover:no-underline py-0" data-testid="accordion-guidelines">
+                              <div className="flex items-center gap-2 text-left">
+                                <BookOpen className="w-5 h-5 text-red-400 shrink-0" />
+                                <span className="font-semibold text-foreground">Testimony Submission Guidelines</span>
                               </div>
-
-                              <div>
-                                <h4 className="font-semibold text-foreground mb-1">2. Testimonies Are Not for Self Promotion</h4>
-                                <p>TestiFaith is not a marketing platform. The following are not allowed:</p>
-                                <ul className="list-disc list-inside mt-1 space-y-0.5">
-                                  <li>Promotion of personal brands, businesses, ministries, or social media pages</li>
-                                  <li>Requests for followers, donations, or support</li>
-                                  <li>Mention of contact details, links, or handles</li>
-                                  <li>Using testimony as a tool to build influence or visibility</li>
-                                </ul>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-4 pb-0">
+                              <div className="space-y-4 text-sm text-muted-foreground">
+                                <p className="text-foreground font-medium">
+                                  TestiFaith exists to glorify Jesus Christ and bear witness to God's faithfulness. Every testimony shared on this platform should reflect that purpose.
+                                </p>
+  
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-1">1. Christ Must Be the Focus</h4>
+                                  <p>All testimonies must clearly point to Jesus, not to an individual, ministry, brand, product, or personal achievement. Share what God did, not how impressive you are. Give glory to God alone, not to human effort. Avoid language that centers on self elevation.</p>
+                                  <p className="italic mt-1">"Let the redeemed of the Lord tell their story" - Psalm 107:2</p>
+                                </div>
+  
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-1">2. Testimonies Are Not for Self Promotion</h4>
+                                  <p>TestiFaith is not a marketing platform. The following are not allowed:</p>
+                                  <ul className="list-disc list-inside mt-1 space-y-0.5">
+                                    <li>Promotion of personal brands, businesses, ministries, or social media pages</li>
+                                    <li>Requests for followers, donations, or support</li>
+                                    <li>Mention of contact details, links, or handles</li>
+                                    <li>Using testimony as a tool to build influence or visibility</li>
+                                  </ul>
+                                </div>
+  
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-1">3. Speak of God's Faithfulness, Not Personal Glory</h4>
+                                  <p>Testimonies should highlight God's mercy, grace, power, healing, provision, or direction. His faithfulness through trials, waiting seasons, or breakthroughs. Transformation that points back to God's hand, not personal strength. Avoid exaggeration or storytelling meant to impress.</p>
+                                </div>
+  
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-1">4. Be Honest, Reverent, and Edifying</h4>
+                                  <p>Share truthfully and with humility. Avoid sensationalism or dramatic exaggeration. Ensure your testimony encourages faith, hope, and trust in God. Testimonies should build up the body of Christ, not cause confusion or comparison.</p>
+                                </div>
+  
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-1">5. Keep It Respectful and Biblically Aligned</h4>
+                                  <p>Language must be respectful, reverent, and clean. Content should align with biblical truth. Avoid controversial doctrines, accusations, or divisive narratives.</p>
+                                </div>
+  
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-1">6. Protect Privacy and Dignity</h4>
+                                  <p>Do not expose private details of others without consent. Avoid naming individuals, organizations, or institutions in a harmful way. Keep sensitive information wise and discreet.</p>
+                                </div>
+  
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-1">7. Testimonies Are Subject to Review</h4>
+                                  <p>All testimonies submitted on TestiFaith are reviewed before publishing, may be edited for clarity or alignment with platform values, and may be declined if they do not meet these guidelines. This is done to protect the spiritual purpose of the platform.</p>
+                                </div>
+  
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-1">8. The Heart Behind the Testimony Matters</h4>
+                                  <p>Before submitting, ask yourself: Does this testimony glorify Jesus? Does it point people to faith in God? Would God be pleased with the motive behind this submission? If the answer is yes, you are welcome to share.</p>
+                                </div>
                               </div>
-
-                              <div>
-                                <h4 className="font-semibold text-foreground mb-1">3. Speak of God's Faithfulness, Not Personal Glory</h4>
-                                <p>Testimonies should highlight God's mercy, grace, power, healing, provision, or direction. His faithfulness through trials, waiting seasons, or breakthroughs. Transformation that points back to God's hand, not personal strength. Avoid exaggeration or storytelling meant to impress.</p>
-                              </div>
-
-                              <div>
-                                <h4 className="font-semibold text-foreground mb-1">4. Be Honest, Reverent, and Edifying</h4>
-                                <p>Share truthfully and with humility. Avoid sensationalism or dramatic exaggeration. Ensure your testimony encourages faith, hope, and trust in God. Testimonies should build up the body of Christ, not cause confusion or comparison.</p>
-                              </div>
-
-                              <div>
-                                <h4 className="font-semibold text-foreground mb-1">5. Keep It Respectful and Biblically Aligned</h4>
-                                <p>Language must be respectful, reverent, and clean. Content should align with biblical truth. Avoid controversial doctrines, accusations, or divisive narratives.</p>
-                              </div>
-
-                              <div>
-                                <h4 className="font-semibold text-foreground mb-1">6. Protect Privacy and Dignity</h4>
-                                <p>Do not expose private details of others without consent. Avoid naming individuals, organizations, or institutions in a harmful way. Keep sensitive information wise and discreet.</p>
-                              </div>
-
-                              <div>
-                                <h4 className="font-semibold text-foreground mb-1">7. Testimonies Are Subject to Review</h4>
-                                <p>All testimonies submitted on TestiFaith are reviewed before publishing, may be edited for clarity or alignment with platform values, and may be declined if they do not meet these guidelines. This is done to protect the spiritual purpose of the platform.</p>
-                              </div>
-
-                              <div>
-                                <h4 className="font-semibold text-foreground mb-1">8. The Heart Behind the Testimony Matters</h4>
-                                <p>Before submitting, ask yourself: Does this testimony glorify Jesus? Does it point people to faith in God? Would God be pleased with the motive behind this submission? If the answer is yes, you are welcome to share.</p>
-                              </div>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-
-                      <div className="flex items-start gap-3 pt-2 border-t border-red-500/20">
-                        <Checkbox
-                          id="guidelines-checkbox"
-                          checked={guidelinesAccepted}
-                          onCheckedChange={(checked) => setGuidelinesAccepted(checked === true)}
-                          className="mt-0.5 border-red-400 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
-                          data-testid="checkbox-guidelines"
-                        />
-                        <label
-                          htmlFor="guidelines-checkbox"
-                          className="text-sm font-medium cursor-pointer leading-relaxed"
-                        >
-                          I've read the guidelines. My testimony points to Jesus and follows the community standards.
-                        </label>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+  
+                        <div className="flex items-start gap-3 pt-2 border-t border-red-500/20">
+                          <Checkbox
+                            id="guidelines-checkbox"
+                            checked={guidelinesAccepted}
+                            onCheckedChange={(checked) => setGuidelinesAccepted(checked === true)}
+                            className="mt-0.5 border-red-400 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
+                            data-testid="checkbox-guidelines"
+                          />
+                          <label
+                            htmlFor="guidelines-checkbox"
+                            className="text-sm font-medium cursor-pointer leading-relaxed"
+                          >
+                            I've read the guidelines. My testimony points to Jesus and follows the community standards.
+                          </label>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {isUploading && (
                       <div className="space-y-2">
@@ -728,11 +747,11 @@ export default function PostTestimony() {
                     <div className="flex gap-4">
                       <Button
                         type="submit"
-                        disabled={mutation.isPending || isUploading || !guidelinesAccepted}
+                        disabled={mutation.isPending || isUploading || (entryPrivacy === "public" && !guidelinesAccepted)}
                         className="flex-1"
                         data-testid="button-submit"
                       >
-                        {mutation.isPending || isUploading ? "Saving…" : "Save My Testimony"}
+                        {mutation.isPending || isUploading ? "Saving…" : entryPrivacy === "private" ? "Save to My Journal" : testimonyType === "video" ? "Submit Video for Review" : "Share with Community"}
                       </Button>
                       <Button
                         type="button"

@@ -16,6 +16,7 @@ import Bible from "@/pages/Bible";
 import Testimonies from "@/pages/Testimonies";
 import PostTestimony from "@/pages/PostTestimony";
 import MyTestimonies from "@/pages/MyTestimonies";
+import EditJournalEntry from "@/pages/EditJournalEntry";
 import Categories from "@/pages/Categories";
 import CategoryPage from "@/pages/CategoryPage";
 import TestimonyDetail from "@/pages/TestimonyDetail";
@@ -159,6 +160,9 @@ function Router() {
           </Route>
           <Route path="/my-testimonies">
             <ProtectedRoute isAuthenticated={isAuthenticated} component={MyTestimonies} />
+          </Route>
+          <Route path="/journal/:id/edit">
+            <ProtectedRoute isAuthenticated={isAuthenticated} component={EditJournalEntry} />
           </Route>
           <Route path="/profile">
             <ProtectedRoute isAuthenticated={isAuthenticated} component={Profile} />

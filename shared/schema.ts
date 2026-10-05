@@ -182,6 +182,16 @@ export const insertTestimonySchema = createInsertSchema(testimonies).omit({
 });
 
 export type InsertTestimony = z.infer<typeof insertTestimonySchema>;
+
+export const updateTestimonySchema = z.object({
+  title: z.string().min(5, "Title must be at least 5 characters").max(200, "Title is too long"),
+  category: z.enum(['Healing', 'Marriage', 'Fruitfulness', 'Finance', 'Breakthrough', 'Deliverance', 'General', 'Others']),
+  story: z.string().min(10, "Story must be at least 10 characters").max(10000, "Story is too long"),
+  privacy: z.enum(['public', 'private']),
+  isAnonymous: z.boolean(),
+}).strict();
+export type UpdateTestimony = z.infer<typeof updateTestimonySchema>;
+
 export type Testimony = typeof testimonies.$inferSelect;
 
 // Testimony interactions table (tracks who gave Amen/Encourage)

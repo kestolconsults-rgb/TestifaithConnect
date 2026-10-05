@@ -5,7 +5,7 @@ import { toSafeUser } from "./privacy";
 import { setupAuth, isAuthenticated } from "./googleAuth";
 import { sendWelcomeEmail } from "./emailService";
 import { isAdminAuthenticated, verifyPassword, createInitialAdmin, hashPassword, checkLoginRateLimit, recordLoginAttempt, regenerateSession, destroySession } from "./adminAuth";
-import { insertTestimonySchema, insertEncouragementVerseSchema, insertCommentSchema, insertFaithDeclarationSchema, updateProfileSchema, updateSettingsSchema, completeOnboardingSchema, addPasswordSchema, insertFaithExpectationSchema, insertExpectationMilestoneSchema, insertExpectationScriptureSchema, answerExpectationSchema, updateMilestoneStatusSchema, insertSupportMessageSchema } from "@shared/schema";
+import { insertTestimonySchema, updateTestimonySchema, insertEncouragementVerseSchema, insertCommentSchema, insertFaithDeclarationSchema, updateProfileSchema, updateSettingsSchema, completeOnboardingSchema, addPasswordSchema, insertFaithExpectationSchema, insertExpectationMilestoneSchema, insertExpectationScriptureSchema, answerExpectationSchema, updateMilestoneStatusSchema, insertSupportMessageSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { ObjectStorageService } from "./replit_integrations/object_storage";
@@ -354,6 +354,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching category testimonies:", error);
       res.status(500).json({ message: "Failed to fetch category testimonies" });
+    }
+  });
+
+  app.patch('/api/testimonies/:id', isAuthenticated, async (req: Request, res) => {
+    try {
+      const updates = updateTestimonySchema.parse(req.body);
+      const updated = await storage.updateTestimony(req.params.id, req.user!.id, updates);
+      if (!updated) {
+        res.status(404).json({ message: "Testimony not found or unauthorized" });
+        return;
+      }
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        console.error("Error updating testimony:", error);
+        res.status(500).json({ message: "Failed to update testimony" });
+      }
     }
   });
 

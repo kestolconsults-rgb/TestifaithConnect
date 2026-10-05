@@ -4,13 +4,22 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import TestimonyCard from "@/components/TestimonyCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
+import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { TestimonyWithUser } from "@shared/schema";
-import { PlusCircle, Search, X } from "lucide-react";
+import { PlusCircle, Search, X, LockKeyhole, Users, Video, Clock3, Trash2, ArrowRight, Pencil } from "lucide-react";
 import { format, subDays, parseISO } from "date-fns";
 
 function calculateStreak(testimonies: TestimonyWithUser[]): number {
@@ -39,6 +48,7 @@ export default function MyTestimonies() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "public" | "private">("all");
+  const [entryToDelete, setEntryToDelete] = useState<TestimonyWithUser | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -63,6 +73,7 @@ export default function MyTestimonies() {
       return await apiRequest("DELETE", `/api/testimonies/${testimonyId}`, {});
     },
     onSuccess: () => {
+      setEntryToDelete(null);
       queryClient.invalidateQueries({ queryKey: ["/api/testimonies/my"] });
       queryClient.invalidateQueries({ queryKey: ["/api/testimonies"] });
       toast({
@@ -218,22 +229,70 @@ export default function MyTestimonies() {
                 ))}
               </div>
             ) : filtered.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {filtered.map((testimony) => (
-                  <div key={testimony.id} className="relative">
-                    <TestimonyCard testimony={testimony} />
-                    <div className="absolute top-4 right-4 flex gap-2">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteMutation.mutate(testimony.id)}
-                        disabled={deleteMutation.isPending}
-                        data-testid={`button-delete-${testimony.id}`}
-                      >
-                        Delete
-                      </Button>
+                  <article key={testimony.id} className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-shadow hover:shadow-md" data-testid={`journal-entry-${testimony.id}`}>
+                    <div className="p-4 sm:p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wide">
+                            {testimony.category}
+                          </Badge>
+                          <Badge variant="outline" className={testimony.privacy === "private"
+                            ? "gap-1.5 border-primary/20 bg-primary/5 text-primary"
+                            : "gap-1.5 border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300"}>
+                            {testimony.privacy === "private" ? <LockKeyhole className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+                            {testimony.privacy === "private" ? "Private journal" : "Shared with community"}
+                          </Badge>
+                          {testimony.videoUrl && (
+                            <Badge variant="secondary" className="gap-1.5 text-[10px]">
+                              <Video className="h-3 w-3" /> Video
+                            </Badge>
+                          )}
+                          {testimony.moderationStatus === "pending" && (
+                            <Badge variant="outline" className="gap-1.5 border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-300">
+                              <Clock3 className="h-3 w-3" /> In review
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {testimony.createdAt && format(new Date(testimony.createdAt), "MMM d, yyyy")}
+                        </span>
+                      </div>
+
+                      <Link href={`/testimony/${testimony.id}`} className="group mt-4 block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                        <h2 className="font-['Space_Grotesk'] text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+                          {testimony.title || "Untitled entry"}
+                        </h2>
+                        <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                          {testimony.story}
+                        </p>
+                        <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                          Open entry <ArrowRight className="h-3.5 w-3.5" />
+                        </span>
+                      </Link>
+
+                      <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                        <Link
+                          href={`/journal/${testimony.id}/edit`}
+                          className="inline-flex items-center rounded-md px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          data-testid={`link-edit-${testimony.id}`}
+                        >
+                          <Pencil className="mr-1.5 h-4 w-4" /> Edit entry
+                        </Link>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => setEntryToDelete(testimony)}
+                          data-testid={`button-delete-${testimony.id}`}
+                        >
+                          <Trash2 className="mr-1.5 h-4 w-4" /> Delete entry
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
             ) : testimonies && testimonies.length > 0 ? (
@@ -271,6 +330,28 @@ export default function MyTestimonies() {
           </div>
         </div>
       </div>
+      <AlertDialog open={!!entryToDelete} onOpenChange={(open) => !open && setEntryToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this journal entry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              “{entryToDelete?.title || "Untitled entry"}” will be permanently removed from your journal.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Keep entry</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => entryToDelete && deleteMutation.mutate(entryToDelete.id)}
+              data-testid="button-confirm-delete-entry"
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete entry"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
