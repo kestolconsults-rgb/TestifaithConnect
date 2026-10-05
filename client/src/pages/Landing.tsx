@@ -39,17 +39,6 @@ export default function Landing() {
         height="min(560px, 78vh)"
       />
 
-      <section className="px-4 py-5 border-b bg-card/50">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-3">
-          <a href="/testimonies" className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground hover:opacity-90">
-            Browse testimonies
-          </a>
-          <a href="/signin" className="inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-background px-6 text-sm font-semibold text-foreground hover:bg-muted">
-            Start a private journal
-          </a>
-        </div>
-      </section>
-
       {/* Faith Declaration of the Day */}
       <section className="px-4 py-16 md:py-24">
         <div className="max-w-4xl mx-auto">
