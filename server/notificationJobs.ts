@@ -20,7 +20,7 @@ export async function sendDailyDeclarationNow(): Promise<{ recipientCount: numbe
         body: declaration.declaration,
         url: "/",
         tag: "daily-declaration",
-      });
+      }, "notifyDailyDeclaration");
       if (u.email) {
         await sendDailyDeclarationEmail(
           u.email,
