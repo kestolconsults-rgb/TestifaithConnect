@@ -166,6 +166,162 @@ export default function MyFaith() {
         </div>
       </section>
 
+      {/* Your Faith Journal — Private Journal */}
+      <section className="px-5 mb-6">
+        {!user ? (
+          <div className="flex items-center gap-2 mb-1">
+            <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Your Faith Journal</h2>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+              <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">
+                Your Faith Journal
+              </h2>
+              {streak > 0 && (
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                  <Flame className="w-3 h-3 text-amber-500" />
+                  <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                    {streak}-day streak
+                  </span>
+                </div>
+              )}
+            </div>
+            <Link href="/my-testimonies">
+              <button className="text-xs font-medium text-blue-500 dark:text-blue-400" data-testid="link-see-all-private">
+                See all
+              </button>
+            </Link>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground mb-1">
+          {user ? "Your private faith journal — only visible to you" : "A private place to record what God has done — only you can see it"}
+        </p>
+        <p className="font-['Crimson_Pro'] italic text-muted-foreground text-[13px] leading-snug mb-3">
+          "Write the vision; make it plain on tablets, so he may run who reads it." — Hab. 2:2
+        </p>
+
+        {!user ? (
+          <div
+            className="rounded-2xl p-6 border"
+            style={{
+              background: "color-mix(in srgb, hsl(var(--primary)) 5%, hsl(var(--background)))",
+              borderColor: "color-mix(in srgb, hsl(var(--primary)) 18%, transparent)",
+            }}
+            data-testid="guest-signin-cta"
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: "color-mix(in srgb, hsl(var(--primary)) 12%, transparent)" }}
+              >
+                <Feather className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1">
+                  Keep a private faith journal
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                  Write down what God has done — healings, answered prayers, breakthroughs — a record only you can see.
+                </p>
+                <div className="flex gap-2 flex-wrap mb-3">
+                  <Link href="/signin">
+                    <button
+                      className="flex items-center gap-1.5 text-xs font-semibold text-white px-4 py-2 rounded-full"
+                      style={{ background: "#ef4444" }}
+                      data-testid="button-signin-cta-home"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      Sign In
+                    </button>
+                  </Link>
+                  <Link href="/create-account">
+                    <button
+                      className="text-xs font-semibold px-4 py-2 rounded-full border"
+                      style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}
+                      data-testid="button-create-account-cta-home"
+                    >
+                      Create account
+                    </button>
+                  </Link>
+                </div>
+                <Link href="/home">
+                  <button
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    data-testid="link-browse-community-home"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Browse community testimonies first
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : myLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-28 rounded-2xl" />
+            <Skeleton className="h-28 rounded-2xl" />
+          </div>
+        ) : privateTestimonies.length > 0 ? (
+          <div className="space-y-3">
+            {privateTestimonies.slice(0, 3).map((t) => (
+              <Link key={t.id} href={`/testimony/${t.id}`}>
+                <div
+                  className="rounded-2xl p-4 border cursor-pointer hover-elevate"
+                  style={{
+                    background: "color-mix(in srgb, #3b82f6 5%, hsl(var(--background)))",
+                    borderColor: "color-mix(in srgb, #3b82f6 20%, transparent)",
+                  }}
+                  data-testid={`private-entry-${t.id}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] font-bold uppercase border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30"
+                    >
+                      {t.category}
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground">
+                      {format(new Date(t.createdAt ?? Date.now()), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                  {t.title && (
+                    <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1">{t.title}</p>
+                  )}
+                  <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">{t.story}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div
+            className="rounded-2xl p-6 border text-center"
+            style={{
+              background: "color-mix(in srgb, #3b82f6 4%, hsl(var(--background)))",
+              borderColor: "color-mix(in srgb, #3b82f6 15%, transparent)",
+            }}
+            data-testid="empty-private-journal"
+          >
+            <Lock className="w-8 h-8 text-blue-400 mx-auto mb-2 opacity-60" />
+            <p className="text-sm font-medium text-foreground mb-1">Your faith journal is empty</p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Start with a prayer, an answered hope, or an everyday mercy. This entry stays private unless you choose to share it.
+            </p>
+            <Link href="/post">
+              <button
+                className="inline-flex items-center gap-2 text-xs font-semibold text-blue-500 dark:text-blue-400 border border-blue-200 dark:border-blue-800 px-4 py-2 rounded-full"
+                data-testid="button-start-journal"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Write your first entry
+              </button>
+            </Link>
+          </div>
+        )}
+      </section>
+
       {/* Daily Declaration */}
       <div className="px-5 pt-4 mb-5">
         {declarationLoading ? (
@@ -335,162 +491,6 @@ export default function MyFaith() {
           <EncouragementCard verse={encouragementVerse} />
         </section>
       )}
-
-      {/* Your Faith Journal — Private Journal */}
-      <section className="px-5 mb-6">
-        {!user ? (
-          <div className="flex items-center gap-2 mb-1">
-            <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Your Faith Journal</h2>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-              <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">
-                Your Faith Journal
-              </h2>
-              {streak > 0 && (
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-                  <Flame className="w-3 h-3 text-amber-500" />
-                  <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                    {streak}-day streak
-                  </span>
-                </div>
-              )}
-            </div>
-            <Link href="/my-testimonies">
-              <button className="text-xs font-medium text-blue-500 dark:text-blue-400" data-testid="link-see-all-private">
-                See all
-              </button>
-            </Link>
-          </div>
-        )}
-        <p className="text-xs text-muted-foreground mb-1">
-          {user ? "Your private faith journal — only visible to you" : "A private place to record what God has done — only you can see it"}
-        </p>
-        <p className="font-['Crimson_Pro'] italic text-muted-foreground text-[13px] leading-snug mb-3">
-          "Write the vision; make it plain on tablets, so he may run who reads it." — Hab. 2:2
-        </p>
-
-        {!user ? (
-          <div
-            className="rounded-2xl p-6 border"
-            style={{
-              background: "color-mix(in srgb, hsl(var(--primary)) 5%, hsl(var(--background)))",
-              borderColor: "color-mix(in srgb, hsl(var(--primary)) 18%, transparent)",
-            }}
-            data-testid="guest-signin-cta"
-          >
-            <div className="flex items-start gap-4">
-              <div
-                className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: "color-mix(in srgb, hsl(var(--primary)) 12%, transparent)" }}
-              >
-                <Feather className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1">
-                  Keep a private faith journal
-                </p>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                  Write down what God has done — healings, answered prayers, breakthroughs — a record only you can see.
-                </p>
-                <div className="flex gap-2 flex-wrap mb-3">
-                  <Link href="/signin">
-                    <button
-                      className="flex items-center gap-1.5 text-xs font-semibold text-white px-4 py-2 rounded-full"
-                      style={{ background: "#ef4444" }}
-                      data-testid="button-signin-cta-home"
-                    >
-                      <LogIn className="w-3.5 h-3.5" />
-                      Sign In
-                    </button>
-                  </Link>
-                  <Link href="/create-account">
-                    <button
-                      className="text-xs font-semibold px-4 py-2 rounded-full border"
-                      style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}
-                      data-testid="button-create-account-cta-home"
-                    >
-                      Create account
-                    </button>
-                  </Link>
-                </div>
-                <Link href="/home">
-                  <button
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    data-testid="link-browse-community-home"
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    Browse community testimonies first
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        ) : myLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-28 rounded-2xl" />
-            <Skeleton className="h-28 rounded-2xl" />
-          </div>
-        ) : privateTestimonies.length > 0 ? (
-          <div className="space-y-3">
-            {privateTestimonies.slice(0, 3).map((t) => (
-              <Link key={t.id} href={`/testimony/${t.id}`}>
-                <div
-                  className="rounded-2xl p-4 border cursor-pointer hover-elevate"
-                  style={{
-                    background: "color-mix(in srgb, #3b82f6 5%, hsl(var(--background)))",
-                    borderColor: "color-mix(in srgb, #3b82f6 20%, transparent)",
-                  }}
-                  data-testid={`private-entry-${t.id}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] font-bold uppercase border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30"
-                    >
-                      {t.category}
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground">
-                      {format(new Date(t.createdAt ?? Date.now()), "MMM d, yyyy")}
-                    </span>
-                  </div>
-                  {t.title && (
-                    <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-1">{t.title}</p>
-                  )}
-                  <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">{t.story}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div
-            className="rounded-2xl p-6 border text-center"
-            style={{
-              background: "color-mix(in srgb, #3b82f6 4%, hsl(var(--background)))",
-              borderColor: "color-mix(in srgb, #3b82f6 15%, transparent)",
-            }}
-            data-testid="empty-private-journal"
-          >
-            <Lock className="w-8 h-8 text-blue-400 mx-auto mb-2 opacity-60" />
-            <p className="text-sm font-medium text-foreground mb-1">Your faith journal is empty</p>
-            <p className="text-xs text-muted-foreground mb-4">
-              Start with a prayer, an answered hope, or an everyday mercy. This entry stays private unless you choose to share it.
-            </p>
-            <Link href="/post">
-              <button
-                className="inline-flex items-center gap-2 text-xs font-semibold text-blue-500 dark:text-blue-400 border border-blue-200 dark:border-blue-800 px-4 py-2 rounded-full"
-                data-testid="button-start-journal"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Write your first entry
-              </button>
-            </Link>
-          </div>
-        )}
-      </section>
 
       {/* On This Day */}
       {user && onThisDayEntries.length > 0 && (
