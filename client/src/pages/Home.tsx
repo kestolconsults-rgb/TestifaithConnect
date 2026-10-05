@@ -217,7 +217,7 @@ export default function Home() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (debouncedQuery) params.set("q", debouncedQuery);
-      if (activeCategory !== "All") params.set("category", activeCategory);
+      if (activeCategory !== "All") params.set("categories", activeCategory);
       const res = await fetch(`/api/testimonies/search?${params}`);
       if (!res.ok) throw new Error("Search failed");
       return res.json();
@@ -247,7 +247,7 @@ export default function Home() {
   return (
     <div
       ref={containerRef}
-      className="min-h-screen bg-background pb-28 overflow-y-auto"
+      className="mx-auto w-full max-w-5xl min-h-screen bg-background pb-28 overflow-y-auto"
       style={{ WebkitOverflowScrolling: "touch" }}
     >
       {/* Pull-to-refresh indicator */}
@@ -312,7 +312,7 @@ export default function Home() {
         })}
       </div>
 
-      {/* Trending This Week */}
+      {/* Most Encouraged */}
       {!debouncedQuery && activeCategory === "All" && !isLoading && allTestimonies && allTestimonies.length > 0 && (() => {
         const trending = [...allTestimonies]
           .filter(t => !t.videoUrl)
@@ -323,7 +323,7 @@ export default function Home() {
           <section className="mb-5">
             <div className="flex items-center gap-2 px-5 mb-3">
               <Flame className="w-4 h-4 text-amber-500" />
-              <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Trending This Week</h2>
+              <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Most Encouraged</h2>
             </div>
             <div className="flex gap-3 overflow-x-auto px-5 pb-1 hide-scrollbar">
               {trending.map((t) => {
