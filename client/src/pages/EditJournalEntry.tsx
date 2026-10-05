@@ -141,7 +141,7 @@ export default function EditJournalEntry() {
         {entry.videoUrl && (
           <div className="flex items-start gap-3 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">
             <Video className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>Your attached video will stay with this entry. To change the video, please contact support.</p>
+            <p>Your attached video will stay with this entry. Video changes aren't available from this editor.</p>
           </div>
         )}
         <div className="flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-end">
