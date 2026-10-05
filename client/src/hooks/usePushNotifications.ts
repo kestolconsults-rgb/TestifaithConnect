@@ -16,33 +16,63 @@ export function usePushNotifications() {
   const [permission, setPermission] = useState<PushPermission>("default");
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const supported = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
-
-  useEffect(() => {
-    if (!supported) return;
-    setPermission(Notification.permission as PushPermission);
-    checkSubscription();
-  }, [supported]);
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const supported =
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window;
+  const hasVapidKey = Boolean(VAPID_PUBLIC_KEY);
 
   const checkSubscription = useCallback(async () => {
-    if (!supported) return;
+    if (!supported) {
+      setIsReady(true);
+      return;
+    }
+
     try {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
       setIsSubscribed(!!sub);
     } catch {
-      // ignore
+      // Keep the prompt from blocking the rest of the app if push is unavailable.
+    } finally {
+      setIsReady(true);
     }
   }, [supported]);
 
+  useEffect(() => {
+    if (!supported) {
+      setIsReady(true);
+      return;
+    }
+    setPermission(Notification.permission as PushPermission);
+    void checkSubscription();
+  }, [supported, checkSubscription]);
+
   const subscribe = useCallback(async () => {
-    if (!supported || !VAPID_PUBLIC_KEY) return;
+    setError(null);
+    if (!supported) {
+      setError("Notifications are not supported by this browser.");
+      return;
+    }
+    if (!VAPID_PUBLIC_KEY) {
+      setError("Notifications are not configured yet. Please try again later.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const reg = await navigator.serviceWorker.ready;
-      const permission = await Notification.requestPermission();
-      setPermission(permission as PushPermission);
-      if (permission !== "granted") return;
+      const nextPermission = await Notification.requestPermission();
+      setPermission(nextPermission as PushPermission);
+      if (nextPermission !== "granted") {
+        if (nextPermission === "denied") {
+          setError("Notifications are blocked in your browser settings. Allow them for Testifaith to continue.");
+        }
+        return;
+      }
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
@@ -63,6 +93,7 @@ export function usePushNotifications() {
       setIsSubscribed(true);
     } catch (err) {
       console.error("Push subscription failed:", err);
+      setError("We couldn't enable notifications right now. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -70,6 +101,7 @@ export function usePushNotifications() {
 
   const unsubscribe = useCallback(async () => {
     if (!supported) return;
+    setError(null);
     setIsLoading(true);
     try {
       const reg = await navigator.serviceWorker.ready;
@@ -81,10 +113,11 @@ export function usePushNotifications() {
       }
     } catch (err) {
       console.error("Push unsubscribe failed:", err);
+      setError("We couldn't update your notification settings. Please try again.");
     } finally {
       setIsLoading(false);
     }
   }, [supported]);
 
-  return { supported, permission, isSubscribed, isLoading, subscribe, unsubscribe };
+  return { supported, hasVapidKey, permission, isSubscribed, isLoading, isReady, error, subscribe, unsubscribe };
 }
