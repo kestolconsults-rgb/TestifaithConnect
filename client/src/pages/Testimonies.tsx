@@ -187,7 +187,7 @@ export default function Testimonies() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (debouncedQuery) params.set("q", debouncedQuery);
-      if (activeCategory !== "All") params.set("category", activeCategory);
+      if (activeCategory !== "All") params.set("categories", activeCategory);
       const res = await fetch(`/api/testimonies/search?${params}`);
       if (!res.ok) throw new Error("Search failed");
       return res.json();
@@ -212,10 +212,10 @@ export default function Testimonies() {
   });
 
   return (
-    <div className="min-h-screen bg-background pb-36 overflow-y-auto">
+    <div className="mx-auto min-h-screen w-full max-w-6xl bg-background pb-36 overflow-y-auto">
       {/* Sticky top bar */}
       <div
-        className="sticky top-0 z-20 px-4 pt-3 pb-3 border-b"
+        className="sticky top-[57px] z-20 px-4 pt-3 pb-3 border-b lg:top-20"
         style={{ background: "hsl(var(--background) / 0.94)", backdropFilter: "blur(12px)" }}
       >
         {/* Title row */}
