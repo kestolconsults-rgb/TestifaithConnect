@@ -38,7 +38,7 @@ export default function VideoHero({
           aria-hidden="true"
           style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.55), #171717 58%, #6b342a)" }}
         />
-      )
+      )}
 
       {/* Dark Overlay for Text Readability */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/70 to-black/80" />
