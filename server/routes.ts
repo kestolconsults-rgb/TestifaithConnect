@@ -10,7 +10,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { ObjectStorageService } from "./replit_integrations/object_storage";
 import { s3StorageService } from "./s3Storage";
-import { sendPushNotification } from "./pushService";
+import { isPushConfigured, sendPushNotification } from "./pushService";
 import { sendNewsletterEmail, sendDailyDeclarationEmail } from "./emailService";
 import { insertNewsletterSchema, updateAppSettingsSchema } from "@shared/schema";
 import { sendDailyDeclarationNow, sendNewsletterNow } from "./notificationJobs";
@@ -433,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             body: `${senderName} said Amen to your testimony "${testimony.title || "your testimony"}"`,
             url: `/testimony/${id}`,
             tag: `amen-${id}`,
-          });
+          }, "notifyOnAmen");
         }
         res.json({ action: 'added' });
       }
@@ -467,7 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             body: `${senderName} sent you encouragement for "${testimony.title || "your testimony"}"`,
             url: `/testimony/${id}`,
             tag: `encourage-${id}`,
-          });
+          }, "notifyOnEncourage");
         }
         res.json({ action: 'added' });
       }
@@ -477,21 +477,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // The public VAPID key is safe to expose; return it only when the matching private key is configured.
+  app.get('/api/push/config', (_req: Request, res: Response) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ publicKey: isPushConfigured ? process.env.VAPID_PUBLIC_KEY!.trim() : null });
+  });
+
   // Push notification subscription routes
   app.post('/api/push/subscribe', isAuthenticated, async (req: Request, res) => {
     try {
-      const { endpoint, p256dh, auth } = req.body;
-      if (!endpoint || !p256dh || !auth) {
-        return res.status(400).json({ message: "Missing subscription fields" });
-      }
+      const subscription = z.object({
+        endpoint: z.string().url().max(4096),
+        p256dh: z.string().min(1).max(512),
+        auth: z.string().min(1).max(512),
+      }).strict().parse(req.body);
       await storage.savePushSubscription({
         userId: req.user!.id,
-        endpoint,
-        p256dh,
-        auth,
+        ...subscription,
       });
       res.json({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid subscription data", errors: error.errors });
+      }
       console.error("Push subscribe error:", error);
       res.status(500).json({ message: "Failed to save subscription" });
     }
@@ -499,11 +507,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/push/unsubscribe', isAuthenticated, async (req: Request, res) => {
     try {
-      const { endpoint } = req.body;
-      if (!endpoint) return res.status(400).json({ message: "Missing endpoint" });
-      await storage.deletePushSubscription(endpoint);
+      const { endpoint } = z.object({ endpoint: z.string().url().max(4096) }).strict().parse(req.body);
+      await storage.deletePushSubscription(endpoint, req.user!.id);
       res.json({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid subscription data", errors: error.errors });
+      }
       console.error("Push unsubscribe error:", error);
       res.status(500).json({ message: "Failed to remove subscription" });
     }
@@ -607,6 +617,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const comment = await storage.createComment(data);
       res.json(comment);
+
+      void storage.getTestimony(id)
+        .then((testimony) => {
+          if (testimony && testimony.userId !== userId) {
+            const senderName = req.user!.firstName || "Someone";
+            void sendPushNotification(testimony.userId, {
+              title: "New comment on your testimony",
+              body: `${senderName} commented on "${testimony.title || "your testimony"}"`,
+              url: `/testimony/${id}`,
+              tag: `comment-${id}`,
+            }, "notifyOnComment");
+          }
+        })
+        .catch((error) => console.error("[push] Failed to load testimony for comment alert:", error));
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid data", errors: error.errors });
