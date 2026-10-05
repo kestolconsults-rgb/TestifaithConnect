@@ -748,7 +748,8 @@ export default function Bible() {
             <button
               key={t}
               onClick={() => setTestament(t)}
-              className="flex-1 py-2 rounded-lg text-sm font-semibold transition-colors"
+              className="flex-1 py-2 rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+               aria-pressed={testament === t}
               style={{
                 background: testament === t ? "hsl(var(--primary))" : "transparent",
                 color: testament === t ? "#fff" : "hsl(var(--muted-foreground))",
@@ -764,13 +765,14 @@ export default function Bible() {
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl border bg-card mb-4" style={{ borderColor: "hsl(var(--border))" }}>
           <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
           <input
+            aria-label={`Filter ${testament === "OT" ? "Old Testament" : "New Testament"} books`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={`Filter ${testament === "OT" ? "OT" : "NT"} books…`}
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
             data-testid="input-filter-books"
           />
-          {searchQuery && <button onClick={() => setSearchQuery("")}><X className="w-3.5 h-3.5 text-muted-foreground" /></button>}
+          {searchQuery && <button type="button" onClick={() => setSearchQuery("")} aria-label="Clear book filter"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>}
         </div>
 
         {/* Book list */}
