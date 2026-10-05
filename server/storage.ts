@@ -170,7 +170,7 @@ export interface IStorage {
 
   // Push subscriptions
   savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
-  deletePushSubscription(endpoint: string): Promise<void>;
+  deletePushSubscription(endpoint: string, userId?: string): Promise<void>;
   getPushSubscriptionsForUser(userId: string): Promise<PushSubscription[]>;
 
   // Newsletters
@@ -1478,8 +1478,11 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async deletePushSubscription(endpoint: string): Promise<void> {
-    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+  async deletePushSubscription(endpoint: string, userId?: string): Promise<void> {
+    const conditions = userId
+      ? and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.userId, userId))
+      : eq(pushSubscriptions.endpoint, endpoint);
+    await db.delete(pushSubscriptions).where(conditions);
   }
 
   async getPushSubscriptionsForUser(userId: string): Promise<PushSubscription[]> {
