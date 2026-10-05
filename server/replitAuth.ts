@@ -80,6 +80,9 @@ export async function setupAuth(app: Express) {
     verified: passport.AuthenticateCallback
   ) => {
     const claims = tokens.claims();
+    if (!claims || typeof claims["sub"] !== "string") {
+      return verified(new Error("Replit OIDC response is missing a subject"), false);
+    }
     const user: Express.User = {
       id: claims["sub"] as string,
       email: claims["email"] as string | undefined,
