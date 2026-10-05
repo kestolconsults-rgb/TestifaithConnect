@@ -70,12 +70,14 @@ export function GuidedTestimonyEditor({ value, onChange, isVideoMode = false }: 
   });
 
   useEffect(() => {
-    if (value && !Object.values(sectionContents).some(s => s.trim())) {
-      const sections = parseExistingContent(value);
-      if (Object.values(sections).some(s => s.trim())) {
-        setSectionContents(sections);
-      }
+    if (!value?.trim()) return;
+
+    const sections = parseExistingContent(value);
+    if (!Object.values(sections).some((section) => section.trim())) {
+      // Preserve free-form writing when someone switches back to the guided prompts.
+      sections.beginning = value;
     }
+    setSectionContents(sections);
   }, []);
 
   const parseExistingContent = (content: string): Record<string, string> => {
