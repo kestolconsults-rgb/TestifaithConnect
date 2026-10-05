@@ -1,6 +1,7 @@
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { useEffect } from "react";
 import InstallBanner from "@/components/InstallBanner";
+import PushNotificationPrompt from "@/components/PushNotificationPrompt";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -189,6 +190,7 @@ export default function App() {
       <ThemeProvider>
         <TooltipProvider>
           <Toaster />
+          <PushNotificationPrompt />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
