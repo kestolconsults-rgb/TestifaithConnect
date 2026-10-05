@@ -595,9 +595,11 @@ export default function PostTestimony() {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base">Just for my journal</FormLabel>
+                            <FormLabel className="text-base">Keep this entry in my private journal</FormLabel>
                             <FormDescription>
-                              Only you can see this — it won't appear in the community feed
+                              {field.value === "private"
+                                ? "Only you can see this. It will not appear in the community."
+                                : "This entry will be visible to the community. Turn on anonymity below if you prefer not to show your name."}
                             </FormDescription>
                           </div>
                           <FormControl>
