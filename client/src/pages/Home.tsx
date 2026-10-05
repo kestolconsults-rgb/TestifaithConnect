@@ -32,53 +32,80 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
   General:       "linear-gradient(135deg, #6b7280 0%, #374151 100%)",
 };
 
-function VideoCard({ testimony }: { testimony: TestimonyWithUser }) {
+function formatVideoDuration(duration?: number | null) {
+  if (!duration || !Number.isFinite(duration)) return null;
+  const minutes = Math.floor(duration / 60);
+  const seconds = Math.round(duration % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
+function VideoCard({ testimony, featured = false }: { testimony: TestimonyWithUser; featured?: boolean }) {
   const displayName = testimony.isAnonymous ? "Anonymous" : `${testimony.user?.firstName || ""} ${testimony.user?.lastName || ""}`.trim() || "Anonymous";
   const initials = testimony.isAnonymous ? "A" : getInitials(testimony.user?.firstName, testimony.user?.lastName);
   const gradient = CATEGORY_GRADIENTS[testimony.category] || CATEGORY_GRADIENTS.General;
+  const duration = formatVideoDuration(testimony.videoDuration);
+  const title = testimony.title || "A story of God’s faithfulness";
 
   return (
-    <Link href={`/testimony/${testimony.id}`}>
-      <div className="rounded-2xl overflow-hidden border bg-card hover-elevate cursor-pointer" data-testid={`video-card-${testimony.id}`}>
-        <div className="relative h-44 flex items-center justify-center overflow-hidden" style={{ background: testimony.thumbnailUrl ? undefined : gradient }}>
+    <Link href={`/testimony/${testimony.id}`} className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+      <article className="h-full overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-focus-visible:shadow-xl" data-testid={`video-card-${testimony.id}`}>
+        <div className="relative aspect-video overflow-hidden" style={{ background: testimony.thumbnailUrl ? undefined : gradient }}>
           {testimony.thumbnailUrl ? (
-            <img src={testimony.thumbnailUrl} alt={testimony.title || "Video"} className="absolute inset-0 w-full h-full object-cover" />
-          ) : (
-            <div
-              className="absolute inset-0 opacity-30"
-              style={{ background: "repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0px, rgba(255,255,255,.05) 2px, transparent 2px, transparent 12px)" }}
+            <img
+              src={testimony.thumbnailUrl}
+              alt=""
+              loading="lazy"
+              className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105 motion-reduce:transform-none"
             />
+          ) : (
+            <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+              <div className="absolute -right-8 -top-12 h-48 w-48 rounded-full border border-white/20" />
+              <div className="absolute -right-1 top-0 h-36 w-36 rounded-full bg-white/15 blur-2xl" />
+              <div className="absolute -bottom-12 -left-5 h-40 w-40 rounded-full bg-black/10 blur-2xl" />
+              <div className="absolute inset-0 opacity-20" style={{ background: "repeating-linear-gradient(45deg, rgba(255,255,255,.12) 0px, rgba(255,255,255,.12) 1px, transparent 1px, transparent 14px)" }} />
+              <span className="absolute bottom-[-3.5rem] right-3 font-serif text-[13rem] font-bold leading-none text-white/15">{testimony.category.slice(0, 1)}</span>
+            </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center z-10">
-            <Play className="w-6 h-6 text-white ml-0.5" />
-          </div>
-          <div className="absolute bottom-3 left-3 z-10">
-            <Badge className={`text-[10px] font-bold uppercase ${CATEGORY_COLORS[testimony.category as keyof typeof CATEGORY_COLORS] || ""}`}>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/20" />
+
+          <div className="absolute inset-x-3 top-3 z-10 flex items-center justify-between gap-2 sm:inset-x-4 sm:top-4">
+            <span className="rounded-full border border-white/25 bg-black/25 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
               {testimony.category}
-            </Badge>
+            </span>
+            {duration && (
+              <span className="rounded-md bg-black/55 px-2 py-1 text-xs font-semibold tabular-nums text-white backdrop-blur-md">
+                {duration}
+              </span>
+            )}
           </div>
-          <div className="absolute top-3 right-3 z-10 text-white text-[10px] font-semibold bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm">
-            Video
-          </div>
-        </div>
-        <div className="p-3">
-          <p className="font-['Space_Grotesk'] text-sm font-bold text-foreground mb-2 line-clamp-1">{testimony.title || "Video Testimony"}</p>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Avatar className="w-6 h-6">
-                <AvatarImage src={testimony.user?.profileImageUrl || undefined} />
-                <AvatarFallback className="text-[9px] bg-muted">{initials}</AvatarFallback>
-              </Avatar>
-              <span className="text-xs text-muted-foreground">{displayName}</span>
-            </div>
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <Heart className="w-3.5 h-3.5" />
-              <span className="text-xs">{testimony.amenCount || 0}</span>
-            </div>
+
+          <span className="absolute left-1/2 top-1/2 z-10 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/50 bg-white/25 text-white shadow-lg backdrop-blur-md transition duration-300 group-hover:scale-110 group-hover:bg-white group-hover:text-primary group-focus-visible:bg-white group-focus-visible:text-primary sm:h-16 sm:w-16">
+            <Play className="ml-1 h-6 w-6 fill-current sm:h-7 sm:w-7" aria-hidden="true" />
+            <span className="sr-only">Play video testimony</span>
+          </span>
+
+          <div className="absolute inset-x-4 bottom-4 z-10 text-white sm:inset-x-5 sm:bottom-5">
+            {featured && <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/75">Featured story</p>}
+            <h3 className={`font-['Space_Grotesk'] font-bold leading-tight ${featured ? "text-xl sm:text-2xl" : "text-lg"} line-clamp-2`}>{title}</h3>
           </div>
         </div>
-      </div>
+
+        <div className="flex items-center justify-between gap-3 p-3.5 sm:p-4">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Avatar className="h-9 w-9 shrink-0 ring-2 ring-background">
+              <AvatarImage src={testimony.user?.profileImageUrl || undefined} alt="" />
+              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
+              <p className="text-xs text-muted-foreground">Shared a story of faith</p>
+            </div>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-primary transition-transform group-hover:translate-x-0.5">
+            Watch <ArrowRight className="h-3.5 w-3.5" />
+          </span>
+        </div>
+      </article>
     </Link>
   );
 }
@@ -398,18 +425,26 @@ export default function Home() {
 
       {/* Video Testimonies — only shown when there are videos */}
       {!debouncedQuery && activeCategory === "All" && (isLoading || videoTestimonies.length > 0) && (
-        <section className="px-5 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">Video Testimonies</h2>
-            <Link href="/testimonies">
-              <button className="text-xs font-medium text-primary" data-testid="link-see-all-videos">See all</button>
+        <section className="mb-8 px-5" aria-labelledby="video-testimonies-heading">
+          <div className="mb-4 flex items-end justify-between gap-4">
+            <div>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Real voices. Real hope.</p>
+              <h2 id="video-testimonies-heading" className="font-['Space_Grotesk'] text-xl font-bold text-foreground sm:text-2xl">Video testimonies</h2>
+              <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground sm:text-sm">Hear how God has met people in the middle of their story.</p>
+            </div>
+            <Link href="/testimonies?type=video" className="mb-0.5 inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary/80" data-testid="link-see-all-videos">
+              See all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
           {isLoading ? (
             <Skeleton className="h-64 rounded-2xl" />
           ) : (
-            <div className="grid grid-cols-1 gap-3">
-              {videoTestimonies.slice(0, 2).map((t) => <VideoCard key={t.id} testimony={t} />)}
+            <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-[1.2fr_1fr]">
+              {videoTestimonies.slice(0, 2).map((t, index) => (
+                <div className="w-[86%] shrink-0 snap-start md:w-auto" key={t.id}>
+                  <VideoCard testimony={t} featured={index === 0} />
+                </div>
+              ))}
             </div>
           )}
         </section>
