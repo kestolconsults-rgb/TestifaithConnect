@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { CATEGORY_COLORS, CATEGORIES } from "@/lib/constants";
 import { format } from "date-fns";
-import { Heart, MessageCircle, Search, ArrowLeft, BookOpen, SlidersHorizontal } from "lucide-react";
+import { Heart, MessageCircle, Search, ArrowLeft, BookOpen, SlidersHorizontal, Video } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -177,6 +177,7 @@ export default function Testimonies() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [videoOnly, setVideoOnly] = useState(() => new URLSearchParams(window.location.search).get("type") === "video");
 
   const { data: allTestimonies, isLoading } = useQuery<TestimonyWithUser[]>({
     queryKey: ["/api/testimonies"],
@@ -204,8 +205,18 @@ export default function Testimonies() {
   const isFiltered = !!debouncedQuery || activeCategory !== "All";
   const rawList = isFiltered ? (searchResults || []) : (allTestimonies || []);
   const loading = isFiltered ? searchLoading : isLoading;
+  const visibleTestimonies = videoOnly
+    ? rawList.filter((testimony) => Boolean(testimony.videoUrl) && testimony.moderationStatus === "approved")
+    : rawList;
 
-  const sorted = [...rawList].sort((a, b) => {
+  const clearVideoFilter = () => {
+    setVideoOnly(false);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("type");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+
+  const sorted = [...visibleTestimonies].sort((a, b) => {
     if (sortBy === "amened") return (b.amenCount || 0) - (a.amenCount || 0);
     if (sortBy === "encouraged") return (b.encourageCount || 0) - (a.encourageCount || 0);
     return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
@@ -233,11 +244,13 @@ export default function Testimonies() {
               className="font-['Space_Grotesk'] text-lg font-bold text-foreground leading-tight"
               data-testid="text-page-title"
             >
-              Testimonies
+              {videoOnly ? "Video testimonies" : "Testimonies"}
             </h1>
             {!loading && (
               <p className="text-[11px] text-muted-foreground">
-                {sorted.length} {sorted.length === 1 ? "testimony" : "testimonies"}
+                {sorted.length} {videoOnly
+                  ? sorted.length === 1 ? "video testimony" : "video testimonies"
+                  : sorted.length === 1 ? "testimony" : "testimonies"}
               </p>
             )}
           </div>
@@ -272,6 +285,17 @@ export default function Testimonies() {
             )}
           </div>
         </div>
+
+        {videoOnly && (
+          <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold text-primary">
+              <Video className="h-4 w-4" /> Showing approved video stories
+            </span>
+            <button onClick={clearVideoFilter} className="text-xs font-semibold text-foreground hover:text-primary" data-testid="button-show-all-testimonies">
+              Show all
+            </button>
+          </div>
+        )}
 
         {/* Search bar */}
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl border bg-card mb-3">
@@ -342,14 +366,16 @@ export default function Testimonies() {
         ) : (
           <EmptyState
             type={debouncedQuery ? "search" : "community"}
-            title={debouncedQuery ? `No results for "${debouncedQuery}"` : "Nothing here yet"}
+            title={debouncedQuery ? `No results for "${debouncedQuery}"` : videoOnly ? "No video testimonies yet" : "Nothing here yet"}
             description={
               debouncedQuery
                 ? "Try a different keyword or browse a different category"
-                : "Be the first to record what God has done"
+                : videoOnly
+                  ? "New video stories will appear here as the community shares them."
+                  : "Be the first to record what God has done"
             }
-            actionLabel={debouncedQuery ? undefined : "Share your testimony"}
-            actionHref={debouncedQuery ? undefined : "/post"}
+            actionLabel={debouncedQuery ? undefined : videoOnly ? "Browse all testimonies" : "Share your testimony"}
+            actionHref={debouncedQuery ? undefined : videoOnly ? "/testimonies" : "/post"}
           />
         )}
       </div>
