@@ -403,3 +403,66 @@
   background-size: 800px 100%;
   animation: shimmer 1.5s infinite;
 }
+
+/* Landing page: a quiet, warm motion language that keeps the journal illustration alive. */
+@keyframes faith-note-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, -9px, 0) rotate(-1deg); }
+}
+
+@keyframes faith-orbit-turn {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes faith-heart-pulse {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(1.08); }
+}
+
+.faith-hero-art {
+  min-height: 27rem;
+}
+
+.faith-hero-halo {
+  background: radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, hsl(40 95% 70% / 0.14) 46%, transparent 72%);
+}
+
+.faith-hero-orbit {
+  animation: faith-orbit-turn 44s linear infinite;
+}
+
+.faith-hero-orbit-slow {
+  animation-duration: 62s;
+  animation-direction: reverse;
+}
+
+.faith-journal-card {
+  transform: rotate(-2deg);
+}
+
+.faith-note-top {
+  animation: faith-note-float 6s ease-in-out infinite;
+}
+
+.faith-note-bottom {
+  animation: faith-note-float 7s ease-in-out -2.5s infinite;
+}
+
+.faith-heart {
+  animation: faith-heart-pulse 2.6s ease-in-out infinite;
+}
+
+@media (min-width: 640px) {
+  .faith-hero-art { min-height: 32rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faith-hero-art *,
+  .faith-hero-art *::before,
+  .faith-hero-art *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
