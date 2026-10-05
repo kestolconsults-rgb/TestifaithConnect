@@ -1,3 +1,5 @@
+import { Link } from "wouter";
+
 interface VideoHeroProps {
   videoSrc: string;
   headline?: string;
@@ -9,7 +11,7 @@ interface VideoHeroProps {
 
 export default function VideoHero({
   videoSrc,
-  headline = "TestiFaith exists as a memorial to preserve God's faithfulness across every life through real stories and lived testimonies, so that in seasons of doubt, fear, or waiting, hearts are reminded of who He is, what He has done, and are strengthened to trust Him again.",
+  headline = "Remember what God has done. Encourage someone today.",
   subheadline = "",
   scripture = "And they overcame him by the blood of the Lamb, and by the word of their testimony.",
   scriptureReference = "Revelation 12:11",
@@ -24,6 +26,7 @@ export default function VideoHero({
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
+        aria-hidden="true"
         data-testid="hero-video"
       >
         <source src={videoSrc} type="video/mp4" />
@@ -34,10 +37,10 @@ export default function VideoHero({
 
       {/* Text Overlay */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4 md:px-6">
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-5">
           {/* Main Message */}
-          <p 
-            className="text-lg md:text-2xl lg:text-3xl text-white leading-relaxed font-medium" 
+          <h1 
+            className="text-3xl md:text-5xl lg:text-6xl text-white leading-tight font-semibold" 
             style={{ 
               fontFamily: 'Space Grotesk, sans-serif',
               textShadow: '0 2px 8px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.5)'
@@ -45,10 +48,10 @@ export default function VideoHero({
             data-testid="hero-headline"
           >
             {headline}
-          </p>
+          </h1>
           {subheadline && (
             <p 
-              className="text-lg md:text-2xl lg:text-3xl text-white leading-relaxed font-medium" 
+              className="text-base md:text-xl text-white/90 leading-relaxed font-medium" 
               style={{ 
                 fontFamily: 'Space Grotesk, sans-serif',
                 textShadow: '0 2px 8px rgba(0, 0, 0, 0.8)' 
@@ -60,7 +63,7 @@ export default function VideoHero({
           )}
 
           {/* Scripture Verse */}
-          <div className="pt-8 space-y-3">
+          <div className="pt-2 space-y-3">
             <p 
               className="text-lg md:text-xl lg:text-2xl text-white/95 italic leading-relaxed" 
               style={{ 
@@ -78,6 +81,14 @@ export default function VideoHero({
             >
               — {scriptureReference}
             </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3 pt-1">
+            <Link href="/testimonies" className="inline-flex min-h-11 items-center rounded-full bg-white px-6 text-sm font-semibold text-slate-950 shadow-lg hover:bg-white/90">
+              Browse testimonies
+            </Link>
+            <Link href="/signin" className="inline-flex min-h-11 items-center rounded-full border border-white/60 bg-black/20 px-6 text-sm font-semibold text-white hover:bg-black/40">
+              Start a private journal
+            </Link>
           </div>
         </div>
       </div>
