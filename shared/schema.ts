@@ -305,7 +305,7 @@ export const encouragementVersesRelations = relations(encouragementVerses, ({ on
 
 // Extended testimony type with user info
 export type TestimonyWithUser = Testimony & {
-  user?: User;
+  user?: Pick<User, "id" | "firstName" | "lastName" | "profileImageUrl">;
   userHasAmen?: boolean;
   userHasEncourage?: boolean;
   commentCount?: number;

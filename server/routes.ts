@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { toSafeUser } from "./privacy";
 import { setupAuth, isAuthenticated } from "./googleAuth";
 import { sendWelcomeEmail } from "./emailService";
 import { isAdminAuthenticated, verifyPassword, createInitialAdmin, hashPassword, checkLoginRateLimit, recordLoginAttempt, regenerateSession, destroySession } from "./adminAuth";
@@ -241,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const user = await storage.getUser(userId);
-      res.json(user);
+      res.json(toSafeUser(user));
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -322,7 +323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/testimonies/my', isAuthenticated, async (req: Request, res) => {
     try {
       const userId = req.user!.id;
-      const testimonies = await storage.getUserTestimonies(userId);
+      const testimonies = await storage.getUserTestimonies(userId, true);
       res.json(testimonies);
     } catch (error) {
       console.error("Error fetching user testimonies:", error);
@@ -715,7 +716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const stats = await storage.getUserStats(userId);
       const testimonies = isOwner || user.profileVisibility === 'public' 
-        ? await storage.getUserTestimonies(userId) 
+        ? await storage.getUserTestimonies(userId, isOwner) 
         : [];
       
       // Return only public-safe fields - never expose email, notification settings, or other sensitive data
@@ -1519,7 +1520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ipAddress: req.ip || req.connection.remoteAddress || undefined,
       });
       
-      res.json(user);
+      res.json(toSafeUser(user));
     } catch (error) {
       console.error("Error suspending user:", error);
       res.status(500).json({ message: "Failed to suspend user" });
@@ -1542,7 +1543,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ipAddress: req.ip || req.connection.remoteAddress || undefined,
       });
       
-      res.json(user);
+      res.json(toSafeUser(user));
     } catch (error) {
       console.error("Error unsuspending user:", error);
       res.status(500).json({ message: "Failed to unsuspend user" });
