@@ -18,6 +18,6 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      - run: npm ci --registry=https://registry.npmjs.org --replace-registry-host=always
       - run: npm run check
       - run: npm run build
