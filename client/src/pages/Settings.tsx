@@ -177,8 +177,28 @@ export default function Settings() {
           </div>
         </div>
 
+        <nav
+          aria-label="Settings sections"
+          className="sticky top-12 z-20 -mx-4 flex gap-2 overflow-x-auto border-y bg-background/95 px-4 py-3 backdrop-blur lg:top-20"
+        >
+          {[
+            ["settings-notifications", "Notifications"],
+            ["settings-privacy", "Privacy"],
+            ["settings-security", "Security"],
+            ["settings-support", "Support"],
+          ].map(([id, label]) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              className="shrink-0 rounded-full border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+
         {/* Notification Settings */}
-        <Card className="rounded-xl">
+        <Card id="settings-notifications" className="scroll-mt-28 rounded-xl">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-amber-500/10">
@@ -291,7 +311,7 @@ export default function Settings() {
         </Card>
 
         {/* Privacy Settings */}
-        <Card className="rounded-xl">
+        <Card id="settings-privacy" className="scroll-mt-28 rounded-xl">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-500/10">
@@ -338,7 +358,7 @@ export default function Settings() {
         </Card>
 
         {/* Account Security */}
-        <Card className="rounded-xl">
+        <Card id="settings-security" className="scroll-mt-28 rounded-xl">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-green-500/10">
@@ -533,7 +553,7 @@ export default function Settings() {
         </Card>
 
         {/* Help & Support */}
-        <Card>
+        <Card id="settings-support" className="scroll-mt-28">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Headphones className="w-5 h-5 text-primary" />
