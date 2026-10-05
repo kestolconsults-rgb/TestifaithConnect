@@ -79,9 +79,19 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
+    const claims = tokens.claims();
+    if (!claims || typeof claims["sub"] !== "string") {
+      return verified(new Error("Replit OIDC response is missing a subject"), false);
+    }
+    const user: Express.User = {
+      id: claims["sub"] as string,
+      email: claims["email"] as string | undefined,
+      firstName: claims["first_name"] as string | undefined,
+      lastName: claims["last_name"] as string | undefined,
+      profileImageUrl: claims["profile_image_url"] as string | undefined,
+    };
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    await upsertUser(claims);
     verified(null, user);
   };
 

@@ -904,7 +904,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const newPasswordHash = await hashPassword(newPassword);
-      // Note: We'd need to add an updateAdmin method for this
+      await storage.updateAdminPassword(admin.id, newPasswordHash);
       res.json({ message: "Password changed successfully" });
     } catch (error) {
       console.error("Change password error:", error);

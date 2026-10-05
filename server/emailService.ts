@@ -249,7 +249,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string | 
   try {
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
-      reply_to: REPLY_TO,
+      replyTo: REPLY_TO,
       to: email,
       subject: "Reset your Testifaith password",
       html: getPasswordResetEmailHtml(displayName, resetUrl),
@@ -339,7 +339,7 @@ export async function sendVerificationEmail(email: string, firstName: string | u
   try {
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
-      reply_to: REPLY_TO,
+      replyTo: REPLY_TO,
       to: email,
       subject: "Confirm your email for Testifaith",
       html: getVerificationEmailHtml(displayName, verifyUrl),
@@ -418,7 +418,7 @@ export async function sendDailyDeclarationEmail(email: string, firstName: string
   try {
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
-      reply_to: REPLY_TO,
+      replyTo: REPLY_TO,
       to: email,
       subject: `Today's Faith Declaration: ${bibleReference}`,
       html: getDailyDeclarationEmailHtml(displayName, declaration, bibleVerse, bibleReference, unsubscribeUrl),
@@ -496,7 +496,7 @@ export async function sendNewsletterEmail(email: string, subject: string, body: 
   try {
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
-      reply_to: REPLY_TO,
+      replyTo: REPLY_TO,
       to: email,
       subject,
       html: getNewsletterEmailHtml(displayName, subject, body, unsubscribeUrl),
@@ -527,7 +527,7 @@ export async function sendWelcomeEmail(email: string, firstName?: string): Promi
   try {
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
-      reply_to: REPLY_TO,
+      replyTo: REPLY_TO,
       to: email,
       subject: `Welcome to Testifaith, ${displayName}!`,
       html: getWelcomeEmailHtml(displayName),

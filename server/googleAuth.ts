@@ -47,8 +47,8 @@ async function verifyTurnstileToken(token: string, remoteIp?: string): Promise<b
     ? process.env.TURNSTILE_SECRET_KEY
     : TURNSTILE_TEST_SECRET_KEY;
   if (!secret) {
-    console.warn("TURNSTILE_SECRET_KEY not configured, skipping CAPTCHA verification");
-    return true;
+    console.error("TURNSTILE_SECRET_KEY is not configured; rejecting signup verification");
+    return false;
   }
   try {
     const body = new URLSearchParams({ secret, response: token });
