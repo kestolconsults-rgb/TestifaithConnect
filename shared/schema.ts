@@ -48,6 +48,10 @@ export const users = pgTable("users", {
   notifyDailyVerse: boolean("notify_daily_verse").default(true),
   notifyNewsletter: boolean("notify_newsletter").default(true),
   notifyDailyDeclaration: boolean("notify_daily_declaration").default(true),
+  notifyExpectationDaily: boolean("notify_expectation_daily").default(false).notNull(),
+  expectationReminderHour: integer("expectation_reminder_hour").default(9).notNull(),
+  expectationTimezone: varchar("expectation_timezone", { length: 64 }).default("UTC").notNull(),
+  lastExpectationReminderDate: varchar("last_expectation_reminder_date", { length: 10 }),
   profileVisibility: varchar("profile_visibility", { length: 20 }).default("public"),
   emailVerified: boolean("email_verified").default(false).notNull(),
   isSuspended: boolean("is_suspended").default(false),
@@ -109,6 +113,11 @@ export const updateSettingsSchema = z.object({
   notifyDailyVerse: z.boolean().optional(),
   notifyNewsletter: z.boolean().optional(),
   notifyDailyDeclaration: z.boolean().optional(),
+  notifyExpectationDaily: z.boolean().optional(),
+  expectationReminderHour: z.number().int().min(0).max(23).optional(),
+  expectationTimezone: z.string().min(1).max(64).refine((timezone) => {
+    try { Intl.DateTimeFormat(undefined, { timeZone: timezone }); return true; } catch { return false; }
+  }, "Please choose a valid time zone").optional(),
   profileVisibility: z.enum(["public", "private"]).optional(),
 });
 
