@@ -32,7 +32,7 @@ export default function MobileHeader() {
   return (
     <header
       className="sticky top-0 z-30 flex items-center justify-between px-5 py-3 backdrop-blur-xl border-b"
-      style={{ background: "hsl(var(--background) / 0.92)", borderColor: "hsl(var(--border))" }}
+      style={{ background: "hsl(var(--background) / 0.92)", borderColor: "hsl(var(--border))", paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
     >
       <Logo />
 
