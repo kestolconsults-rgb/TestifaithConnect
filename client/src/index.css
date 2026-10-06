@@ -503,3 +503,22 @@
     transition: none !important;
   }
 }
+
+.expectation-art circle:nth-of-type(2) { animation: expectation-glow 3.6s ease-in-out infinite; transform-origin: 126px 42px; }
+.expectation-card { animation: expectation-rise 420ms both; }
+.expectation-card:hover { transform: translateY(-3px); }
+.expectation-empty { animation: expectation-rise 500ms both; }
+@keyframes expectation-glow {
+  0%, 100% { opacity: .72; transform: scale(.96); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+@keyframes expectation-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .expectation-art circle:nth-of-type(2), .expectation-card, .expectation-empty {
+    animation: none;
+    transition: none;
+  }
+}
