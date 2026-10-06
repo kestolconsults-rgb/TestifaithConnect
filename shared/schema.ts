@@ -48,6 +48,7 @@ export const users = pgTable("users", {
   notifyDailyVerse: boolean("notify_daily_verse").default(true),
   notifyNewsletter: boolean("notify_newsletter").default(true),
   notifyDailyDeclaration: boolean("notify_daily_declaration").default(true),
+  notifyExpectationEncouragement: boolean("notify_expectation_encouragement").default(true),
   profileVisibility: varchar("profile_visibility", { length: 20 }).default("public"),
   emailVerified: boolean("email_verified").default(false).notNull(),
   isSuspended: boolean("is_suspended").default(false),
@@ -109,6 +110,7 @@ export const updateSettingsSchema = z.object({
   notifyDailyVerse: z.boolean().optional(),
   notifyNewsletter: z.boolean().optional(),
   notifyDailyDeclaration: z.boolean().optional(),
+  notifyExpectationEncouragement: z.boolean().optional(),
   profileVisibility: z.enum(["public", "private"]).optional(),
 });
 

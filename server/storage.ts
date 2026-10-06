@@ -189,7 +189,7 @@ export interface IStorage {
   markNewsletterDigestSent(dateStr: string): Promise<void>;
 
   // Users opted into notification types (with email/push targets)
-  getUsersOptedInto(field: "notifyNewsletter" | "notifyDailyDeclaration"): Promise<User[]>;
+  getUsersOptedInto(field: "notifyNewsletter" | "notifyDailyDeclaration" | "notifyExpectationEncouragement"): Promise<User[]>;
 
   // =====================================================
   // ADMIN DASHBOARD OPERATIONS
@@ -1569,7 +1569,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(appSettings.id, "default"));
   }
 
-  async getUsersOptedInto(field: "notifyNewsletter" | "notifyDailyDeclaration"): Promise<User[]> {
+  async getUsersOptedInto(field: "notifyNewsletter" | "notifyDailyDeclaration" | "notifyExpectationEncouragement"): Promise<User[]> {
     return await db
       .select()
       .from(users)

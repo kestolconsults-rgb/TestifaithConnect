@@ -131,13 +131,13 @@ export default function MyTestimonies() {
             <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
               <div>
                 <h1
-                  className="text-4xl md:text-5xl font-bold mb-1"
+                  className="text-3xl md:text-5xl font-bold tracking-tight mb-1"
                   style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                   data-testid="text-page-title"
                 >
                   My Journal
                 </h1>
-                <p className="text-muted-foreground">
+                <p className="text-base leading-relaxed text-muted-foreground">
                   A record of His faithfulness
                 </p>
               </div>
@@ -312,8 +312,8 @@ export default function MyTestimonies() {
                   <div className="inline-flex items-center justify-center w-20 h-20 rounded-xl bg-primary/10 mb-2">
                     <PlusCircle className="h-10 w-10 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold">Your journal is empty</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
+                  <h3 className="text-2xl md:text-3xl font-semibold">Your journal is empty</h3>
+                  <p className="text-base leading-relaxed text-muted-foreground">
                     Start recording what God has done. Every stone of remembrance begins with writing it down — even if only you ever read it.
                   </p>
                   <Link href="/post">
