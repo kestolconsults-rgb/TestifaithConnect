@@ -40,7 +40,7 @@ import Landing from "@/pages/Landing";
 
 // Full-screen wrapper for auth flow pages (no nav chrome)
 function AuthFlow({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen bg-background">{children}</div>;
+  return <div className="min-h-screen bg-background" style={{ minHeight: "100dvh" }}>{children}</div>;
 }
 
 // Renders the given component only when the user is signed in; otherwise
@@ -58,8 +58,8 @@ function ProtectedRoute({
 
 function AppSkeleton() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="sticky top-0 z-30 flex items-center justify-between px-5 py-3 border-b bg-background/92">
+    <div className="min-h-screen bg-background flex flex-col" style={{ minHeight: "100dvh" }}>
+      <div className="sticky top-0 z-30 flex items-center justify-between px-5 py-3 border-b bg-background/92" style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}>
         <Skeleton className="h-7 w-32 rounded-lg" />
         <div className="flex gap-2">
           <Skeleton className="w-9 h-9 rounded-full" />
