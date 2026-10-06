@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Lock, Heart, Star, Plus, Feather, LogIn, ChevronDown, ChevronUp, Flame, Clock, Users, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
+import { BookOpen, Lock, Heart, Star, Plus, Feather, LogIn, ChevronDown, ChevronUp, Flame, Clock, Users, CheckCircle2, Sparkles, ArrowRight, Target } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow, format, subDays, parseISO } from "date-fns";
 import type { TestimonyWithUser, EncouragementVerse, FaithDeclaration } from "@shared/schema";
@@ -165,6 +165,27 @@ export default function MyFaith() {
           </div>
         </div>
       </section>
+
+      {user && (
+        <section className="px-5 pb-5" aria-label="Faith expectations">
+          <Link
+            href="/expectations"
+            data-testid="link-faith-expectations"
+            className="group flex min-h-[76px] items-center justify-between gap-4 rounded-2xl border border-violet-200/70 bg-gradient-to-r from-violet-50 to-white px-4 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-violet-300/15 dark:from-violet-950/35 dark:to-card"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-300">
+                <Target className="h-5 w-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-['Space_Grotesk'] text-sm font-semibold text-foreground">Faith Expectations</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">Track a prayer, promise, or milestone.</span>
+              </span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-violet-500 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </section>
+      )}
 
       {/* Your Faith Journal — Private Journal */}
       <section className="px-5 mb-6">
