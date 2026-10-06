@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Plus, BookOpen, User, Feather, Sparkles, Search, LogIn } from "lucide-react";
+import { Home, Plus, BookOpen, User, Feather, Sparkles, Search, LogIn, Target } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -18,6 +18,13 @@ const AUTH_FAB_ACTIONS = [
     sublabel: "Log what God has done — privately",
     color: "#ef4444",
     href: "/post",
+  },
+  {
+    icon: Target,
+    label: "Faith Expectations",
+    sublabel: "Track a prayer, promise, or milestone",
+    color: "#8b5cf6",
+    href: "/expectations",
   },
   {
     icon: Sparkles,
