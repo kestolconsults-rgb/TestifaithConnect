@@ -96,7 +96,7 @@ export default function BottomTabBar() {
 
       {/* FAB Action Cards */}
       {fabOpen && (
-        <div className="fixed bottom-28 left-0 right-0 z-50 flex flex-col gap-3 px-5 max-w-lg mx-auto lg:hidden">
+        <div id="quick-actions-menu" className="fixed bottom-28 left-0 right-0 z-50 flex flex-col gap-3 px-5 max-w-lg mx-auto overflow-y-auto lg:hidden" style={{ bottom: "calc(7rem + env(safe-area-inset-bottom))", maxHeight: "calc(100dvh - 9rem - env(safe-area-inset-top) - env(safe-area-inset-bottom))" }}>
           {FAB_ACTIONS.map((action) => {
             const Icon = action.icon;
             return (
@@ -147,6 +147,8 @@ export default function BottomTabBar() {
                     }}
                     data-testid="button-fab"
                     aria-label="Quick actions"
+                    aria-expanded={fabOpen}
+                    aria-controls="quick-actions-menu"
                   >
                     <Plus className="w-7 h-7" />
                   </button>
