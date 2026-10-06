@@ -9,3 +9,6 @@ For existing databases, generate and apply schema changes with:
 The initial migration records the `email_verified` column that was previously added manually. Its `IF NOT EXISTS` clause lets Drizzle record the migration safely on databases where that hotfix is already present.
 
 For a brand-new database, provision the current schema once with `npm run db:push`; use reviewed migrations for subsequent schema changes.
+
+
+Reviewed migrations run automatically during application startup. The runtime image includes the migration files, and a PostgreSQL advisory lock ensures only one Koyeb replica applies pending migrations at a time. New databases can still be provisioned once with `npm run db:push`.
