@@ -53,7 +53,7 @@ function ExpectationCard({ expectation }: { expectation: FaithExpectationWithDet
   return (
     <Link href={`/expectations/${expectation.id}`}>
       <Card 
-        className="hover-elevate cursor-pointer transition-all border border-border/50"
+        className="expectation-card hover-elevate cursor-pointer transition-all border border-border/50"
         data-testid={`card-expectation-${expectation.id}`}
       >
         <CardContent className="p-5">
@@ -150,10 +150,22 @@ function ExpectationsList({
 
   if (!expectations || expectations.length === 0) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="py-12 text-center">
-          <EmptyIcon className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-          <p className="text-muted-foreground">{emptyMessage}</p>
+      <Card className="expectation-empty overflow-hidden border-dashed bg-gradient-to-br from-primary/[0.035] via-card to-amber-500/[0.04]">
+        <CardContent className="relative py-12 text-center sm:py-16">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <EmptyIcon className="h-7 w-7" />
+          </div>
+          <p className="mx-auto max-w-md text-base font-medium text-foreground">{emptyMessage}</p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            Every journey begins with a hope. Write it down, add a promise that strengthens you, and come back to record each step.
+          </p>
+          <div className="mx-auto mt-8 flex max-w-sm items-center justify-between text-xs text-muted-foreground">
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-primary/70" />Hope</span>
+            <span className="mx-2 h-px flex-1 bg-primary/20" />
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-primary/40" />Promise</span>
+            <span className="mx-2 h-px flex-1 bg-primary/20" />
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-amber-500/60" />Remember</span>
+          </div>
         </CardContent>
       </Card>
     );
@@ -217,7 +229,7 @@ export default function Expectations() {
                 Faith Expectations
               </h1>
               <p className="text-lg text-muted-foreground max-w-xl">
-                Track what you're believing God for, celebrate milestones, and witness His faithfulness
+                Give your hopes a place to grow. Hold on to the promises you're praying over, notice each small step, and remember what God has done.
               </p>
             </div>
             <Button 
@@ -229,6 +241,16 @@ export default function Expectations() {
               <Plus className="h-5 w-5" />
               New Expectation
             </Button>
+            <div className="hidden md:block w-44 shrink-0" aria-hidden="true">
+              <svg viewBox="0 0 180 140" className="expectation-art h-36 w-full" fill="none">
+                <circle cx="126" cy="42" r="23" fill="hsl(var(--primary) / .12)" />
+                <circle cx="126" cy="42" r="13" fill="hsl(var(--primary) / .55)" />
+                <path d="M13 123c26-31 48-32 67-7 14 18 28 10 39-5 12-17 26-17 48 7" stroke="hsl(var(--primary) / .42)" strokeWidth="3" strokeLinecap="round" />
+                <path d="M16 128h148" stroke="hsl(var(--primary) / .18)" strokeWidth="2" strokeLinecap="round" />
+                <path d="M43 108c6-11 14-17 22-18m53 15c6-10 12-15 20-17" stroke="hsl(var(--primary) / .3)" strokeWidth="2" strokeLinecap="round" />
+                <path d="M35 53l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5Zm65-33 1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5 1.5-4Z" fill="hsl(var(--primary) / .55)" />
+              </svg>
+            </div>
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-6 md:mt-8">
