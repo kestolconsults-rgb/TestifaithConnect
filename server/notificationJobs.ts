@@ -3,6 +3,33 @@ import { sendPushNotification } from "./pushService";
 import { sendDailyDeclarationEmail, sendNewsletterEmail } from "./emailService";
 import { buildUnsubscribeUrl } from "./unsubscribeToken";
 
+export async function sendExpectationEncouragementNow(userId: string, localDate: string): Promise<boolean> {
+  const expectations = await storage.getUserExpectations(userId, "active");
+  if (expectations.length === 0) return false;
+
+  const dayIndex = [...localDate].reduce((sum, char) => sum + char.charCodeAt(0), 0) % expectations.length;
+  const expectation = expectations[dayIndex];
+  const scripture = expectation.scriptures?.find((item) => item.isPrimary) || expectation.scriptures?.[0];
+  const verse = scripture?.passageText
+    ? { text: scripture.passageText, reference: scripture.reference }
+    : await storage.getDailyVerse();
+  if (!verse?.text) return false;
+
+  const subscriptions = await storage.getPushSubscriptionsForUser(userId);
+  if (subscriptions.length === 0) return false;
+  const body = scripture?.passageText
+    ? `Take heart today: “${scripture.passageText}” — ${scripture.reference}`
+    : `A word for your faith journey: “${verse.text}” — ${verse.reference}`;
+  await sendPushNotification(userId, {
+    title: "A word for your faith journey",
+    body: body.slice(0, 240),
+    url: `/expectations/${expectation.id}`,
+    tag: "faith-expectation-daily",
+  }, "notifyExpectationDaily");
+  await storage.markExpectationReminderSent(userId, localDate);
+  return true;
+}
+
 export async function sendDailyDeclarationNow(): Promise<{ recipientCount: number }> {
   const today = new Date().toISOString().slice(0, 10);
   const declaration = await storage.getActiveFaithDeclaration(today);
