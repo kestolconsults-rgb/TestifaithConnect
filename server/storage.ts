@@ -189,7 +189,8 @@ export interface IStorage {
   markNewsletterDigestSent(dateStr: string): Promise<void>;
 
   // Users opted into notification types (with email/push targets)
-  getUsersOptedInto(field: "notifyNewsletter" | "notifyDailyDeclaration"): Promise<User[]>;
+  getUsersOptedInto(field: "notifyNewsletter" | "notifyDailyDeclaration" | "notifyExpectationDaily"): Promise<User[]>;
+  markExpectationReminderSent(userId: string, localDate: string): Promise<void>;
 
   // =====================================================
   // ADMIN DASHBOARD OPERATIONS
@@ -1101,6 +1102,9 @@ export class DatabaseStorage implements IStorage {
     if (settings.notifyDailyVerse !== undefined) updateData.notifyDailyVerse = settings.notifyDailyVerse;
     if (settings.notifyNewsletter !== undefined) updateData.notifyNewsletter = settings.notifyNewsletter;
     if (settings.notifyDailyDeclaration !== undefined) updateData.notifyDailyDeclaration = settings.notifyDailyDeclaration;
+    if (settings.notifyExpectationDaily !== undefined) updateData.notifyExpectationDaily = settings.notifyExpectationDaily;
+    if (settings.expectationReminderHour !== undefined) updateData.expectationReminderHour = settings.expectationReminderHour;
+    if (settings.expectationTimezone !== undefined) updateData.expectationTimezone = settings.expectationTimezone;
     if (settings.profileVisibility !== undefined) updateData.profileVisibility = settings.profileVisibility;
 
     const [updated] = await db
@@ -1569,7 +1573,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(appSettings.id, "default"));
   }
 
-  async getUsersOptedInto(field: "notifyNewsletter" | "notifyDailyDeclaration"): Promise<User[]> {
+  async getUsersOptedInto(field: "notifyNewsletter" | "notifyDailyDeclaration" | "notifyExpectationDaily"): Promise<User[]> {
     return await db
       .select()
       .from(users)
@@ -1579,6 +1583,10 @@ export class DatabaseStorage implements IStorage {
   // =====================================================
   // ADMIN DASHBOARD OPERATIONS
   // =====================================================
+
+  async markExpectationReminderSent(userId: string, localDate: string): Promise<void> {
+    await db.update(users).set({ lastExpectationReminderDate: localDate, updatedAt: new Date() }).where(eq(users.id, userId));
+  }
 
   async getAnalytics(): Promise<{
     totalUsers: number;
