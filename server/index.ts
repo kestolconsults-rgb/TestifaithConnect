@@ -2,6 +2,9 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { startScheduler } from "./scheduler";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { resolve } from "node:path";
+import { db, pool } from "./db";
 
 const app = express();
 
@@ -48,6 +51,17 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  const migrationLockId = 947315602;
+  const migrationClient = await pool.connect();
+  try {
+    await migrationClient.query("SELECT pg_advisory_lock($1)", [migrationLockId]);
+    await migrate(db, { migrationsFolder: resolve(process.cwd(), "migrations") });
+    log("Database migrations are up to date");
+  } finally {
+    try { await migrationClient.query("SELECT pg_advisory_unlock($1)", [migrationLockId]); }
+    finally { migrationClient.release(); }
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
