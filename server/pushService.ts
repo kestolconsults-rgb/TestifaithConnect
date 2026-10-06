@@ -15,7 +15,7 @@ if (isPushConfigured) {
   console.warn("[push] VAPID public/private keys are not both configured; push delivery is disabled");
 }
 
-type PushPreference = "notifyOnAmen" | "notifyOnEncourage" | "notifyOnComment" | "notifyDailyDeclaration";
+type PushPreference = "notifyOnAmen" | "notifyOnEncourage" | "notifyOnComment" | "notifyDailyDeclaration" | "notifyExpectationDaily";
 
 export async function sendPushNotification(
   userId: string,
