@@ -293,6 +293,48 @@ export default function Settings() {
 
             <Separator />
 
+            <div className="rounded-xl border border-primary/15 bg-gradient-to-br from-primary/5 via-background to-amber-500/5 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="notify-expectation-daily" className="text-base font-semibold">Faith Expectation Encouragement</Label>
+                  <p className="max-w-xl text-sm text-muted-foreground">
+                    Receive one Scripture-based encouragement each day for your active expectations. Your expectation title stays private in the notification.
+                  </p>
+                </div>
+                <Switch
+                  id="notify-expectation-daily"
+                  checked={profile?.notifyExpectationDaily ?? false}
+                  onCheckedChange={(checked) => updateSettingsMutation.mutate({
+                    notifyExpectationDaily: checked,
+                    ...(checked ? { expectationTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" } : {}),
+                  })}
+                  disabled={updateSettingsMutation.isPending}
+                  data-testid="switch-notify-expectation-daily"
+                />
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Label htmlFor="expectation-reminder-hour" className="text-sm text-muted-foreground">Send around</Label>
+                <select
+                  id="expectation-reminder-hour"
+                  value={profile?.expectationReminderHour ?? 9}
+                  onChange={(event) => updateSettingsMutation.mutate({
+                    expectationReminderHour: Number(event.target.value),
+                    expectationTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+                  })}
+                  disabled={updateSettingsMutation.isPending}
+                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                  aria-label="Daily expectation encouragement time"
+                >
+                  {Array.from({ length: 24 }, (_, hour) => (
+                    <option key={hour} value={hour}>{new Date(2000, 0, 1, hour).toLocaleTimeString([], { hour: "numeric" })}</option>
+                  ))}
+                </select>
+                <span className="text-sm text-muted-foreground">your local time</span>
+              </div>
+            </div>
+
+            <Separator />
+
             <p className="pt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Email updates</p>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
