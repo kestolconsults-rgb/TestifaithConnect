@@ -2,10 +2,23 @@ import cron from "node-cron";
 import { storage } from "./storage";
 import { pool } from "./db";
 import type { PoolClient } from "pg";
-import { sendDailyDeclarationNow, sendNewsletterNow } from "./notificationJobs";
+import { sendDailyDeclarationNow, sendExpectationEncouragementNow, sendNewsletterNow } from "./notificationJobs";
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function localDateAndHour(timezone: string, now: Date): { date: string; hour: number } {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", hourCycle: "h23",
+    }).formatToParts(now);
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return { date: `${values.year}-${values.month}-${values.day}`, hour: Number(values.hour) };
+  } catch {
+    return { date: now.toISOString().slice(0, 10), hour: now.getUTCHours() };
+  }
 }
 
 function isDigestDueToday(settings: { newsletterDigestFrequency: string; newsletterDigestDayOfWeek: number; newsletterDigestDayOfMonth: number }): boolean {
@@ -49,6 +62,18 @@ async function runSchedulerTick() {
         console.log(`[scheduler] Sent daily declaration to ${recipientCount} users`);
       } catch (err) {
         console.error("[scheduler] Failed to send daily declaration:", err);
+      }
+    }
+
+    const expectationUsers = await storage.getUsersOptedInto("notifyExpectationDaily");
+    for (const user of expectationUsers) {
+      const local = localDateAndHour(user.expectationTimezone || "UTC", now);
+      if (local.hour !== (user.expectationReminderHour ?? 9) || user.lastExpectationReminderDate === local.date) continue;
+      try {
+        const sent = await sendExpectationEncouragementNow(user.id, local.date);
+        if (sent) console.log(`[scheduler] Sent faith expectation encouragement for user ${user.id}`);
+      } catch (err) {
+        console.error(`[scheduler] Failed expectation encouragement for user ${user.id}:`, err);
       }
     }
 
