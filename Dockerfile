@@ -24,6 +24,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Only copy what's needed to run
 COPY --from=deps    /app/node_modules ./node_modules
 COPY --from=builder /app/dist         ./dist
+COPY --from=builder /app/migrations   ./migrations
 COPY package.json ./
 
 USER appuser
