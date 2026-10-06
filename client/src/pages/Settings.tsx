@@ -279,6 +279,22 @@ export default function Settings() {
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
+                <Label htmlFor="notify-expectation">Expectation Encouragement</Label>
+                <p className="text-sm text-muted-foreground">Get daily encouragement verses specifically for your active faith expectations</p>
+              </div>
+              <Switch
+                id="notify-expectation"
+                checked={profile?.notifyExpectationEncouragement ?? true}
+                onCheckedChange={(checked) => handleSettingToggle("notifyExpectationEncouragement", checked)}
+                disabled={updateSettingsMutation.isPending}
+                data-testid="switch-notify-expectation"
+              />
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
                 <Label htmlFor="notify-declaration">Daily Declaration</Label>
                 <p className="text-sm text-muted-foreground">Get a push notification and email with today's faith declaration</p>
               </div>

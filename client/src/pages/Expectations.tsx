@@ -25,6 +25,7 @@ import type { FaithExpectationWithDetails } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 import CreateExpectationDialog from "@/components/CreateExpectationDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { motion } from "framer-motion";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Healing: "bg-green-500/10 text-green-500 border-green-500/20",
@@ -51,9 +52,16 @@ function ExpectationCard({ expectation }: { expectation: FaithExpectationWithDet
     : 0;
 
   return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      whileHover={{ scale: 1.02 }}
+    >
     <Link href={`/expectations/${expectation.id}`}>
       <Card 
-        className="hover-elevate cursor-pointer transition-all border border-border/50"
+        className="hover-elevate cursor-pointer transition-all border border-border/50 h-full"
         data-testid={`card-expectation-${expectation.id}`}
       >
         <CardContent className="p-5">
@@ -124,6 +132,7 @@ function ExpectationCard({ expectation }: { expectation: FaithExpectationWithDet
         </CardContent>
       </Card>
     </Link>
+    </motion.div>
   );
 }
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, Sparkles, Share2, MessageCircle } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Link } from "wouter";
+import { motion } from "framer-motion";
 import type { TestimonyWithUser } from "@shared/schema";
 import { CATEGORY_COLORS, CATEGORY_ACCENT_COLORS } from "@/lib/constants";
 import type { Category } from "@/lib/constants";
@@ -88,6 +89,13 @@ export default function TestimonyCard({
   const accentColor = CATEGORY_ACCENT_COLORS[testimony.category as Category] ?? '#64748b';
 
   return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      whileHover={{ scale: 1.01 }}
+    >
     <Card 
       className={`hover-elevate transition-all ${featured ? 'shadow-lg' : ''}`}
       style={{
@@ -210,5 +218,6 @@ export default function TestimonyCard({
         </Link>
       </CardFooter>
     </Card>
+    </motion.div>
   );
 }

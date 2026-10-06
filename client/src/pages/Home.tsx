@@ -14,6 +14,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { motion } from "framer-motion";
 
 const ALL_CATEGORIES = ["All", ...CATEGORIES] as const;
 
@@ -152,7 +153,14 @@ function TestimonyRow({ testimony, currentUser }: { testimony: TestimonyWithUser
   };
 
   return (
-    <div className="community-card-enter rounded-2xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6" data-testid={`testimony-row-${testimony.id}`}>
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="community-card-enter rounded-2xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6"
+      data-testid={`testimony-row-${testimony.id}`}
+    >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
           <Avatar className="w-10 h-10">
@@ -199,7 +207,7 @@ function TestimonyRow({ testimony, currentUser }: { testimony: TestimonyWithUser
           </button>
         </Link>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -295,10 +303,10 @@ export default function Home() {
           <div className="relative grid items-center gap-5 sm:grid-cols-[1fr_auto] sm:gap-2">
             <div className="max-w-2xl">
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Your faith community</p>
-              <h1 className="font-['Space_Grotesk'] text-2xl font-bold leading-tight text-zinc-950 dark:text-white sm:text-3xl lg:text-4xl">
+              <h1 className="font-['Space_Grotesk'] text-3xl md:text-5xl font-bold tracking-tight text-zinc-950 dark:text-white">
                 Welcome back{user?.firstName ? `, ${user.firstName}` : ""}.
               </h1>
-              <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300 sm:text-base">
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-zinc-600 dark:text-zinc-300">
                 Keep a record of what God has done in your life—and find encouragement in the stories others have lived.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
@@ -426,8 +434,8 @@ export default function Home() {
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Real voices. Real hope.</p>
-              <h2 id="video-testimonies-heading" className="font-['Space_Grotesk'] text-xl font-bold text-foreground sm:text-2xl">Video testimonies</h2>
-              <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground sm:text-sm">Hear how God has met people in the middle of their story.</p>
+              <h2 id="video-testimonies-heading" className="font-['Space_Grotesk'] text-2xl md:text-3xl font-semibold text-foreground">Video testimonies</h2>
+              <p className="mt-1 max-w-xl text-base leading-relaxed text-muted-foreground">Hear how God has met people in the middle of their story.</p>
             </div>
             <Link href="/testimonies?type=video" className="mb-0.5 inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary/80" data-testid="link-see-all-videos">
               See all <ArrowRight className="h-3.5 w-3.5" />
@@ -450,7 +458,7 @@ export default function Home() {
       {/* Text Testimonies */}
       <section className="px-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-['Space_Grotesk'] text-base font-semibold text-foreground">
+          <h2 className="font-['Space_Grotesk'] text-2xl md:text-3xl font-semibold text-foreground">
             {debouncedQuery || activeCategory !== "All" ? "Results" : "From the Community"}
           </h2>
           {!debouncedQuery && activeCategory === "All" && (

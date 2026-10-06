@@ -1,7 +1,45 @@
 import { storage } from "./storage";
 import { sendPushNotification } from "./pushService";
-import { sendDailyDeclarationEmail, sendNewsletterEmail } from "./emailService";
+import { sendDailyDeclarationEmail, sendNewsletterEmail, sendExpectationEncouragementEmail } from "./emailService";
 import { buildUnsubscribeUrl } from "./unsubscribeToken";
+
+export async function sendDailyExpectationEncouragementNow(): Promise<{ recipientCount: number }> {
+  const optedInUsers = await storage.getUsersOptedInto("notifyExpectationEncouragement");
+  let recipientCount = 0;
+
+  const verses = await storage.getActiveVerses();
+  if (verses.length === 0) return { recipientCount };
+
+  await Promise.allSettled(
+    optedInUsers.map(async (u) => {
+      const activeExpectations = await storage.getUserExpectations(u.id, "active");
+      if (activeExpectations.length === 0) return;
+
+      const expectation = activeExpectations[Math.floor(Math.random() * activeExpectations.length)];
+      const verse = verses[Math.floor(Math.random() * verses.length)];
+
+      await sendPushNotification(u.id, {
+        title: `Encouragement for: ${expectation.title}`,
+        body: `"${verse.verse}" — ${verse.reference}`,
+        url: `/expectations/${expectation.id}`,
+        tag: `expectation-${expectation.id}`,
+      }, "notifyExpectationEncouragement");
+
+      if (u.email) {
+        await sendExpectationEncouragementEmail(
+          u.email,
+          u.firstName || undefined,
+          expectation.title,
+          verse.verse,
+          verse.reference
+        );
+      }
+      recipientCount++;
+    })
+  );
+
+  return { recipientCount };
+}
 
 export async function sendDailyDeclarationNow(): Promise<{ recipientCount: number }> {
   const today = new Date().toISOString().slice(0, 10);

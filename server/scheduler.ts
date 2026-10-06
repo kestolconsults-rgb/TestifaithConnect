@@ -2,7 +2,7 @@ import cron from "node-cron";
 import { storage } from "./storage";
 import { pool } from "./db";
 import type { PoolClient } from "pg";
-import { sendDailyDeclarationNow, sendNewsletterNow } from "./notificationJobs";
+import { sendDailyDeclarationNow, sendNewsletterNow, sendDailyExpectationEncouragementNow } from "./notificationJobs";
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
@@ -45,10 +45,12 @@ async function runSchedulerTick() {
     ) {
       try {
         const { recipientCount } = await sendDailyDeclarationNow();
+        // Also trigger daily expectation encouragement at the same time
+        const expResult = await sendDailyExpectationEncouragementNow();
         await storage.markDailyDeclarationSent(today);
-        console.log(`[scheduler] Sent daily declaration to ${recipientCount} users`);
+        console.log(`[scheduler] Sent daily declaration to ${recipientCount} users, and expectation encouragement to ${expResult.recipientCount} users`);
       } catch (err) {
-        console.error("[scheduler] Failed to send daily declaration:", err);
+        console.error("[scheduler] Failed to send daily declaration or expectation encouragement:", err);
       }
     }
 

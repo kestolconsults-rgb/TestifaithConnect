@@ -433,7 +433,7 @@ export default function ExpectationDetail() {
           </div>
 
           <h1 
-            className="text-3xl md:text-4xl font-bold mb-4"
+            className="text-3xl md:text-5xl font-bold tracking-tight mb-4"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             data-testid="text-expectation-title"
           >
@@ -441,7 +441,7 @@ export default function ExpectationDetail() {
           </h1>
 
           {expectation.description && (
-            <p className="text-lg text-muted-foreground mb-4">{expectation.description}</p>
+            <p className="text-base leading-relaxed text-muted-foreground mb-4">{expectation.description}</p>
           )}
 
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">

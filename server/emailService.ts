@@ -407,6 +407,87 @@ function getDailyDeclarationEmailHtml(firstName: string, declaration: string, bi
 </html>`;
 }
 
+function getExpectationEncouragementEmailHtml(firstName: string, expectationTitle: string, verse: string, reference: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Encouragement for Your Faith Expectation</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #000000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #000000;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #111111; border-radius: 12px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); padding: 36px 40px; text-align: center;">
+              <h1 style="margin: 0; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 32px; font-weight: 700; color: #FFFFFF; letter-spacing: 1px;">TESTIFAITH</h1>
+              <p style="margin: 8px 0 0; font-size: 13px; color: rgba(255,255,255,0.85); letter-spacing: 2px; text-transform: uppercase;">Encouragement for Your Expectation</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 24px; color: #FFFFFF;">Hi ${firstName},</h2>
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #CCCCCC;">
+                Keep standing in faith for <strong>"${expectationTitle}"</strong>. God is faithful, and we're standing with you in prayer today.
+              </p>
+              <div style="background-color: #1A1A1A; padding: 24px; border-radius: 8px; border-left: 4px solid #EF4444;">
+                <p style="margin: 0 0 12px; font-size: 18px; line-height: 1.6; color: #FFFFFF; font-style: italic;">
+                  "${verse}"
+                </p>
+                <p style="margin: 0; font-size: 14px; color: #EF4444; font-weight: 600;">
+                  — ${reference}
+                </p>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 40px; text-align: center; border-top: 1px solid #333333;">
+              <p style="margin: 0 0 10px; font-size: 12px; color: #555555;">© ${new Date().getFullYear()} Testifaith. All rights reserved.</p>
+              <p style="margin: 0; font-size: 11px;"><a href="https://testifaith.com/settings" style="color: #777777; text-decoration: underline;">Update notification settings</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendExpectationEncouragementEmail(email: string, firstName: string | undefined, expectationTitle: string, verse: string, reference: string): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not configured, skipping expectation encouragement email');
+    return false;
+  }
+
+  const displayName = firstName || 'Friend';
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO,
+      to: email,
+      subject: `Encouragement for: ${expectationTitle}`,
+      html: getExpectationEncouragementEmailHtml(displayName, expectationTitle, verse, reference),
+      text: `Hi ${displayName},\n\nKeep standing in faith for "${expectationTitle}".\n\n"${verse}"\n— ${reference}\n\n© ${new Date().getFullYear()} Testifaith`,
+    });
+
+    if (error) {
+      console.error('Expectation encouragement email error:', JSON.stringify(error));
+      return false;
+    }
+
+    console.log('Expectation encouragement email sent:', data?.id, '→', email);
+    return true;
+  } catch (error: any) {
+    console.error('Expectation encouragement email exception:', error?.message || error);
+    return false;
+  }
+}
+
 export async function sendDailyDeclarationEmail(email: string, firstName: string | undefined, declaration: string, bibleVerse: string, bibleReference: string, unsubscribeUrl?: string): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) {
     console.warn('RESEND_API_KEY not configured, skipping daily declaration email');
