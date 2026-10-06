@@ -139,7 +139,7 @@ function Router() {
       <div className="hidden lg:block"><Header /></div>
       <div className="lg:hidden"><MobileHeader /></div>
       <InstallBanner />
-      <main className="flex-1">
+      <main className="flex-1 app-typography">
         <Switch>
           {/* ── Public routes — accessible to everyone ── */}
           <Route path="/" component={() => isAuthenticated ? <Home /> : <Landing />} />
